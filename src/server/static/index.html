@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en" style="height:100%">
+   <head>
+      <meta charset="UTF-8" />
+      <title>Map</title>
+      <!--CSS for map-->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+      <!--Font-->
+      <link href='https://fonts.googleapis.com/css?family=Noto Sans' rel='stylesheet'>
+
+      <!--Script for leaflet.js-->
+
+      <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
+      <link rel="stylesheet" href="static/styles.css"/>
+
+
+   <!--Run code-->
+      <!--Jquery-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet-src.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+
+
+   </head>
+
+   <body style="height:100%;margin: 0;padding: 0;font-family:'Noto Sans',sans-serif">
+       <!--Map div-->
+       <!--<div id="settingsPane">Settings</div>-->
+       <div id="clickBlocker" onclick="hideSettings();" style="height:100%; width: 0; z-index:10000; position:absolute;"></div>
+
+
+       <div id="map"></div>
+
+       <div id="settings">
+           <button class="imageIconDiv button" style="grid-column: 5; grid-row: 2" onclick="hideSettings();">
+               <img class="imageIcon" src="static/back.png" alt="Go back">
+           </button>
+           <h1 style="grid-column: 2; grid-row: 2">Settings</h1>
+           <p style="grid-column: 3; grid-row: 3;">Animation delay for isochrones (ms)</p>
+           <input id="isochroneDelay" min="0" max="1000" type="number" style="grid-column: 4; grid-row: 3" />
+           <p style="grid-column: 3; grid-row: 4;">Region colouring opacity - 1 for fully opaque, 0 for fully transparent</p>
+           <input id="regionOpacity" min="0" max="1" step="0.1" type="number" style="grid-column: 4; grid-row: 4" />
+           <p style="grid-column: 3; grid-row: 5 / span 2;">Distance between regions of different colour. Pick lower distances for higher quality, higher distances for quicker rendering.</p>
+
+
+           <div style="grid-column: 4; grid-row: 5;">
+               <input type="radio" id="partition100" name="partitionDistance" value="100"
+                      checked="checked">
+               <label for="partition100">100m</label>
+           </div>
+
+           <div style="grid-column: 4; grid-row: 6;">
+               <input type="radio" id="partition500" name="partitionDistance" value="500"
+                      >
+               <label for="partition500">500m</label>
+           </div>
+           <div style="grid-column: 4; grid-row: 7;">
+               <input type="radio" id="partition1000" name="partitionDistance" value="1000"
+                      >
+               <label for="partition1000">1km</label>
+           </div>
+           <h1 style="grid-column: 2; grid-row: 8">Statistics</h1>
+
+
+           <p id="statsStartLocation" style="grid-column: 3 / span 2; grid-row: 9;"></p>
+           <p id="statsDestinationLocation" style="grid-column: 3 / span 2; grid-row: 10;"></p>
+           <p id="statsGpsAccuracy" style="grid-column: 3 / span 2; grid-row: 11;"></p>
+
+       </div>
+       <div id="route_suggestor" class="control_box">
+           <div style="grid-row:2/span 2; grid-column: 2; font-size: 1vw;display:flex;align-items:center;width:100%;height:100%;">
+               Set the distance of the walk you want to generate:
+           </div>
+           <button class="textButton" id="route_suggestor_button" onclick="suggestRoute();" style="grid-row: 2/ span 2; grid-column: 5;">
+               Generate Route
+           </button>
+          <input type="range" id="walk_generator_slider" min=1 max=100 step=1 style="grid-column: 3/span 2; grid-row: 2"/>
+           <input type="number" id="walk_generator_slider_text" min=1 max=100 step=1 style="grid-column: 3; grid-row: 3"/>
+           <div style="grid-column: 4; grid-row: 3; font: inherit">km</div>
+           <div style="grid-column: 7; grid-row:2; font-size: 0.8vw;display:flex;" id="generated_walk_info"></div>
+           <div style="grid-column: 7; grid-row:3; font-size: 0.8vw;display:flex;">
+               Include destination in generated route:
+           </div>
+          <input checked="checked" type="checkbox" id="include_destination_in_cycle_checkbox" style="grid-column: 8; grid-row: 3;" />
+
+       </div>
+       <!--Search bar-->
+       <div id="main_controls" class="control_box">
+           <div id="search_container">
+               <button class="imageIconDiv button" id="homeButton" onclick="centreMap();">
+                   <img class="imageIcon" src="static/home.png" />
+               </button>
+
+               <div class="imageIconDiv" style="grid-column: 1; grid-row: 2">
+                   <img class="imageIcon" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png">
+               </div>
+               <div class="imageIconDiv" style="grid-column: 1; grid-row: 4">
+                   <img class="imageIcon redMarker" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png">
+               </div>
+               <button class="imageIconDiv button" onclick="getStartGPSLocation();" style="grid-column: 3; grid-row: 2">
+                   <img class="imageIcon" src="static/current-location-icon.png">
+               </button>
+               <input type="checkbox" id="destination_show_checkbox" style="grid-column: 3; grid-row: 4; height:100%" />
+
+               <input id="start_search" placeholder="" class="search_box" value="" type="search" />
+               <input id="destination_search" placeholder="" class="search_box" value="" type="search" />
+
+
+
+           </div>
+           <div id="convex_hull_slider_box">
+               <div class="imageIconDiv" style="grid-column: 1; grid-row: 1">
+                   <img class="imageIcon" src="static/convex_hull.jpg">
+               </div>
+
+               <input type="range" id="convex_hull_slider">
+               <input type="checkbox" id="convex_hull_slider_checkbox" style="grid-column: 5; grid-row: 1; height:133%" />
+               <input type="number" id="convex_hull_slider_text" min="0" />
+               <label id="convex_hull_slider_units">km</label>
+
+
+           </div>
+           <button class="imageIconDiv button" style="grid-row: 3" onclick="displaySettings();">
+               <img class="imageIcon" src="static/settings.png">
+           </button>
+       </div>
+
+
+       <script src="/static/page_setup.js"></script>
+       <script src="/static/script.js"></script>
+
+   </body>
+
+
+ </html>
