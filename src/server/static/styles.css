@@ -1,5 +1,6 @@
 #main_controls{
 
+  position: absolute;
   top: 3%;
   left: 2%;
   height: 30%;
@@ -18,7 +19,8 @@ background-color: white;
   border-color: gray;
   border-width: 2px;
   border-style: solid;
-position:absolute;  border-radius: 10px;
+  position: absolute;
+  border-radius: 10px;
   display: grid;
   font-family: inherit;
 
