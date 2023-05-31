@@ -674,6 +674,33 @@ async function initialise(){
     // get the lat/lons of all nodes
     nodeLatLons = await nodeLatLonsResponse.json()
 
+
+    if (sessionStorage.getItem("settings")){
+        settings = JSON.parse(sessionStorage.getItem("settings"));
+    }
+    else{
+        settings = defaultSettings;
+    }
+
+    // Apply all (default) settings to checkboxes/sliders/inputs
+    document.getElementById("include_destination_in_cycle_checkbox").checked = true;
+    document.getElementById("convex_hull_slider_checkbox").checked = false;
+    document.getElementById("destination_show_checkbox").checked = false;
+    // Set default value of suggested route to 5k
+    document.getElementById("walk_generator_slider").value = 5;
+    document.getElementById("walk_generator_slider_text").value = 5;
+
+    document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
+    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1))/1000;
+    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance)/1000;
+
+    // set slider to 0
+    document.getElementById("convex_hull_slider").value = 0;
+    document.getElementById("convex_hull_slider").value = 0;
+    document.getElementById("convex_hull_slider_text").value = "0";
+
+
+
     let outerRegionLatLngs = outerRegionIds.map((index) => nodeLatLons[index])
 
     // Layers allow node markers to appear on top, isochrone colouring behind
@@ -682,12 +709,6 @@ async function initialise(){
     map.createPane('isochrone_colouring');
     map.getPane('isochrone_colouring').style.zIndex = 399;
 
-    if (sessionStorage.getItem("settings")){
-        settings = JSON.parse(sessionStorage.getItem("settings"));
-    }
-    else{
-        settings = defaultSettings;
-    }
 
 
     // Creates rectangle covering entire map, except for a hole around
@@ -724,18 +745,8 @@ async function initialise(){
     connectToEndNode();
     await generateIsochrone();
 
-    // Set default value of suggested route to 5k
-    document.getElementById("walk_generator_slider").value = 5;
-    document.getElementById("walk_generator_slider_text").value = 5;
 
-    document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1))/1000;
-    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance)/1000;
 
-    // set slider to 0
-    document.getElementById("convex_hull_slider").value = 0;
-    document.getElementById("convex_hull_slider").value = 0;
-    document.getElementById("convex_hull_slider_text").value = "0";
     displayConvexHull();
 
 
