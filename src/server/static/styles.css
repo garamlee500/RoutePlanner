@@ -31,6 +31,19 @@ background-color: white;
     grid-column: 1 / span 3;
 }
 
+#route_suggestor_button{
+    background-color: lightgreen;
+}
+#route_suggestor_button:hover{
+    background-color: lightgrey;
+}
+
+#default_settings{
+    background-color: red;
+}
+#default_settings:hover{
+    background-color: lightgrey;
+}
 
 #route_suggestor{
     top: 80%;
@@ -77,7 +90,6 @@ background-color: white;
 
 .textButton{
     /*width: fit-content;*/
-    background-color: lightgreen;
     cursor: pointer;
     border: none;
     border-radius: 4px;

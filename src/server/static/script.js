@@ -675,7 +675,8 @@ async function initialise() {
     if (sessionStorage.getItem("settings")) {
         settings = JSON.parse(sessionStorage.getItem("settings"));
     } else {
-        settings = defaultSettings;
+        // Clone default settings
+        settings = {...defaultSettings};
     }
 
     // Apply all (default) settings to checkboxes/sliders/inputs
