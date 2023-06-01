@@ -122,10 +122,10 @@ background-color: white;
     border-radius: 10px;
 }
 .redOnlyButton:hover{
-    background-color: red;
+    background-color: red !important;
 }
 .redOnlyButton{
-    background-color: red;
+    background-color: red !important;
     color: white;
 }
 #convex_hull_slider_units{
