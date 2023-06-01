@@ -31,10 +31,10 @@ background-color: white;
     grid-column: 1 / span 3;
 }
 
-#route_suggestor_button{
+.greyButton{
     background-color: lightgreen;
 }
-#route_suggestor_button:hover{
+.greyButton:hover{
     background-color: lightgrey;
 }
 
@@ -122,10 +122,10 @@ background-color: white;
     border-radius: 10px;
 }
 .redOnlyButton:hover{
-    background-color: red !important;
+    background-color: red;
 }
 .redOnlyButton{
-    background-color: red !important;
+    background-color: red;
     color: white;
 }
 #convex_hull_slider_units{
