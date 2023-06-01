@@ -59,8 +59,7 @@ async function hideSettings() {
         displayConvexHull();
 
 
-    }
-    else if (settings.isochroneOpacity !== parseFloat(document.getElementById('regionOpacity').value)){
+    } else if (settings.isochroneOpacity !== parseFloat(document.getElementById('regionOpacity').value)) {
         settings.isochroneOpacity = parseFloat(document.getElementById('regionOpacity').value)
 
         // No need to reconsider reindexing region selection since same as before
@@ -68,6 +67,7 @@ async function hideSettings() {
     }
     sessionStorage.setItem("settings", JSON.stringify(settings))
 }
+
 function displaySettings() {
     //map.dragging.disable()
     //map.doubleClickZoom.disable()
@@ -92,20 +92,19 @@ function displaySettings() {
 
 
 
-function getStartGPSLocation(){
-    try{
+function getStartGPSLocation() {
+    try {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(setStartGPSLocation);
         } else {
             alert("This browser does not support geolocation.")
-          }
-    }
-    catch (error){
+        }
+    } catch (error) {
         alert("Browser did not respond with location. Please check you have set location permissions properly for this website.")
     }
 }
 
-function setStartGPSLocation(position){
+function setStartGPSLocation(position) {
     startMarker.setLatLng([position.coords.latitude,
         position.coords.longitude
     ]);
@@ -114,11 +113,11 @@ function setStartGPSLocation(position){
 
     fixStart();
 }
+
 function generateCycleWithDestination(targetLength,
-                                      distanceTolerance=0.05,
-                                      overlapTolerance=0.05,
-                                      maxTries= 2<<25)
-{
+    distanceTolerance = 0.05,
+    overlapTolerance = 0.05,
+    maxTries = 2 << 25) {
     // We are talking approximately 20-30 ms to run this in javascript
     // while c++ takes about 10 ms for the same call
     // While javascript is slower (even throttling for wifi), javascript has the advantage
@@ -126,14 +125,13 @@ function generateCycleWithDestination(targetLength,
     // additionally has required dijkstra cached without need for lookup
     // and no need to convert to json string when sending data
     let possibleNodes = [];
-    for (let node = 0; node < nodeLatLons.length; node++){
-        if(dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] > targetLength * 0.75
-            &&
-        dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] < targetLength * 1.5){
+    for (let node = 0; node < nodeLatLons.length; node++) {
+        if (dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] > targetLength * 0.75 &&
+            dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] < targetLength * 1.5) {
             possibleNodes.push(node);
         }
     }
-    if (possibleNodes.length < 2){
+    if (possibleNodes.length < 2) {
         return [0, []];
     }
     for (let i = 0; i < maxTries; i++) {
@@ -149,13 +147,12 @@ function generateCycleWithDestination(targetLength,
 
             let currentPathNode = node;
             // start -> node excluding start
-            while (currentPathNode!==startNode){
+            while (currentPathNode !== startNode) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromStart[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)){
+                if (usedNodes.has(currentPathNode)) {
                     duplicateCount++;
-                }
-                else{
+                } else {
                     usedNodes.add(currentPathNode);
                 }
             }
@@ -166,35 +163,34 @@ function generateCycleWithDestination(targetLength,
             totalPath.pop();
             // node -> endNode excluding endNode
             currentPathNode = node;
-            while (currentPathNode!==endNode){
+            while (currentPathNode !== endNode) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromEnd[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)){
+                if (usedNodes.has(currentPathNode)) {
                     duplicateCount++;
-                }
-                else{
+                } else {
                     usedNodes.add(currentPathNode);
                 }
             }
 
             // endNode -> startNode excluding startNode
             currentPathNode = endNode;
-            while (currentPathNode!==startNode){
+            while (currentPathNode !== startNode) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromStart[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)){
+                if (usedNodes.has(currentPathNode)) {
                     duplicateCount++;
-                }
-                else{
+                } else {
                     usedNodes.add(currentPathNode);
                 }
             }
             // Add missing entry of startNode
             totalPath.push(startNode);
 
-            if (duplicateCount/totalPath.length < overlapTolerance){
+            if (duplicateCount / totalPath.length < overlapTolerance) {
                 return [dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode],
-                    totalPath];
+                    totalPath
+                ];
             }
             overlapTolerance *= 1.1;
 
@@ -204,25 +200,23 @@ function generateCycleWithDestination(targetLength,
     }
     return [0, []];
 }
-async function suggestRoute(useEndNode=false){
+async function suggestRoute(useEndNode = false) {
     // Set generate button to red and prevent clicks
     let buttonElement = document.getElementById("route_suggestor_button");
-    buttonElement.disabled=true;
+    buttonElement.disabled = true;
     buttonElement.textContent = "Generating...";
     buttonElement.classList.add("redOnlyButton");
     // Ask for a suggested cycle and parse to get lat lons
     let suggestedCycleObject;
     if (document.getElementById("include_destination_in_cycle_checkbox").checked === true) {
         //suggestedCycle = await fetch(`api/get/fixed_cycle/${startNode}/${endNode}/${walkSuggestionDistance * 1000}`);
-        try{
-            suggestedCycleObject = generateCycleWithDestination(walkSuggestionDistance*1000);
-        }
-        catch{
+        try {
+            suggestedCycleObject = generateCycleWithDestination(walkSuggestionDistance * 1000);
+        } catch {
             // When website is not fully loaded yet
             suggestedCycleObject = [0, []];
         }
-    }
-    else{
+    } else {
         let suggestedCycle = await fetch(`api/get/cycle/${startNode}/${walkSuggestionDistance * 1000}`);
         suggestedCycleObject = await suggestedCycle.json();
 
@@ -230,74 +224,73 @@ async function suggestRoute(useEndNode=false){
     let suggestedCycleNodeLatLons = (suggestedCycleObject)[1].map(x => nodeLatLons[x]);
 
     // Remove previous route polygon if present on map
-    if (suggestedRoutePolygon !== null){
+    if (suggestedRoutePolygon !== null) {
         suggestedRoutePolygon.remove(map);
     }
-    suggestedRoutePolygon = L.polygon(suggestedCycleNodeLatLons,
-        {fillOpacity: 0}).addTo(map);
+    suggestedRoutePolygon = L.polygon(suggestedCycleNodeLatLons, {
+        fillOpacity: 0
+    }).addTo(map);
 
     if (suggestedCycleObject[0] === 0) {
         // Failed to find cycle if distance is 0
         document.getElementById("generated_walk_info").textContent =
             `Failed to generate walk. Ensure the walk distance input is suitable.`
 
-    }
-    else {
+    } else {
         // Succesful cycle generation - add message with actual distance
         document.getElementById("generated_walk_info").textContent =
             `Generated walk length is ${Math.round(suggestedCycleObject[0]) / 1000}km long.`
     }
     // Reactivate generate route button
     buttonElement.textContent = "Generate Route";
-    buttonElement.disabled=false;
+    buttonElement.disabled = false;
     buttonElement.classList.remove("redOnlyButton");
 }
 
-function displayConvexHull(){
-    document.getElementById("convex_hull_slider_text").value = (convexHullIndex * settings.partitionDistance/1000);
+function displayConvexHull() {
+    document.getElementById("convex_hull_slider_text").value = (convexHullIndex * settings.partitionDistance / 1000);
     document.getElementById("convex_hull_slider").value = convexHullIndex;
 
-    if (currentIndicatedConvexHull != null){
+    if (currentIndicatedConvexHull != null) {
         currentIndicatedConvexHull.remove(map)
     }
 
-    if (document.getElementById("convex_hull_slider_checkbox").checked === true){
-        currentIndicatedConvexHull = L.polygon(convexHullRegionsLatLons[convexHullIndex],
-            {
-                fillOpacity: 0,
-                color: 'grey',
-                interactive: false
-            }).addTo(map);
+    if (document.getElementById("convex_hull_slider_checkbox").checked === true) {
+        currentIndicatedConvexHull = L.polygon(convexHullRegionsLatLons[convexHullIndex], {
+            fillOpacity: 0,
+            color: 'grey',
+            interactive: false
+        }).addTo(map);
     }
 }
 
 // Following functions are needed when markers move
 // But too slow to run while dragging - run when dragging ends
-async function fixEnd(){
+async function fixEnd() {
     await changeEnd();
     document.getElementById('destination_search').value =
         await searchReverseGeocode(endMarker.getLatLng());
     dijkstraFromEnd = await dijkstraDetails(endNode);
 }
-async function fixStart(){
+async function fixStart() {
     await changeStart();
     dijkstraFromStart = await dijkstraDetails(startNode);
     document.getElementById('start_search').value =
         await searchReverseGeocode(startMarker.getLatLng());
     await generateIsochrone();
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1))/1000;
-    convexHullIndex = Math.min(convexHullRegions.length-1, convexHullIndex)
+    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
+    convexHullIndex = Math.min(convexHullRegions.length - 1, convexHullIndex)
     displayConvexHull();
 }
 
-async function searchReverseGeocode(latLon){
+async function searchReverseGeocode(latLon) {
     let data =
         await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latLon.lat}&lon=${latLon.lng}&format=json`)).json();
     return data["display_name"];
 }
 
-async function searchGeocode(query){
+async function searchGeocode(query) {
 
 
     // Make sure url is created safely since can be arbitrarily set
@@ -305,19 +298,20 @@ async function searchGeocode(query){
     let requestURL = new URL("https://nominatim.openstreetmap.org/search?format=json");
     requestURL.searchParams.append('q', query);
     let data = await (await fetch(requestURL)).json();
-    if (data.length > 0){
+    if (data.length > 0) {
 
         // Everyone needs to get together and decide whether its lon or lng
         return [parseFloat(data[0]["lat"]),
             parseFloat(data[0]["lon"]),
-            data[0]["display_name"]]
+            data[0]["display_name"]
+        ]
     }
     return null;
 
 }
 document.getElementById('destination_show_checkbox').addEventListener(
     'change',
-    (event)=> {
+    (event) => {
         if (event.target.checked === true) {
             // endMarker.addTo(map);
             // // Class information lost when removed from map
@@ -337,51 +331,51 @@ document.getElementById('destination_show_checkbox').addEventListener(
 
 
 document.getElementById('convex_hull_slider_box').addEventListener("change", displayConvexHull)
-document.getElementById('convex_hull_slider').addEventListener("input", (event)=>{
+document.getElementById('convex_hull_slider').addEventListener("input", (event) => {
     convexHullIndex = event.target.value;
     displayConvexHull();
 })
 
 
-document.getElementById('walk_generator_slider').addEventListener("input", (event) =>{
+document.getElementById('walk_generator_slider').addEventListener("input", (event) => {
     walkSuggestionDistance = event.target.value;
     document.getElementById('walk_generator_slider_text').value = walkSuggestionDistance;
 })
-document.getElementById('walk_generator_slider_text').addEventListener("input", (event) =>{
+document.getElementById('walk_generator_slider_text').addEventListener("input", (event) => {
     walkSuggestionDistance = event.target.value;
     document.getElementById('walk_generator_slider').value = walkSuggestionDistance;
 })
 
-document.getElementById('convex_hull_slider_text').addEventListener("input", (event)=>{
-    convexHullIndex = event.target.value * 1000/ settings.partitionDistance;
+document.getElementById('convex_hull_slider_text').addEventListener("input", (event) => {
+    convexHullIndex = event.target.value * 1000 / settings.partitionDistance;
     displayConvexHull();
 })
-document.getElementById('destination_search').addEventListener("keydown", async function (e) {
+document.getElementById('destination_search').addEventListener("keydown", async function(e) {
     if (e.code === "Enter") {
         let geo_code_data = await searchGeocode(e.target.value);
-        if (geo_code_data == null){
+        if (geo_code_data == null) {
             e.target.value = "Search not found!";
-        }
-        else{
+        } else {
             e.target.value = geo_code_data[2];
             // Need to generate function here to prevent code repetition
             endMarker.setLatLng([geo_code_data[0],
-                geo_code_data[1]]);
+                geo_code_data[1]
+            ]);
             await fixEnd();
         }
     }
 });
-document.getElementById('start_search').addEventListener("keydown", async function (e) {
+document.getElementById('start_search').addEventListener("keydown", async function(e) {
     if (e.code === "Enter") {
         let geo_code_data = await searchGeocode(e.target.value);
-        if (geo_code_data == null){
+        if (geo_code_data == null) {
             e.target.value = "Search not found!";
-        }
-        else{
+        } else {
             e.target.value = geo_code_data[2];
             // Need to generate function here to prevent code repetition
             startMarker.setLatLng([geo_code_data[0],
-                geo_code_data[1]]);
+                geo_code_data[1]
+            ]);
             await fixStart();
         }
     }
@@ -389,11 +383,11 @@ document.getElementById('start_search').addEventListener("keydown", async functi
 
 
 function colorGradient(colorCount,
-                       startR=0, startG=255, startB=0,
-                       endR=255, endG=0, endB=0,
+    startR = 0, startG = 255, startB = 0,
+    endR = 255, endG = 0, endB = 0,
 ) {
 
-    if (colorCount===1){
+    if (colorCount === 1) {
         // Zero division error occurs if colorCount is 1
         return [`rgb(${startR}, ${startG}, ${startB})`]
     }
@@ -401,10 +395,10 @@ function colorGradient(colorCount,
     // Uses a linear colour gradient
     let colors = []
 
-    let rDiff = (endR-startR)/(colorCount-1);
-    let gDiff = (endG-startG)/(colorCount-1);
-    let bDiff = (endB-startB)/(colorCount-1);
-    for (let i = 0; i < colorCount; i++){
+    let rDiff = (endR - startR) / (colorCount - 1);
+    let gDiff = (endG - startG) / (colorCount - 1);
+    let bDiff = (endB - startB) / (colorCount - 1);
+    for (let i = 0; i < colorCount; i++) {
         let r = Math.round(startR + rDiff * i);
         let g = Math.round(startG + gDiff * i);
         let b = Math.round(startB + bDiff * i);
@@ -421,29 +415,30 @@ function colorGradient(colorCount,
 
 
 }
-function scaled_haversine_node_distance(node1lat, node1lon, node2lat, node2lon){
+
+function scaled_haversine_node_distance(node1lat, node1lon, node2lat, node2lon) {
     // computes the haversine node distance up to what is required
     // for distance comparisons
     // no need to scale to earths radius, use arcsin or squareroot
     // since they are all increasing functions
     //const EARTH_RADIUS = 6_371_000;
 
-    let lat2 = Math.PI* node2lat/180;
-    let lat1 = Math.PI* node1lat/180;
-    let lon2 = Math.PI* node2lon/180;
-    let lon1 = Math.PI* node1lon/180;
-    let term1 = Math.sin((lat2-lat1)/2)**2;
-    let term2 = Math.cos(lat1) * Math.cos(lat2) * (Math.sin((lon2-lon1)/2)**2);
+    let lat2 = Math.PI * node2lat / 180;
+    let lat1 = Math.PI * node1lat / 180;
+    let lon2 = Math.PI * node2lon / 180;
+    let lon1 = Math.PI * node1lon / 180;
+    let term1 = Math.sin((lat2 - lat1) / 2) ** 2;
+    let term2 = Math.cos(lat1) * Math.cos(lat2) * (Math.sin((lon2 - lon1) / 2) ** 2);
     return term1 + term2
 }
 
-function closestNode(latLng){
+function closestNode(latLng) {
     let closest = 0
     let closest_distance = scaled_haversine_node_distance(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
 
-    for (let i = 1; i < nodeLatLons.length; i++){
+    for (let i = 1; i < nodeLatLons.length; i++) {
         let distance = scaled_haversine_node_distance(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
-        if (distance < closest_distance){
+        if (distance < closest_distance) {
             closest_distance = distance;
             closest = i;
         }
@@ -451,17 +446,17 @@ function closestNode(latLng){
     return closest;
 }
 
-async function dijkstraDetails(node){
+async function dijkstraDetails(node) {
     const response = await fetch(`/api/get/dijkstra/${node}`);
     let data = await response.json();
     return data;
 }
 
-function connectToStartNode(){
-    if (startNodeConnector!=null){
+function connectToStartNode() {
+    if (startNodeConnector != null) {
         startNodeConnector.remove(map);
     }
-    if (startNodeMarker!=null){
+    if (startNodeMarker != null) {
         startNodeMarker.remove(map);
     }
 
@@ -470,14 +465,13 @@ function connectToStartNode(){
             [nodeLatLons[startNode][0],
                 nodeLatLons[startNode][1]
             ]
-        ],
-        {
+        ], {
             weight: 5,
             color: 'black',
             fill: true,
             fillColor: 'black',
             fillOpacity: 1,
-            dashArray : [6],
+            dashArray: [6],
             interactive: false
 
         }
@@ -487,8 +481,7 @@ function connectToStartNode(){
     startNodeMarker = L.circleMarker(
         [nodeLatLons[startNode][0],
             nodeLatLons[startNode][1]
-        ],
-        {
+        ], {
             radius: 5,
             color: 'black',
             fill: true,
@@ -498,11 +491,12 @@ function connectToStartNode(){
             interactive: false
         }).addTo(map);
 }
-function connectToEndNode(){
-    if (endNodeConnector!=null){
+
+function connectToEndNode() {
+    if (endNodeConnector != null) {
         endNodeConnector.remove(map);
     }
-    if (endNodeMarker!=null){
+    if (endNodeMarker != null) {
         endNodeMarker.remove(map);
     }
 
@@ -511,14 +505,13 @@ function connectToEndNode(){
             [nodeLatLons[endNode][0],
                 nodeLatLons[endNode][1]
             ]
-        ],
-        {
+        ], {
             weight: 5,
             color: 'black',
             fill: true,
             fillColor: 'black',
             fillOpacity: 1,
-            dashArray : [6],
+            dashArray: [6],
             interactive: false
 
         }
@@ -527,7 +520,8 @@ function connectToEndNode(){
 
     endNodeMarker = L.circleMarker(
         [nodeLatLons[endNode][0],
-            nodeLatLons[endNode][1]],
+            nodeLatLons[endNode][1]
+        ],
 
         {
             radius: 5,
@@ -541,32 +535,31 @@ function connectToEndNode(){
 }
 
 
-async function changeStart(event){
+async function changeStart(event) {
     startNode = closestNode(startMarker.getLatLng());
     // Redraw route from start
     path = [];
     let currentNode = startNode;
-    while (currentNode!==-1){
+    while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
         currentNode = dijkstraFromEnd[1][currentNode]
     }
 
 
-    if (routeLine!=null){
+    if (routeLine != null) {
         routeLine.remove(map);
     }
 
-    routeLine = L.polyline(path,
-        {
-            fillOpacity: 1,
-            color: 'green'
+    routeLine = L.polyline(path, {
+        fillOpacity: 1,
+        color: 'green'
 
-        }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km`,
-        { autoPan	:false
-        }    )
+    }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km`, {
+        autoPan: false
+    })
 
     // Don't draw route if not needed - but get everything else ready for when it is checked
-    if (document.getElementById('destination_show_checkbox').checked===true){
+    if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
         routeLine.openPopup();
     }
@@ -576,29 +569,30 @@ async function changeStart(event){
 
 }
 
-async function changeEnd(event){
+async function changeEnd(event) {
     endNode = closestNode(endMarker.getLatLng());
     // Redraw route from end
 
     path = [];
     let currentNode = endNode;
-    while (currentNode!==-1){
+    while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
         currentNode = dijkstraFromStart[1][currentNode]
     }
 
 
-    if (routeLine!=null){
+    if (routeLine != null) {
         routeLine.remove(map);
     }
 
-    routeLine = L.polyline(path,
-        {
-            fillOpacity: 1,
-            color: 'green'
-        }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km`, { autoPan: false } );
+    routeLine = L.polyline(path, {
+        fillOpacity: 1,
+        color: 'green'
+    }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km`, {
+        autoPan: false
+    });
     // Don't draw route if not needed - but get everything else ready for when it is checked
-    if (document.getElementById('destination_show_checkbox').checked===true){
+    if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
         routeLine.openPopup();
     }
@@ -606,11 +600,11 @@ async function changeEnd(event){
 }
 
 
-async function generateIsochrone(){
+async function generateIsochrone() {
     const convex_hull_response = await fetch(`/api/get/convex/${startNode}/${settings.partitionDistance}`);
     data = await convex_hull_response.json();
 
-    for (let i = 0; i < convexHullRegions.length; i++){
+    for (let i = 0; i < convexHullRegions.length; i++) {
         convexHullRegions[i].remove(map);
     }
     convexHullRegions = []
@@ -621,24 +615,25 @@ async function generateIsochrone(){
     let colors = colorGradient(data.length);
 
 
-    for (let i = 0; i < data[0].length; i++){
+    for (let i = 0; i < data[0].length; i++) {
         convex_hull_lat_lons.push(nodeLatLons[data[0][i]]);
     }
     convexHullRegionsLatLons.push(convex_hull_lat_lons)
 
-    convexHullRegions.push(L.polygon(convex_hull_lat_lons,
-        {fillColor: colors[0],
+    convexHullRegions.push(L.polygon(convex_hull_lat_lons, {
+            fillColor: colors[0],
             opacity: 0,
             fillOpacity: settings.isochroneOpacity,
             pane: 'isochrone_colouring',
-            interactive: false}).addTo(map)
+            interactive: false
+        }).addTo(map)
 
     );
     prev_convex_hull_lat_lons = convex_hull_lat_lons
-    for (let j = 1; j < data.length; j++){
+    for (let j = 1; j < data.length; j++) {
         convex_hull_lat_lons = []
 
-        for (let i = 0; i < data[j].length; i++){
+        for (let i = 0; i < data[j].length; i++) {
             convex_hull_lat_lons.push(nodeLatLons[data[j][i]]);
         }
 
@@ -649,11 +644,13 @@ async function generateIsochrone(){
 
         convexHullRegions.push(L.polygon([convex_hull_lat_lons, prev_convex_hull_lat_lons],
 
-            {fillColor: colors[j],
+            {
+                fillColor: colors[j],
                 opacity: 0,
                 fillOpacity: settings.isochroneOpacity,
                 pane: 'isochrone_colouring',
-                interactive: false}).addTo(map));
+                interactive: false
+            }).addTo(map));
 
         // uncomment to show only newly coloured region
         //convexHullRegions[convexHullRegions.length-2].remove(map);
@@ -664,7 +661,7 @@ async function generateIsochrone(){
 
 }
 
-async function initialise(){
+async function initialise() {
     // fetch region, nodes and store
     const response = await fetch("/api/get/region");
     const nodeLatLonsResponse = await fetch("/api/get/nodes")
@@ -675,10 +672,9 @@ async function initialise(){
     nodeLatLons = await nodeLatLonsResponse.json()
 
 
-    if (sessionStorage.getItem("settings")){
+    if (sessionStorage.getItem("settings")) {
         settings = JSON.parse(sessionStorage.getItem("settings"));
-    }
-    else{
+    } else {
         settings = defaultSettings;
     }
 
@@ -691,8 +687,8 @@ async function initialise(){
     document.getElementById("walk_generator_slider_text").value = 5;
 
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1))/1000;
-    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance)/1000;
+    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
+    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
 
     // set slider to 0
     document.getElementById("convex_hull_slider").value = 0;
@@ -713,13 +709,19 @@ async function initialise(){
 
     // Creates rectangle covering entire map, except for a hole around
     // region
-    let holedPolygon = L.polygon([[[90, -180],
-        [90, 180],
-        [-90, 180],
-        [-90, -180]]
-        , outerRegionLatLngs], {color: 'grey', fillOpacity:0.3,
+    let holedPolygon = L.polygon([
+        [
+            [90, -180],
+            [90, 180],
+            [-90, 180],
+            [-90, -180]
+        ], outerRegionLatLngs
+    ], {
+        color: 'grey',
+        fillOpacity: 0.3,
         pane: 'isochrone_colouring',
-        interactive: false});
+        interactive: false
+    });
     holedPolygon.addTo(map);
     let regionPolygon = L.polygon(outerRegionLatLngs);
 
@@ -727,12 +729,19 @@ async function initialise(){
 
 
     map = map.fitBounds(regionPolygon.getBounds());
-    startMarker = L.marker(regionPolygon.getBounds().getCenter(), {draggable: true, autoPan: true, title: "Start"}).addTo(map)
+    startMarker = L.marker(regionPolygon.getBounds().getCenter(), {
+        draggable: true,
+        autoPan: true,
+        title: "Start"
+    }).addTo(map)
 
     endNode = 0;
 
 
-    endMarker = L.marker(nodeLatLons[0], {draggable: true, autoPan: true, title: "Destination"
+    endMarker = L.marker(nodeLatLons[0], {
+        draggable: true,
+        autoPan: true,
+        title: "Destination"
     }).addTo(map)
 
     endMarker._icon.classList.add("redMarker");
