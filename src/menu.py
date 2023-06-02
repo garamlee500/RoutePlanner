@@ -1,6 +1,5 @@
 from typing import Union, Tuple, List, Callable, Literal
 import math
-from rich import print as rprint
 
 class Menu:
     """

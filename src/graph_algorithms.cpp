@@ -1,17 +1,13 @@
 #include <pybind11/pybind11.h>
 
 #include <unordered_set>
-#include <queue>
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <deque>
+#include <list>
 #include <utility>
-#include <numeric>
 #include <limits>
 #include <algorithm>
-#include <string>
-#include <tuple>
 #include <unordered_map>
 #include <functional>
 
@@ -51,8 +47,9 @@ template <class T>
 class LRUcache{
 private:
     unordered_map<int, T> cachedData;
-    unordered_map<int, deque<int>::iterator> LRUlocations;
-    deque<int> LRUdeque;
+    unordered_map<int, list<int>::iterator> locationOfInputsInLRUInputs;
+    // A queue of objects
+    list<int> LRUInputs;
     function<T(int)> targetFunction;
     unsigned int maxSize;
 
@@ -60,15 +57,15 @@ private:
     void storeDataWithoutCacheHitChecks(int x, T& data){
         // Stores data without checking for cache hits
         cachedData[x] = data;
-        LRUdeque.push_back(x);
-        LRUlocations[x] = LRUdeque.end() - 1;
+        LRUInputs.push_back(x);
+        locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
 
-        if (LRUdeque.size() > maxSize){
+        if (LRUInputs.size() > maxSize){
             // Cache has got too big - erase element Least Recently Used
-            int erasingInput = LRUdeque.front();
+            int erasingInput = LRUInputs.front();
             cachedData.erase(erasingInput);
-            LRUlocations.erase(erasingInput);
-            LRUdeque.pop_front();
+            locationOfInputsInLRUInputs.erase(erasingInput);
+            LRUInputs.pop_front();
         }
     }
 public:
@@ -82,9 +79,9 @@ public:
 
     void storeData(int x, T& data){
         if (cachedData.count(x)){
-            LRUdeque.erase(LRUlocations[x]);
-            LRUdeque.push_back(x);
-            LRUlocations[x] = LRUdeque.end() - 1;
+            LRUInputs.erase(locationOfInputsInLRUInputs[x]);
+            LRUInputs.push_back(x);
+            locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
         }
         else{
             storeDataWithoutCacheHitChecks(x, data);
@@ -95,9 +92,9 @@ public:
         if (cachedData.count(x)){
             // Cache hit
             // Move input data to back of LRU deque
-            LRUdeque.erase(LRUlocations[x]);
-            LRUdeque.push_back(x);
-            LRUlocations[x] = LRUdeque.end() - 1;
+            LRUInputs.erase(locationOfInputsInLRUInputs[x]);
+            LRUInputs.push_back(x);
+            locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
 
 
             return cachedData[x];
@@ -736,11 +733,5 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("distance_tolerance")=0.05,
             py::arg("overlap_tolerance")=0.05,
             py::arg("max_tries")=numeric_limits<int>::max());
-//        .def("generate_cycle_with_two_nodes", &MapGraphInstance::generate_cycle_with_two_nodes,
-//            py::arg("startNode"),
-//            py::arg("endNode"),
-//            py::arg("targetLength"),
-//            py::arg("distanceTolerance")=0.05,
-//            py::arg("overlapTolerance")=0.05,
-//            py::arg("maxTries")=numeric_limits<int>::max())
+
 }

@@ -447,7 +447,9 @@ def benchmark_device():
     print(f"Took {timeit(lambda: benchmarkMapGraphInstance.map_dijkstra(0), number=10)/10}s per call with 10 repetitions")
     print("Testing C++ convex hull partition (at partition distance of 100m)")
     print(f"Took {timeit(lambda: benchmarkMapGraphInstance.convex_hull_partition(0, partition_distance=100), number=10)/10}s per call with 10 repetitions")
-    
+    print("Testing C++ cycle generation (from node 0 with a suggested distance of 5km)")
+    print(f"Took {timeit(lambda: benchmarkMapGraphInstance.generate_cycle(0, 5000), number=5)/5}s per call with 5 repetitions")
+
     # Clear files once created
     if os.path.exists("map_data/temp1.csv"):
         os.remove("map_data/temp1.csv")
@@ -492,6 +494,9 @@ if __name__ == "__main__":
     )
     speed_test_menu.add_option(
         ("C++ Convex Hull Partition (includes jsonifying)", cpp_convex_hull_speed_test)
+    )
+    speed_test_menu.add_option(
+        ("C++ Cycle generation (one fixed node)", lambda: standard_speed_test(lambda: testMapGraphInstance.generate_cycle(0, 5000)))
     )
 
     speed_test_menu.run()
