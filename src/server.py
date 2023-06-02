@@ -38,11 +38,6 @@ def get_cycle(node_index, length):
     return serverMapGraphInstance.generate_cycle(int(node_index), float(length))
 
 
-# @app.get('/api/get/fixed_cycle/<start_node_index>/<end_node_index>/<length>')
-# def get_fixed_cycle(start_node_index, end_node_index, length):
-#     return serverMapGraphInstance.generate_cycle_with_two_nodes(int(start_node_index), int(end_node_index), float(length))
-
-
 def reload_map_graph():
     global serverMapGraphInstance
     serverMapGraphInstance = MapGraphInstance()

@@ -529,9 +529,9 @@ private:
     LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x);}};
 
 public:
-    MapGraphInstance(string node_filename="map_data/nodes.csv", string adjacency_list_filename="map_data/edges.csv"){
-        ifstream nodeIn(node_filename);
-        ifstream edgeIn(adjacency_list_filename);
+    MapGraphInstance(string nodeFilename="map_data/nodes.csv", string adjacencyListFilename="map_data/edges.csv"){
+        ifstream nodeIn(nodeFilename);
+        ifstream edgeIn(adjacencyListFilename);
         string line;
 
         // Read number of nodes at top of file
@@ -567,94 +567,7 @@ public:
 
         computeRegionNodes();
     }
-//    string a_star(int startNode, int endNode){
-//        pair<double, vector<int>> completedAstar = aStarResult(startNode, endNode, false);
-//        string result = '[' + to_string(completedAstar.first) + ",[";
-//        for (int x: completedAstar.second){
-//            result += to_string(x) + ',';
-//        }
-//
-//        // Remove final comma
-//        result.pop_back();
-//        result+= "]]";
-//        return result;
-//    }
-//    string generate_cycle_with_two_nodes(int startNode, int endNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
-//        // Dijkstra should hopefully have been recently executed for start and end node
-//        pair<vector<double>, vector<int>> startComputedDijkstra = dijkstraResultCache.getData(startNode);
-//        vector<double> startDistances = startComputedDijkstra.first;
-//        vector<int> startPrevNodes = startComputedDijkstra.second;
-//        pair<vector<double>, vector<int>> endComputedDijkstra = dijkstraResultCache.getData(endNode);
-//        vector<double> endDistances = endComputedDijkstra.first;
-//        vector<int> endPrevNodes = endComputedDijkstra.second;
-//
-//
-//        vector<int> possibleNodes;
-//
-//        for (int node = 0; node < nodeCount; node++){
-//            if(startDistances[node] + endDistances[node] + startDistances[endNode]> 0.75 * targetLength && startDistances[node] + endDistances[node] + startDistances[endNode] < 1.5 * targetLength){
-//                possibleNodes.push_back(node);
-//            }
-//        }
-//
-//        if (possibleNodes.size() < 2){
-//            return "[0,[]]";
-//        }
-//        for (int i = 0; i < maxTries; i++){
-//            int node = possibleNodes[rand() % possibleNodes.size()];
-//            if ( abs(startDistances[node] + endDistances[node] + startDistances[endNode]  - targetLength)/targetLength < distanceTolerance){
-//                // Valid cycle found
-//                // Return distance and path
-//                vector<int> pathA = reconstructDijkstraRoute(node, startPrevNodes, false);
-//                vector<int> pathB = reconstructDijkstraRoute(node, endPrevNodes);
-//                vector<int> pathC = reconstructDijkstraRoute(endNode, startPrevNodes);
-//
-//                unordered_set<int> usedNodes;
-//                int duplicateCount = 0;
-//
-//                // following makes sure no overlaps in cycles
-//                pathA.pop_back();
-//                pathB.pop_back();
-//                pathC.pop_back();
-//
-//                string result = "[";
-//                result += to_string(startDistances[node] + endDistances[node] + startDistances[endNode]);
-//                result += ",[";
-//
-//                for (int x : pathA){
-//                    result += to_string(x) + ',';
-//                    if (!usedNodes.insert(x).second){
-//                        duplicateCount++;
-//                    }
-//                }
-//                for (int x : pathB){
-//                    result += to_string(x) + ',';
-//                    if (!usedNodes.insert(x).second){
-//                        duplicateCount++;
-//                    }
-//                }
-//                for (int x : pathC){
-//                    result += to_string(x) + ',';
-//                    if (!usedNodes.insert(x).second){
-//                        duplicateCount++;
-//                    }
-//                }
-//
-//                // Remove trailing comma;
-//                result.pop_back();
-//                result += "]]";
-//
-//                if ( ((double)duplicateCount)/(pathA.size() + pathB.size() + pathC.size()) < overlapTolerance){
-//                    return result;
-//                }
-//                overlapTolerance *= 1.1;
-//            }
-//            else{
-//                distanceTolerance *= 1.1;
-//            }
-//        }
-//        return "[0,[]]";
-//    }
+
     string generate_cycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
         // Dijkstra should hopefully have been recently executed for start node
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
@@ -755,12 +668,12 @@ public:
 
     }    
 
-    string convex_hull_partition(int start_node, double partition_distance=2000){
-        vector<double> dijkstraDistance = dijkstraResultCache.getData(start_node).first;
+    string convex_hull_partition(int startNode, double partitionDistance=2000){
+        vector<double> dijkstraDistance = dijkstraResultCache.getData(startNode).first;
         vector<vector<Node>> partitionedNodes {vector<Node>{}};
         unsigned int largestSetNum = 0;
         for (unsigned int i = 0; i < dijkstraDistance.size(); i++){
-            unsigned int nodeSetIndex = floor(dijkstraDistance[i] / partition_distance);
+            unsigned int nodeSetIndex = floor(dijkstraDistance[i] / partitionDistance);
             if (nodeSetIndex > largestSetNum){
                 for (unsigned int j = 0; j < nodeSetIndex - largestSetNum; j++){
                     partitionedNodes.push_back(vector<Node>{});
@@ -818,11 +731,11 @@ PYBIND11_MODULE(graph_algorithms, m) {
         .def("get_region_nodes", &MapGraphInstance::get_region_nodes)
         .def("get_node_lat_lons", &MapGraphInstance::get_node_lat_lons)
         .def("generate_cycle", &MapGraphInstance::generate_cycle,
-            py::arg("startNode"),
-            py::arg("targetLength"),
-            py::arg("distanceTolerance")=0.05,
-            py::arg("overlapTolerance")=0.05,
-            py::arg("maxTries")=numeric_limits<int>::max());
+            py::arg("start_node"),
+            py::arg("target_length"),
+            py::arg("distance_tolerance")=0.05,
+            py::arg("overlap_tolerance")=0.05,
+            py::arg("max_tries")=numeric_limits<int>::max());
 //        .def("generate_cycle_with_two_nodes", &MapGraphInstance::generate_cycle_with_two_nodes,
 //            py::arg("startNode"),
 //            py::arg("endNode"),
