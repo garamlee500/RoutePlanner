@@ -687,10 +687,6 @@ async function initialise() {
     document.getElementById("walk_generator_slider").value = 5;
     document.getElementById("walk_generator_slider_text").value = 5;
 
-    document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
-    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
-
     // set slider to 0
     document.getElementById("convex_hull_slider").value = 0;
     document.getElementById("convex_hull_slider").value = 0;
@@ -754,6 +750,10 @@ async function initialise() {
     changeStart();
     connectToEndNode();
     await generateIsochrone();
+
+    document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
+    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
+    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
 
 
 
