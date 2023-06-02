@@ -579,82 +579,82 @@ public:
 //        result+= "]]";
 //        return result;
 //    }
-    string generate_cycle_with_two_nodes(int startNode, int endNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
-        // Dijkstra should hopefully have been recently executed for start and end node
-        pair<vector<double>, vector<int>> startComputedDijkstra = dijkstraResultCache.getData(startNode);
-        vector<double> startDistances = startComputedDijkstra.first;
-        vector<int> startPrevNodes = startComputedDijkstra.second;
-        pair<vector<double>, vector<int>> endComputedDijkstra = dijkstraResultCache.getData(endNode);
-        vector<double> endDistances = endComputedDijkstra.first;
-        vector<int> endPrevNodes = endComputedDijkstra.second;
-
-
-        vector<int> possibleNodes;
-
-        for (int node = 0; node < nodeCount; node++){
-            if(startDistances[node] + endDistances[node] + startDistances[endNode]> 0.75 * targetLength && startDistances[node] + endDistances[node] + startDistances[endNode] < 1.5 * targetLength){
-                possibleNodes.push_back(node);
-            }
-        }
-
-        if (possibleNodes.size() < 2){
-            return "[0,[]]";
-        }
-        for (int i = 0; i < maxTries; i++){
-            int node = possibleNodes[rand() % possibleNodes.size()];
-            if ( abs(startDistances[node] + endDistances[node] + startDistances[endNode]  - targetLength)/targetLength < distanceTolerance){
-                // Valid cycle found
-                // Return distance and path
-                vector<int> pathA = reconstructDijkstraRoute(node, startPrevNodes, false);
-                vector<int> pathB = reconstructDijkstraRoute(node, endPrevNodes);
-                vector<int> pathC = reconstructDijkstraRoute(endNode, startPrevNodes);
-
-                unordered_set<int> usedNodes;
-                int duplicateCount = 0;
-
-                // following makes sure no overlaps in cycles
-                pathA.pop_back();
-                pathB.pop_back();
-                pathC.pop_back();
-
-                string result = "[";
-                result += to_string(startDistances[node] + endDistances[node] + startDistances[endNode]);
-                result += ",[";
-
-                for (int x : pathA){
-                    result += to_string(x) + ',';
-                    if (!usedNodes.insert(x).second){
-                        duplicateCount++;
-                    }
-                }
-                for (int x : pathB){
-                    result += to_string(x) + ',';
-                    if (!usedNodes.insert(x).second){
-                        duplicateCount++;
-                    }
-                }
-                for (int x : pathC){
-                    result += to_string(x) + ',';
-                    if (!usedNodes.insert(x).second){
-                        duplicateCount++;
-                    }
-                }
-
-                // Remove trailing comma;
-                result.pop_back();
-                result += "]]";
-
-                if ( ((double)duplicateCount)/(pathA.size() + pathB.size() + pathC.size()) < overlapTolerance){
-                    return result;
-                }
-                overlapTolerance *= 1.1;
-            }
-            else{
-                distanceTolerance *= 1.1;
-            }
-        }
-        return "[0,[]]";
-    }
+//    string generate_cycle_with_two_nodes(int startNode, int endNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
+//        // Dijkstra should hopefully have been recently executed for start and end node
+//        pair<vector<double>, vector<int>> startComputedDijkstra = dijkstraResultCache.getData(startNode);
+//        vector<double> startDistances = startComputedDijkstra.first;
+//        vector<int> startPrevNodes = startComputedDijkstra.second;
+//        pair<vector<double>, vector<int>> endComputedDijkstra = dijkstraResultCache.getData(endNode);
+//        vector<double> endDistances = endComputedDijkstra.first;
+//        vector<int> endPrevNodes = endComputedDijkstra.second;
+//
+//
+//        vector<int> possibleNodes;
+//
+//        for (int node = 0; node < nodeCount; node++){
+//            if(startDistances[node] + endDistances[node] + startDistances[endNode]> 0.75 * targetLength && startDistances[node] + endDistances[node] + startDistances[endNode] < 1.5 * targetLength){
+//                possibleNodes.push_back(node);
+//            }
+//        }
+//
+//        if (possibleNodes.size() < 2){
+//            return "[0,[]]";
+//        }
+//        for (int i = 0; i < maxTries; i++){
+//            int node = possibleNodes[rand() % possibleNodes.size()];
+//            if ( abs(startDistances[node] + endDistances[node] + startDistances[endNode]  - targetLength)/targetLength < distanceTolerance){
+//                // Valid cycle found
+//                // Return distance and path
+//                vector<int> pathA = reconstructDijkstraRoute(node, startPrevNodes, false);
+//                vector<int> pathB = reconstructDijkstraRoute(node, endPrevNodes);
+//                vector<int> pathC = reconstructDijkstraRoute(endNode, startPrevNodes);
+//
+//                unordered_set<int> usedNodes;
+//                int duplicateCount = 0;
+//
+//                // following makes sure no overlaps in cycles
+//                pathA.pop_back();
+//                pathB.pop_back();
+//                pathC.pop_back();
+//
+//                string result = "[";
+//                result += to_string(startDistances[node] + endDistances[node] + startDistances[endNode]);
+//                result += ",[";
+//
+//                for (int x : pathA){
+//                    result += to_string(x) + ',';
+//                    if (!usedNodes.insert(x).second){
+//                        duplicateCount++;
+//                    }
+//                }
+//                for (int x : pathB){
+//                    result += to_string(x) + ',';
+//                    if (!usedNodes.insert(x).second){
+//                        duplicateCount++;
+//                    }
+//                }
+//                for (int x : pathC){
+//                    result += to_string(x) + ',';
+//                    if (!usedNodes.insert(x).second){
+//                        duplicateCount++;
+//                    }
+//                }
+//
+//                // Remove trailing comma;
+//                result.pop_back();
+//                result += "]]";
+//
+//                if ( ((double)duplicateCount)/(pathA.size() + pathB.size() + pathC.size()) < overlapTolerance){
+//                    return result;
+//                }
+//                overlapTolerance *= 1.1;
+//            }
+//            else{
+//                distanceTolerance *= 1.1;
+//            }
+//        }
+//        return "[0,[]]";
+//    }
     string generate_cycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
         // Dijkstra should hopefully have been recently executed for start node
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
@@ -822,12 +822,12 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("targetLength"),
             py::arg("distanceTolerance")=0.05,
             py::arg("overlapTolerance")=0.05,
-            py::arg("maxTries")=numeric_limits<int>::max())
-        .def("generate_cycle_with_two_nodes", &MapGraphInstance::generate_cycle_with_two_nodes,
-            py::arg("startNode"),
-            py::arg("endNode"),
-            py::arg("targetLength"),
-            py::arg("distanceTolerance")=0.05,
-            py::arg("overlapTolerance")=0.05,
             py::arg("maxTries")=numeric_limits<int>::max());
+//        .def("generate_cycle_with_two_nodes", &MapGraphInstance::generate_cycle_with_two_nodes,
+//            py::arg("startNode"),
+//            py::arg("endNode"),
+//            py::arg("targetLength"),
+//            py::arg("distanceTolerance")=0.05,
+//            py::arg("overlapTolerance")=0.05,
+//            py::arg("maxTries")=numeric_limits<int>::max())
 }
