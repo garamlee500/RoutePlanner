@@ -10,7 +10,7 @@ import exceptions
 current_settings = Settings()
 
 
-def redownload_all_data():
+def redownload_all_data(incremental=False):
     try:
 
         if current_settings["RELATION_REGION_MODE"]:
@@ -136,6 +136,7 @@ def set_area_by_point_radius():
 
 main_menu: Menu = Menu(start_text="Welcome to server configuration")
 main_menu.add_option(("Redownload all data", redownload_all_data))
+main_menu.add_option(("Update data - use if region has not changed", lambda: redownload_all_data(True)))
 main_menu.add_option(("Run server", run_server))
 
 area_setting_menu: Menu = Menu(start_text=lambda: "Map target area selection\n"+current_region_string())

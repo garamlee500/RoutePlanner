@@ -1,8 +1,10 @@
 import json
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Set, Dict
 import requests
 from sphere_formula import haversine_node_distance
 import exceptions
+from load_data import load_node_list, load_adjacency_list
+
 
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
@@ -61,12 +63,35 @@ def search_relation(search_term,
     return relations
 
 
+def _process_ways(data: Dict,
+                  present_nodes: Set[int],
+                  node_indexes: Dict[int, int],
+                  nodes: List[Tuple[int, float, float]],
+                  adjacency_list: List[List[Tuple[int, float]]],
+                  dead_nodes: Set[int],
+                  node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance
+):
+    for item in data:
+        if item["type"] == "way":
+            for i in range(len(item["nodes"]) - 1):
+                if item["nodes"][i] in present_nodes and item["nodes"][i + 1] in present_nodes:
+                    if item["nodes"][i] not in dead_nodes:
+                        node_index1 = node_indexes[item["nodes"][i]]
+                        node_index2 = node_indexes[item["nodes"][i + 1]]
+                        distance = node_distance_formula(nodes[node_index1][1],
+                                                         nodes[node_index1][2],
+                                                         nodes[node_index2][1],
+                                                         nodes[node_index2][2])
+                        adjacency_list[node_index1].append((node_index2, distance))
+                        adjacency_list[node_index2].append((node_index1, distance))
+
 def _download_edges(edge_query: str,
                     node_query: str,
                     node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance,
                     node_filename="map_data/nodes.csv",
                     adjacency_list_filename="map_data/edges.csv",
                     overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                    incremental=False,
                     verbose=True):
     # Make request to overpass for data - note query has been prebuilt
     response = requests.get(overpass_interpreter_url, params={'data': edge_query})
@@ -76,7 +101,6 @@ def _download_edges(edge_query: str,
     # Make request to get all nodes that are actually in region
     response = requests.get(overpass_interpreter_url, params={'data': node_query})
     if response.status_code != 200:
-        # print(overpass_interpreter_url + '?data=' + node_query)
         raise ConnectionError("Unable to succesfully connect to Overpass Api")
 
     present_nodes = set()
@@ -88,12 +112,24 @@ def _download_edges(edge_query: str,
         print("Downloaded data")
 
     # All current nodes with ids, lat, lon
-    nodes = []
     node_indexes = {}
     node_lat_lng_indexes = {}
     duplicate_nodes = set()
+    original_node_count = 0
+    old_adjacency_list = []
+
+    if incremental:
+        nodes = load_node_list(node_filename, include_id=True)
+        original_node_count = len(nodes)
+        old_adjacency_list = load_adjacency_list(adjacency_list_filename)
+        for i, node in enumerate(nodes):
+            node_indexes[nodes[0]] = i
+            node_lat_lng_indexes[(nodes[1], nodes[2])] = i
+    else:
+        nodes = []
+
     for item in data:
-        if item["type"] == "node" and item['id'] in present_nodes:
+        if item["type"] == "node" and item['id'] in present_nodes and item['id'] not in node_indexes:
             if (item["lat"], item["lon"]) in node_lat_lng_indexes:
                 # Duplicated node lat lng
                 original_node_index = node_lat_lng_indexes[(item["lat"], item["lon"])]
@@ -112,19 +148,28 @@ def _download_edges(edge_query: str,
 
     adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
 
-    # Iterate over twice to ensure all nodes have been detected before processing ways
-    for item in data:
-        if item["type"] == "way":
-            for i in range(len(item["nodes"]) - 1):
-                if item["nodes"][i] in present_nodes and item["nodes"][i + 1] in present_nodes:
-                    node_index1 = node_indexes[item["nodes"][i]]
-                    node_index2 = node_indexes[item["nodes"][i + 1]]
-                    distance = node_distance_formula(nodes[node_index1][1],
-                                                     nodes[node_index1][2],
-                                                     nodes[node_index2][1],
-                                                     nodes[node_index2][2])
-                    adjacency_list[node_index1].append((node_index2, distance))
-                    adjacency_list[node_index2].append((node_index1, distance))
+    # Iterate separately to ensure all nodes have been detected before processing ways
+    _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, set(), node_distance_formula)
+
+    if incremental:
+        removed_node_indexes = []
+        for i in range(original_node_count):
+            # Try and preserve edges of removed nodes, but not removed edges of present nodes
+            if len(adjacency_list[i]) == 0:
+                removed_node_indexes.append(i)
+
+        for removed_node in removed_node_indexes:
+            for edge in old_adjacency_list[removed_node]:
+                # Check if any edge in the current adjacency list has a matching index
+                if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
+                    adjacency_list[removed_node].append(edge)
+
+                # Do the same for the other node of the edge
+                if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
+                    # Reconstruct edge to go other way
+                    adjacency_list[edge[0]].append((removed_node, edge[1]))
+
+
 
     if verbose:
         print("Loaded preliminary graph")
@@ -163,12 +208,23 @@ def _download_edges(edge_query: str,
         print("Found all dead nodes")
 
     # Regenerate everything but with knowledge of dead + duplicate nodes
-    nodes = []
     node_indexes = {}
     node_lat_lng_indexes = {}
+    original_node_count = 0
+    old_adjacency_list = []
+    if incremental:
+        nodes = load_node_list(node_filename, include_id=True)
+        original_node_count = len(nodes)
+        old_adjacency_list = load_adjacency_list(adjacency_list_filename)
+        for i, node in enumerate(nodes):
+            node_indexes[nodes[0]] = i
+            node_lat_lng_indexes[(nodes[1], nodes[2])] = i
+    else:
+        nodes = []
+
     for item in data:
         if item["type"] == "node":
-            if item["id"] not in dead_nodes and item['id'] in present_nodes:
+            if item["id"] not in dead_nodes and item['id'] in present_nodes and item['id'] not in node_indexes:
                 if item["id"] in duplicate_nodes:
                     # Duplicated node lat lng
                     original_node_index = node_lat_lng_indexes[(item["lat"], item["lon"])]
@@ -182,22 +238,26 @@ def _download_edges(edge_query: str,
 
     adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
 
-    # Iterate over twice to ensure all nodes have been detected before processing ways
-    for item in data:
-        if item["type"] == "way":
-            # If and only if first node in way is dead, are all nodes in the way dead
-            # No longer true due to fragmented edges caused by region checking
-            for i in range(len(item["nodes"]) - 1):
-                if item["nodes"][i] in present_nodes and item["nodes"][i + 1] in present_nodes:
-                    if item["nodes"][i] not in dead_nodes:
-                        node_index1 = node_indexes[item["nodes"][i]]
-                        node_index2 = node_indexes[item["nodes"][i + 1]]
-                        distance = node_distance_formula(nodes[node_index1][1],
-                                                         nodes[node_index1][2],
-                                                         nodes[node_index2][1],
-                                                         nodes[node_index2][2])
-                        adjacency_list[node_index1].append((node_index2, distance))
-                        adjacency_list[node_index2].append((node_index1, distance))
+    _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, dead_nodes, node_distance_formula)
+
+    if incremental:
+        removed_node_indexes = []
+        for i in range(original_node_count):
+            # Try and preserve edges of removed nodes, but not removed edges of present nodes
+            if len(adjacency_list[i]) == 0:
+                removed_node_indexes.append(i)
+
+        for removed_node in removed_node_indexes:
+            for edge in old_adjacency_list[removed_node]:
+                # Check if any edge in the current adjacency list has a matching index
+                if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
+                    adjacency_list[removed_node].append(edge)
+
+                # Do the same for the other node of the edge
+                if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
+                    # Reconstruct edge to go other way
+                    adjacency_list[edge[0]].append((removed_node, edge[1]))
+
 
     if verbose:
         print("Regenerated graph")
@@ -223,6 +283,7 @@ def download_edges_in_relation(area_relation_id,
                                node_filename="map_data/nodes.csv",
                                adjacency_list_filename="map_data/edges.csv",
                                overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                               incremental=False,
                                verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -239,7 +300,7 @@ def download_edges_in_relation(area_relation_id,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename,
-                    overpass_interpreter_url, verbose)
+                    overpass_interpreter_url, incremental, verbose)
 
 
 def download_edges_around_point(node_lat: float,
@@ -250,6 +311,7 @@ def download_edges_around_point(node_lat: float,
                                 node_filename="map_data/nodes.csv",
                                 adjacency_list_filename="map_data/edges.csv",
                                 overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                                incremental=False,
                                 verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -262,4 +324,4 @@ def download_edges_around_point(node_lat: float,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename,
-                    overpass_interpreter_url, verbose)
+                    overpass_interpreter_url, incremental, verbose)
