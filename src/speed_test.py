@@ -441,14 +441,14 @@ def benchmark_device():
         print("Quitting benchmark")
         return
     print("Initialising C++ extension")
-    benchmarkMapGraphInstance = MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv')
+    benchmark_map_graph_instance = MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv')
     print(f"Took {timeit(lambda: MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv'), number=1)}s per call with 1 repetition")
     print("Testing C++ dijkstra")
-    print(f"Took {timeit(lambda: benchmarkMapGraphInstance.map_dijkstra(0), number=10)/10}s per call with 10 repetitions")
+    print(f"Took {timeit(lambda: benchmark_map_graph_instance.map_dijkstra(0), number=10)/10}s per call with 10 repetitions")
     print("Testing C++ convex hull partition (at partition distance of 100m)")
-    print(f"Took {timeit(lambda: benchmarkMapGraphInstance.convex_hull_partition(0, partition_distance=100), number=10)/10}s per call with 10 repetitions")
+    print(f"Took {timeit(lambda: benchmark_map_graph_instance.convex_hull_partition(0, partition_distance=100), number=10)/10}s per call with 10 repetitions")
     print("Testing C++ cycle generation (from node 0 with a suggested distance of 5km)")
-    print(f"Took {timeit(lambda: benchmarkMapGraphInstance.generate_cycle(0, 5000), number=5)/5}s per call with 5 repetitions")
+    print(f"Took {timeit(lambda: benchmark_map_graph_instance.generate_cycle(0, 5000), number=5)/5}s per call with 5 repetitions")
 
     # Clear files once created
     if os.path.exists("map_data/temp1.csv"):
