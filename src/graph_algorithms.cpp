@@ -540,12 +540,12 @@ public:
             getline(nodeIn, line);
             vector<string> lineEntries = split(line, ',');
 
-            nodeLatLons += '[' + lineEntries[0] + ',' + lineEntries[1] + "],";
-            nodeLats.push_back(stod(lineEntries[0]));
-            nodeLons.push_back(stod(lineEntries[1]));
+            nodeLatLons += '[' + lineEntries[1] + ',' + lineEntries[2] + "],";
+            nodeLats.push_back(stod(lineEntries[1]));
+            nodeLons.push_back(stod(lineEntries[2]));
 
             // Precalculate all mercator projection x,y values for all nodes
-            pair<double, double> mercatorXY = mercator(stod(lineEntries[0]), stod(lineEntries[1]));
+            pair<double, double> mercatorXY = mercator(stod(lineEntries[1]), stod(lineEntries[2]));
             mercatorNodeList.push_back(Node(i, mercatorXY.first, mercatorXY.second));
         }
         nodeLatLons.pop_back();

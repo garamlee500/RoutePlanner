@@ -206,7 +206,7 @@ def _download_edges(edge_query: str,
         # Write node count at top of file
         file.write(str(len(nodes)) + '\n')
         for node in nodes:
-            file.write(str(node[1]) + ',' + str(node[2]) + '\n')
+            file.write(str(node[0]) + ',' + str(node[1]) + ',' + str(node[2]) + '\n')
 
     with open(adjacency_list_filename, 'w') as file:
         for row in adjacency_list:

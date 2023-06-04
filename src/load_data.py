@@ -37,6 +37,6 @@ def load_node_list(filename="map_data/nodes.csv") -> List[Tuple[float, float]]:
                 line = line[:-1]
                 line = line.split(',')
                 # Fix
-                nodes.append((float(line[0]), float(line[1])))
+                nodes.append((float(line[1]), float(line[2])))
 
     return nodes

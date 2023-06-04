@@ -1,5 +1,5 @@
 __pycache__/
 .idea/
 .vscode/
-
+src/map_data/
 *.swp
