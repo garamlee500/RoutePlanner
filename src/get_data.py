@@ -62,6 +62,26 @@ def search_relation(search_term,
 
     return relations
 
+def _add_edges_from_prev_graph(original_node_count: int,
+                               adjacency_list: List[List[Tuple[int, float]]],
+                               old_adjacency_list: List[List[Tuple[int, float]]]):
+    removed_node_indexes = []
+    for i in range(original_node_count):
+        # Try and preserve edges of removed nodes, but not removed edges of present nodes
+        if len(adjacency_list[i]) == 0:
+            removed_node_indexes.append(i)
+
+    for removed_node in removed_node_indexes:
+        for edge in old_adjacency_list[removed_node]:
+            # Check if any edge in the current adjacency list has a matching index
+            if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
+                adjacency_list[removed_node].append(edge)
+
+            # Do the same for the other node of the edge
+            if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
+                # Reconstruct edge to go other way
+                adjacency_list[edge[0]].append((removed_node, edge[1]))
+
 
 def _process_ways(data: Dict,
                   present_nodes: Set[int],
@@ -152,23 +172,7 @@ def _download_edges(edge_query: str,
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, set(), node_distance_formula)
 
     if incremental:
-        removed_node_indexes = []
-        for i in range(original_node_count):
-            # Try and preserve edges of removed nodes, but not removed edges of present nodes
-            if len(adjacency_list[i]) == 0:
-                removed_node_indexes.append(i)
-
-        for removed_node in removed_node_indexes:
-            for edge in old_adjacency_list[removed_node]:
-                # Check if any edge in the current adjacency list has a matching index
-                if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
-                    adjacency_list[removed_node].append(edge)
-
-                # Do the same for the other node of the edge
-                if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
-                    # Reconstruct edge to go other way
-                    adjacency_list[edge[0]].append((removed_node, edge[1]))
-
+        _add_edges_from_prev_graph(original_node_count, adjacency_list, old_adjacency_list)
 
 
     if verbose:
@@ -241,23 +245,7 @@ def _download_edges(edge_query: str,
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, dead_nodes, node_distance_formula)
 
     if incremental:
-        removed_node_indexes = []
-        for i in range(original_node_count):
-            # Try and preserve edges of removed nodes, but not removed edges of present nodes
-            if len(adjacency_list[i]) == 0:
-                removed_node_indexes.append(i)
-
-        for removed_node in removed_node_indexes:
-            for edge in old_adjacency_list[removed_node]:
-                # Check if any edge in the current adjacency list has a matching index
-                if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
-                    adjacency_list[removed_node].append(edge)
-
-                # Do the same for the other node of the edge
-                if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
-                    # Reconstruct edge to go other way
-                    adjacency_list[edge[0]].append((removed_node, edge[1]))
-
+        _add_edges_from_prev_graph(original_node_count, adjacency_list, old_adjacency_list)
 
     if verbose:
         print("Regenerated graph")
