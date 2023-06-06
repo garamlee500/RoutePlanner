@@ -96,18 +96,16 @@ public:
     T getData(int x){
         if (cachedData.count(x)){
             // Cache hit
-            // Move input data to back of LRU deque
+            // Move input data to back of LRU list
             LRUInputs.erase(locationOfInputsInLRUInputs[x]);
             LRUInputs.push_back(x);
             locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
-
-
             return cachedData[x];
         }
         else{
             // Cache miss
             T result = targetFunction(x);
-            storeData(x, result);
+            storeDataWithoutCacheHitChecks(x, result);
             return result;
         }
     }
@@ -652,10 +650,8 @@ public:
     }
 
     string map_dijkstra(int startNode){
-
-        pair<vector<double>, vector<int>> completedDijkstra = dijkstraResult(startNode);
+        pair<vector<double>, vector<int>> completedDijkstra = dijkstraResultCache.getData(startNode);
         vector<double> distances = completedDijkstra.first;
-        dijkstraResultCache.storeData(startNode, completedDijkstra);
         vector<int> previousNodes = completedDijkstra.second;
 
         string result = "[[" + to_string(distances[0]);
