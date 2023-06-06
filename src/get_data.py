@@ -65,6 +65,9 @@ def search_relation(search_term,
 def _add_edges_from_prev_graph(original_node_count: int,
                                adjacency_list: List[List[Tuple[int, float]]],
                                old_adjacency_list: List[List[Tuple[int, float]]]):
+    """
+    Adds edegs that were in the old adjacency list to the new graph, if nodes were completely removed
+    """
     removed_node_indexes = []
     for i in range(original_node_count):
         # Try and preserve edges of removed nodes, but not removed edges of present nodes
@@ -91,6 +94,9 @@ def _process_ways(data: Dict,
                   dead_nodes: Set[int],
                   node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance
 ):
+    """
+    Goes through each way in the data dict and adds it to the adjacency list, subject to checks
+    """
     for item in data:
         if item["type"] == "way":
             for i in range(len(item["nodes"]) - 1):
