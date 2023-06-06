@@ -9,6 +9,7 @@
 #include <limits>
 #include <algorithm>
 #include <unordered_map>
+#include <random>
 #include <functional>
 
 namespace py = pybind11;
@@ -29,6 +30,10 @@ using namespace std;
 // use constexpr to define constants
 constexpr int EARTH_RADIUS = 6371000;
 constexpr double PI = 3.14159265358979323846;
+
+// https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+random_device rd;  // a seed source for the random number engine
+mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
 
 
 struct Node {
@@ -583,9 +588,11 @@ public:
         if (possibleNodes.size() < 2){
             return "[0,[]]";
         }
+        // Creates a random number generator to generate numbers from 0 to n-1
+        uniform_int_distribution<> distrib(0, possibleNodes.size() - 1);
         for (int i = 0; i < maxTries; i++){
-            int node1 = possibleNodes[rand() % possibleNodes.size()];
-            int node2 = possibleNodes[rand() % possibleNodes.size()];
+            int node1 = possibleNodes[distrib(gen)];
+            int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){//&& distances[node1] + distances[node2] < targetLength){
                 // Path is reversed by default - just flip inputs!
                 pair<double, vector<int>> secondaryAstar = aStarResult(node2, node1);
