@@ -247,14 +247,6 @@ public:
         return topItem;
 
     }
-//
-//    void insertNode(int node){
-//        // Nodes are presumed not to be in heap when inserting
-//        // Responsibility of calling functions to ensure this
-//        vertexIndices[node] = heap.size();
-//        heap.push_back(node);
-//        updateNode(node);
-//    }
 
     void updateNode(int node){
         // Notifies heap that new shorter route found to node
