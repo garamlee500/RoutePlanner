@@ -482,8 +482,12 @@ private:
         };
 
         distances[startNode] = 0;
-        DijkstraHeap nodeMinHeap(nodeCount,
+        IndexedPriorityQueue<int, unordered_map<int, int>> nodeMinHeap(
          [&distances, &getHeuristicValue](int x, int y){return distances[x] + getHeuristicValue(x) < distances[y] + getHeuristicValue(y);});
+
+        unordered_set<int> visitedNodes;
+        visitedNodes.insert(startNode);
+        nodeMinHeap.insertItem(startNode);
 
         while (nodeMinHeap.size() > 0){
             int currentNode = nodeMinHeap.popTop();
@@ -491,13 +495,22 @@ private:
                 break;
             }
             for (const pair<int, double>& connectedNodeWeightPair : adjacencyList[currentNode]){
-                if (nodeMinHeap.nodePresent(connectedNodeWeightPair.first)){
-                    double newDistance = connectedNodeWeightPair.second + distances[currentNode];
-                    if (newDistance < distances[connectedNodeWeightPair.first]){
-                        distances[connectedNodeWeightPair.first] = newDistance;
-                        previousNodes[connectedNodeWeightPair.first] = currentNode;
-                        nodeMinHeap.updateNode(connectedNodeWeightPair.first);
+                if (visitedNodes.count(connectedNodeWeightPair.first)){
+                    if (nodeMinHeap.itemPresent(connectedNodeWeightPair.first)){
+                        double newDistance = connectedNodeWeightPair.second + distances[currentNode];
+                        if (newDistance < distances[connectedNodeWeightPair.first]){
+                            distances[connectedNodeWeightPair.first] = newDistance;
+                            previousNodes[connectedNodeWeightPair.first] = currentNode;
+                            nodeMinHeap.reduceItem(connectedNodeWeightPair.first);
+                        }
                     }
+                }
+                else{
+                    visitedNodes.insert(connectedNodeWeightPair.first);
+                    double newDistance = connectedNodeWeightPair.second + distances[currentNode];
+                    distances[connectedNodeWeightPair.first] = newDistance;
+                    previousNodes[connectedNodeWeightPair.first] = currentNode;
+                    nodeMinHeap.insertItem(connectedNodeWeightPair.first);
                 }
             }
         }
