@@ -113,132 +113,117 @@ public:
 
 };
 
-class DijkstraHeap{
-    /*
-    * DijkstraHeap is a highly specific binary heap, for use with standard dijkstra
-    * Expects nodes to be labelled from 0 to n-1, where n is the number of nodes
-    */
+template <class T, class IndexTracker>
+class IndexedPriorityQueue{
+    // A priority queue (minimum first) with all items tracked in heap, allowing for sift up operations
+    // A priority queue of item T, with indexTracker indexable with [] operator with type T to return type of int
 private:
-    // Binary heap of all nodes
-    vector<int> heap;
-    // Vector storing heap indexes for all nodes
-    vector<int> vertexIndices;
-    // Lambda function used to compare nodes - likely simply compares the two nodes' distances in a distance table
-    // of nodes
-    function<bool(int, int)> nodeComparator;
+        vector<T> heap;
+        IndexTracker itemIndices;
+        function<bool(T, T)> itemComparator;
+
 public:
     unsigned int size(){
         // Get the size of the heap
         return heap.size();
     }
 
-    // Constructor of DijkstraHeap
-    // startNode - node number of node that is the 'start' node for the instance of Dijkstra's algorithm running
-    // nodeCount - the total number of nodes - note nodes are expected to be named: 0, 1,..., nodeCount - 1
-    // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
-    //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
-    DijkstraHeap(int startNode, int nodeCount, function<bool(int, int)> nodeComparator):
-        nodeComparator(nodeComparator)
-    {
-        // Reserve space for vectors
-        heap.reserve(startNode);
-        vertexIndices.reserve(nodeCount);
+    IndexedPriorityQueue(function<bool(T, T)> itemComparator):
+        itemComparator(itemComparator){
 
-
-        // Creates min-heap with start node at root
-        heap.push_back(startNode);
-
-        for (int i = 0; i < startNode; i++){
-            // Push all nodes onto heap
-            heap.push_back(i);
-
-            // Indices of nodes before start node have been shifted up by one, due to startNode appearing at index 0
-            // on heap
-            vertexIndices.push_back(i+1);
-        }
-        vertexIndices.push_back(0);
-        for (int i = startNode+1; i < nodeCount; i++){
-            heap.push_back(i);
-            vertexIndices.push_back(i);
-        }
     }
 
-    bool nodePresent(int node){
-        // All nodes removed from heap are marked as -1 on vertexIndices - this can be used to check if a node
-        // is present on the heap or not
-        return vertexIndices[node] != -1;
-    }
+    IndexedPriorityQueue(function<bool(T, T)> itemComparator, IndexTracker indexTracker):
+        itemComparator(itemComparator),
+        itemIndices(indexTracker){
 
-    int peekTop(){
-        // Gets at top of DijkstraHeap
+    }
+    bool itemPresent(T item, bool itemExistenceCheck=true){
+        // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the 
+        // item is known to have previously been processed.
+        // All nodes removed from heap are marked as -1 on itemIndices - this can be used to check if a node 
+        if (itemExistenceCheck){
+            try { 
+                return itemIndices.at(item) != -1; 
+            } 
+            catch (const std::out_of_range&) { 
+                return false;
+            }
+        }
+        else{
+            return itemIndices[item] != -1;
+        }
+
+    }
+    T peekTop(){
         return heap[0];
     }
-    int popTop(){
-        int topItem = peekTop();
+    T popTop(){
+        T topItem = peekTop();
 
         // Swap root with last item in heap (then delete former root) then reheapify to remove root from heap
-        vertexIndices[heap.back()] = 0;
-        vertexIndices[topItem] = -1;
+        itemIndices[heap.back()] = 0;
+        itemIndices[topItem] = -1;
         heap[0] = heap.back();
         heap.pop_back();
 
-        unsigned int nodeIndex = 0;
+        unsigned int itemIndex = 0;
 
-        // Children nodes are 2*i + 1 and 2*i + 2
+        // Children items are 2*i + 1 and 2*i + 2
 
 
-        // Loop until current node has node children
-        while (nodeIndex * 2 + 1 < heap.size()){
+        // Loop until current item has no children
+        while (itemIndex * 2 + 1 < heap.size()){
 
-            // Check if current node has a second child
-            if (nodeIndex * 2 + 2 < heap.size()){
+            // Check if current item has a second child
+            if (itemIndex * 2 + 2 < heap.size()){
                 // First child is less than second child
-                if (nodeComparator(heap[nodeIndex*2+1], heap[nodeIndex*2 + 2])){
-                    // First child is less than current node
-                    if (nodeComparator(heap[nodeIndex*2+1], heap[nodeIndex])){
-                        // Swap current node with first child
-                        int tempHeapValue = heap[nodeIndex*2+1];
-                        vertexIndices[tempHeapValue] = nodeIndex;
-                        heap[nodeIndex*2+1] = heap[nodeIndex];
-                        vertexIndices[heap[nodeIndex]] = nodeIndex*2+1;
-                        heap[nodeIndex] = tempHeapValue;
-                        nodeIndex = nodeIndex*2+1;
+                if (itemComparator(heap[itemIndex*2+1], heap[itemIndex*2 + 2])){
+                    // First child is less than current item
+                    if (itemComparator(heap[itemIndex*2+1], heap[itemIndex])){
+                        // Swap current item with first child
+                        int tempHeapValue = heap[itemIndex*2+1];
+                        itemIndices[tempHeapValue] = itemIndex;
+                        heap[itemIndex*2+1] = heap[itemIndex];
+                        itemIndices[heap[itemIndex]] = itemIndex*2+1;
+                        heap[itemIndex] = tempHeapValue;
+                        itemIndex = itemIndex*2+1;
                     }
                     else{
-                        // Current node is less than both children - stop reheapify
+                        // Current item is less than both children - stop reheapify
                         return topItem;
                     }
                 }
 
                 // Second child is less than first child
                 else{
-                    // Second child is less than current node
-                    if (nodeComparator(heap[nodeIndex*2+2], heap[nodeIndex])){
-                        // Swap current node with second child
-                        int tempHeapValue = heap[nodeIndex*2+2];
-                        vertexIndices[tempHeapValue] = nodeIndex;
-                        heap[nodeIndex*2+2] = heap[nodeIndex];
-                        vertexIndices[heap[nodeIndex]] = nodeIndex*2+2;
-                        heap[nodeIndex] = tempHeapValue;
-                        nodeIndex = nodeIndex*2+2;
+                    // Second child is less than current item
+                    if (itemComparator(heap[itemIndex*2+2], heap[itemIndex])){
+                        // Swap current item with second child
+                        int tempHeapValue = heap[itemIndex*2+2];
+                        itemIndices[tempHeapValue] = itemIndex;
+                        heap[itemIndex*2+2] = heap[itemIndex];
+                        itemIndices[heap[itemIndex]] = itemIndex*2+2;
+                        heap[itemIndex] = tempHeapValue;
+                        itemIndex = itemIndex*2+2;
                     }
                     else{
-                        // Current node is less than both children - stop reheapify
+                        // Current item is less than both children - stop reheapify
                         return topItem;
                     }
                 }
             }
 
-            // Node only has one child
+            // Item only has one child
             else{
-                // First child is less than current node
-                if (nodeComparator(heap[nodeIndex*2+1], heap[nodeIndex])){
-                    // Swap current node with first child
-                    int tempHeapValue = heap[nodeIndex*2+1];
-                    vertexIndices[tempHeapValue] = nodeIndex;
-                    heap[nodeIndex*2+1] = heap[nodeIndex];
-                    vertexIndices[heap[nodeIndex]] = nodeIndex*2+1;
-                    heap[nodeIndex] = tempHeapValue;
+                // First child is less than current item
+                if (itemComparator(heap[itemIndex*2+1], heap[itemIndex])){
+                    // Swap current item with first child
+                    int tempHeapValue = heap[itemIndex*2+1];
+                    itemIndices[tempHeapValue] = itemIndex;
+                    heap[itemIndex*2+1] = heap[itemIndex];
+                    itemIndices[heap[itemIndex]] = itemIndex*2+1;
+                    heap[itemIndex] = tempHeapValue;
                 }
                 // No more children regardless - stop reheapify
                 return topItem;
@@ -248,22 +233,21 @@ public:
 
     }
 
-    void updateNode(int node){
-        // Notifies heap that new shorter route found to node
-        // Must sift node upwards
-        unsigned int nodeIndex = vertexIndices[node];
-        while (nodeIndex > 0){
-            unsigned int parentNodeIndex = (nodeIndex-1)/2;
+    void reduceItem(T item){
+        // Notifies priority queue that item might have reduced key  
+        unsigned int itemIndex = itemIndices[item];
+        while (itemIndex > 0){
+            unsigned int parentItemIndex = (itemIndex-1)/2;
 
             // Check if current node is less than parent node - swap if case otherwise end procedure
-            if (nodeComparator(heap[nodeIndex], heap[parentNodeIndex])){
-                int tempHeapValue = heap[nodeIndex];
-                vertexIndices[tempHeapValue] = parentNodeIndex;
-                vertexIndices[heap[parentNodeIndex]] = nodeIndex;
-                heap[nodeIndex] = heap[parentNodeIndex];
-                heap[parentNodeIndex] = tempHeapValue;
+            if (itemComparator(heap[itemIndex], heap[parentItemIndex])){
+                int tempHeapValue = heap[itemIndex];
+                itemIndices[tempHeapValue] = parentItemIndex;
+                itemIndices[heap[parentItemIndex]] = itemIndex;
+                heap[itemIndex] = heap[parentItemIndex];
+                heap[parentItemIndex] = tempHeapValue;
 
-                nodeIndex = parentNodeIndex;
+                itemIndex = parentItemIndex;
 
             }
             else{
@@ -271,6 +255,58 @@ public:
             }
 
         }
+    }
+    void insertItem(T item){
+        itemIndices[item] = heap.size();
+        heap.push_back(item);
+        reduceItem(item);
+    }
+
+
+};
+
+
+class DijkstraHeap{
+    /*
+    * DijkstraHeap is a highly specific binary heap, for use with standard dijkstra
+    * Expects nodes to be labelled from 0 to n-1, where n is the number of nodes
+    */
+private:
+    IndexedPriorityQueue<int, vector<int>> priorityQueue;
+public:
+    unsigned int size(){
+        // Get the size of the heap
+        return priorityQueue.size();
+    }
+
+    // Constructor of DijkstraHeap
+    // nodeCount - the total number of nodes - note nodes are expected to be named: 0, 1,..., nodeCount - 1
+    // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
+    //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
+    DijkstraHeap(int nodeCount, function<bool(int, int)> nodeComparator)
+    : priorityQueue(IndexedPriorityQueue<int, vector<int>>(nodeComparator, vector<int>(nodeCount)))
+    {
+        for (int i = 0; i < nodeCount; i++){
+            // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indicices is not indexed out of bounds
+            priorityQueue.insertItem(i);
+        }
+    }
+
+    bool nodePresent(int node){
+        // We know all nodes have been processed at least once
+        return priorityQueue.itemPresent(node, false);
+    }
+
+    int peekTop(){
+        // Gets at top of DijkstraHeap
+        return priorityQueue.peekTop();
+    }
+    int popTop(){
+        return priorityQueue.popTop();
+    }
+
+    void updateNode(int node){
+        priorityQueue.reduceItem(node);
     }
 
 };
@@ -446,7 +482,7 @@ private:
         };
 
         distances[startNode] = 0;
-        DijkstraHeap nodeMinHeap(startNode, nodeCount,
+        DijkstraHeap nodeMinHeap(nodeCount,
          [&distances, &getHeuristicValue](int x, int y){return distances[x] + getHeuristicValue(x) < distances[y] + getHeuristicValue(y);});
 
         while (nodeMinHeap.size() > 0){
@@ -499,7 +535,7 @@ private:
         vector<int> previousNodes(nodeCount, -1);
 
         distances[startNode] = 0;
-        DijkstraHeap nodeMinHeap(startNode, nodeCount, [&distances](int x, int y){return distances[x] < distances[y];});
+        DijkstraHeap nodeMinHeap(nodeCount, [&distances](int x, int y){return distances[x] < distances[y];});
 
         while (nodeMinHeap.size() > 0){
             int currentNode = nodeMinHeap.popTop();
