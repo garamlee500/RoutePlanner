@@ -149,8 +149,8 @@ def _download_edges(edge_query: str,
         original_node_count = len(nodes)
         old_adjacency_list = load_adjacency_list(adjacency_list_filename)
         for i, node in enumerate(nodes):
-            node_indexes[nodes[0]] = i
-            node_lat_lng_indexes[(nodes[1], nodes[2])] = i
+            node_indexes[node[0]] = i
+            node_lat_lng_indexes[(node[1], node[2])] = i
     else:
         nodes = []
 
@@ -227,8 +227,8 @@ def _download_edges(edge_query: str,
         original_node_count = len(nodes)
         old_adjacency_list = load_adjacency_list(adjacency_list_filename)
         for i, node in enumerate(nodes):
-            node_indexes[nodes[0]] = i
-            node_lat_lng_indexes[(nodes[1], nodes[2])] = i
+            node_indexes[node[0]] = i
+            node_lat_lng_indexes[(node[1], node[2])] = i
     else:
         nodes = []
 

@@ -15,13 +15,15 @@ def redownload_all_data(incremental=False):
 
         if current_settings["RELATION_REGION_MODE"]:
             download_edges_in_relation(current_settings["AREA_RELATION_ID"],
-                                       overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"])
+                                       overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
+                                       incremental=incremental)
 
         else:
             download_edges_around_point(current_settings["LAT_CENTRE"],
                                         current_settings["LON_CENTRE"],
                                         current_settings["AREA_RADIUS"],
-                                        overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"])
+                                        overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
+                                        incremental=incremental)
     except ConnectionError:
         print("ERROR: Unable to connect to the Overpass API")
         print("Try checking your internet connection, or changing the Overpass API instance used")

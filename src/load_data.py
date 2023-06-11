@@ -16,8 +16,8 @@ def load_adjacency_list(filename="map_data/edges.csv") -> List[List[Tuple[int, f
 
 
 def load_node_list(filename="map_data/nodes.csv",
-                   include_id=False) -> List[Tuple[int, float, float]]:
-    nodes: List[Tuple[float, float]] = []
+                   include_id=False) -> List[Tuple]:
+    nodes: List[Tuple] = []
     with open(filename) as file:
         # Skip node count
         file.readline()
@@ -26,7 +26,7 @@ def load_node_list(filename="map_data/nodes.csv",
                 line = line[:-1]
                 line = line.split(',')
                 if include_id:
-                    nodes.append(int(line[0]), float(line[1]), float(line[2]))
+                    nodes.append((int(line[0]), float(line[1]), float(line[2])))
                 else:
                     nodes.append((float(line[1]), float(line[2])))
 
