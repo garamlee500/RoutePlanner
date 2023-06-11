@@ -444,7 +444,7 @@ def benchmark_device():
     benchmark_map_graph_instance = MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv')
     print(f"Took {timeit(lambda: MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv'), number=1)}s per call with 1 repetition")
     print("Testing C++ dijkstra")
-    print(f"Took {timeit(lambda: benchmark_map_graph_instance.map_dijkstra(0), number=10)/10}s per call with 10 repetitions")
+    print(f"Took {timeit(lambda: [benchmark_map_graph_instance.map_dijkstra(i) for i in range(10)], number=1)/10}s per call with 10 repetitions")
     print("Testing C++ convex hull partition (at partition distance of 100m)")
     print(f"Took {timeit(lambda: benchmark_map_graph_instance.convex_hull_partition(0, partition_distance=100), number=10)/10}s per call with 10 repetitions")
     print("Testing C++ cycle generation (from node 0 with a suggested distance of 5km)")

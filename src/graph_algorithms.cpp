@@ -119,8 +119,8 @@ class IndexedPriorityQueue{
     // A priority queue of item T, with indexTracker indexable with [] operator with type T to return type of int
 private:
         vector<T> heap;
-        IndexTracker itemIndices;
         function<bool(T, T)> itemComparator;
+        IndexTracker itemIndices;
 
 public:
     unsigned int size(){
@@ -139,14 +139,14 @@ public:
 
     }
     bool itemPresent(T item, bool itemExistenceCheck=true){
-        // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the 
+        // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the
         // item is known to have previously been processed.
-        // All nodes removed from heap are marked as -1 on itemIndices - this can be used to check if a node 
+        // All nodes removed from heap are marked as -1 on itemIndices - this can be used to check if a node
         if (itemExistenceCheck){
-            try { 
-                return itemIndices.at(item) != -1; 
-            } 
-            catch (const std::out_of_range&) { 
+            try {
+                return itemIndices.at(item) != -1;
+            }
+            catch (const std::out_of_range&) {
                 return false;
             }
         }
@@ -234,7 +234,7 @@ public:
     }
 
     void reduceItem(T item){
-        // Notifies priority queue that item might have reduced key  
+        // Notifies priority queue that item might have reduced key
         unsigned int itemIndex = itemIndices[item];
         while (itemIndex > 0){
             unsigned int parentItemIndex = (itemIndex-1)/2;
@@ -464,21 +464,11 @@ private:
     }
 
     pair<double, vector<int>> aStarResult(int startNode, int endNode, bool reversedPath=true){
-        vector<double> distances(nodeCount, numeric_limits<int>::max());
-        vector<int> previousNodes(nodeCount, -1);
-        vector<double> heuristicValues(nodeCount, -1);
+        unordered_map<int, double> distances;
+        unordered_map<int, int> previousNodes;
 
-        // Could use LRU cache here instead, but that would be overkill
-        // Don't calculate all heuristics at once
-        // 80000 nodes - estimated time of 0.1 to 0.2 s for haversine distance (cPython)
-        // 0.03 s (pypy c++)
-        // enough to be significant
-
-        function<double(int)> getHeuristicValue = [this, &heuristicValues, endNode](int node){
-            if (heuristicValues[node]==-1){
-                heuristicValues[node] = haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-            }
-            return heuristicValues[node];
+        function<double(int)> getHeuristicValue = [this, endNode](int node){
+            return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
         };
 
         distances[startNode] = 0;
@@ -507,7 +497,7 @@ private:
                 }
                 else{
                     visitedNodes.insert(connectedNodeWeightPair.first);
-                    double newDistance = connectedNodeWeightPair.second + distances[currentNode];
+                    double newDistance = connectedNodeWeightPair.second;
                     distances[connectedNodeWeightPair.first] = newDistance;
                     previousNodes[connectedNodeWeightPair.first] = currentNode;
                     nodeMinHeap.insertItem(connectedNodeWeightPair.first);
@@ -707,7 +697,7 @@ public:
         result += "]]";
         return result;
 
-    }    
+    }
 
     string convex_hull_partition(int startNode, double partitionDistance=2000){
         vector<double> dijkstraDistance = dijkstraResultCache.getData(startNode).first;
@@ -763,7 +753,7 @@ PYBIND11_MODULE(graph_algorithms, m) {
          .def(py::init<string, string>(),
             py::arg("node_filename") = "map_data/nodes.csv",
             py::arg("adjacency_list_filename") = "map_data/edges.csv"
-        )   
+        )
         .def("map_dijkstra", &MapGraphInstance::map_dijkstra,
             py::arg("start_node"))
         .def("convex_hull_partition", &MapGraphInstance::convex_hull_partition,
