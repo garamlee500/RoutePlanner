@@ -313,18 +313,10 @@ document.getElementById('destination_show_checkbox').addEventListener(
     'change',
     (event) => {
         if (event.target.checked === true) {
-            // endMarker.addTo(map);
-            // // Class information lost when removed from map
-            // endMarker._icon.classList.add("redMarker");
-            //
-            // endNodeMarker.addTo(map);
             routeLine.addTo(map);
-            // endNodeConnector.addTo(map);
+            routeLine.openPopup();
         } else {
-            // endMarker.remove(map);
-            // endNodeMarker.remove(map);
             routeLine.remove(map);
-            // endNodeConnector.remove(map);
         }
     }
 )
