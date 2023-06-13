@@ -4,7 +4,7 @@ import requests
 from sphere_formula import haversine_node_distance
 import exceptions
 from load_data import load_node_list, load_adjacency_list
-
+import elevation.downloader
 
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
@@ -116,6 +116,7 @@ def _download_edges(edge_query: str,
                     node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance,
                     node_filename="map_data/nodes.csv",
                     adjacency_list_filename="map_data/edges.csv",
+                    elevation_list_filename="map_data/elevation.csv",
                     overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                     incremental=False,
                     verbose=True):
@@ -256,6 +257,9 @@ def _download_edges(edge_query: str,
     if verbose:
         print("Regenerated graph")
 
+    elevations = elevation.downloader.get_elevation_for_nodes(nodes)
+    print("Found elevations of nodes")
+
     with open(node_filename, 'w') as file:
         # Write node count at top of file
         file.write(str(len(nodes)) + '\n')
@@ -267,6 +271,9 @@ def _download_edges(edge_query: str,
             file.write(','.join([str(edge[0]) + ',' + str(edge[1]) for edge in row]))
             file.write('\n')
 
+    with open(elevation_list_filename, 'w') as file:
+        file.write(",".join([str(x) for x in elevations]))
+
     if verbose:
         print("Saved graph to files")
 
@@ -276,6 +283,7 @@ def download_edges_in_relation(area_relation_id,
                                    [float, float, float, float], float] = haversine_node_distance,
                                node_filename="map_data/nodes.csv",
                                adjacency_list_filename="map_data/edges.csv",
+                               elevation_list_filename="map_data/elevation.csv",
                                overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                                incremental=False,
                                verbose=True):
@@ -293,7 +301,7 @@ def download_edges_in_relation(area_relation_id,
                  "node(area.searchArea);" + \
                  "(._;>;);out;"
 
-    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename,
+    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
                     overpass_interpreter_url, incremental, verbose)
 
 
@@ -304,6 +312,7 @@ def download_edges_around_point(node_lat: float,
                                     [float, float, float, float], float] = haversine_node_distance,
                                 node_filename="map_data/nodes.csv",
                                 adjacency_list_filename="map_data/edges.csv",
+                                elevation_list_filename="map_data/elevation.csv",
                                 overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                                 incremental=False,
                                 verbose=True):
@@ -317,5 +326,5 @@ def download_edges_around_point(node_lat: float,
                  f"node(around:{node_radius},{node_lat},{node_lon});" + \
                  "(._;>;);out;"
 
-    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename,
+    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
                     overpass_interpreter_url, incremental, verbose)

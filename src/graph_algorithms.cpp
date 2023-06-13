@@ -451,6 +451,7 @@ private:
     int nodeCount;
     string region_nodes;
     string nodeLatLons;
+    string nodeElevations;
 
     void computeRegionNodes(){
         region_nodes = "[";
@@ -560,9 +561,11 @@ private:
     LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x);}};
 
 public:
-    MapGraphInstance(string nodeFilename="map_data/nodes.csv", string adjacencyListFilename="map_data/edges.csv"){
+    MapGraphInstance(string nodeFilename="map_data/nodes.csv", string adjacencyListFilename="map_data/edges.csv",
+                     string elevationListFilename="map_data/elevation.csv"){
         ifstream nodeIn(nodeFilename);
         ifstream edgeIn(adjacencyListFilename);
+        ifstream elevationIn(elevationListFilename);
         string line;
 
         // Read number of nodes at top of file
@@ -595,6 +598,11 @@ public:
 
             adjacencyList.push_back(edges);
         }
+
+        nodeElevations = "[";
+        getline(elevationIn, line);
+        nodeElevations += line;
+        nodeElevations += ']';
 
         computeRegionNodes();
     }
@@ -743,6 +751,9 @@ public:
     string get_region_nodes(){
         return region_nodes;
     }
+    string get_node_elevations(){
+        return nodeElevations;
+    }
 };
 
 
@@ -761,6 +772,7 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("partition_distance")=2000)
         .def("get_region_nodes", &MapGraphInstance::get_region_nodes)
         .def("get_node_lat_lons", &MapGraphInstance::get_node_lat_lons)
+        .def("get_node_elevations", &MapGraphInstance::get_node_elevations)
         .def("generate_cycle", &MapGraphInstance::generate_cycle,
             py::arg("start_node"),
             py::arg("target_length"),

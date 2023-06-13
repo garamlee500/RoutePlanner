@@ -22,6 +22,10 @@ def get_dijkstra(node_index):
 def get_nodes():
     return serverMapGraphInstance.get_node_lat_lons()
 
+@app.get('/api/get/elevations')
+def get_elevations():
+    return serverMapGraphInstance.get_node_elevations()
+
 
 @app.get('/api/get/region')
 def get_region():
