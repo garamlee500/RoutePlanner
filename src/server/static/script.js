@@ -442,8 +442,7 @@ function closestNode(latLng) {
 
 async function dijkstraDetails(node) {
     const response = await fetch(`/api/get/dijkstra/${node}`);
-    let data = await response.json();
-    return data;
+    return await response.json();
 }
 
 function connectToStartNode() {
@@ -532,7 +531,7 @@ function connectToEndNode() {
 async function changeStart(event) {
     startNode = closestNode(startMarker.getLatLng());
     // Redraw route from start
-    path = [];
+    let path = [];
     let currentNode = startNode;
 
     let chartData = [];
@@ -602,7 +601,7 @@ async function changeEnd(event) {
     endNode = closestNode(endMarker.getLatLng());
     // Redraw route from end
 
-    path = [];
+    let path = [];
     let currentNode = endNode;
 
     let chartData = [];
