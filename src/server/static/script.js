@@ -5,6 +5,7 @@ let endNode;
 let dijkstraFromStart;
 let dijkstraFromEnd;
 let nodeLatLons;
+let nodeElevations;
 let routeLine = null;
 let suggestedRoutePolygon = null;
 // used to connect user's markers to nodes used in calculations
@@ -18,7 +19,8 @@ let currentIndicatedConvexHull;
 let convexHullIndex = 0;
 let walkSuggestionDistance = 5;
 let gpsAccuracy = null;
-
+let currentChart = null;
+let currentChartData;
 
 let settings;
 let defaultSettings = {
@@ -532,8 +534,12 @@ async function changeStart(event) {
     // Redraw route from start
     path = [];
     let currentNode = startNode;
+
+    let chartData = [];
+
     while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
+        chartData.push({x: dijkstraFromEnd[0][startNode] - dijkstraFromEnd[0][currentNode], y: nodeElevations[currentNode]})
         currentNode = dijkstraFromEnd[1][currentNode]
     }
 
@@ -546,8 +552,39 @@ async function changeStart(event) {
         fillOpacity: 1,
         color: 'green'
 
-    }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km`, {
+    }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
         autoPan: false
+    })
+
+
+    routeLine.on('popupopen',
+    function(){
+        if (currentChart!=null){
+            currentChart.destroy();
+        }
+        currentChart = new Chart(
+            document.getElementById('elevationGraph'),
+            {
+                type: "line",
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        label: 'Elevation of journey',
+                        pointRadius: 0
+                    }]
+
+                },
+                options: {
+                    scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    }
+                    }
+                }
+                
+            }
+        )
     })
 
     // Don't draw route if not needed - but get everything else ready for when it is checked
@@ -567,8 +604,11 @@ async function changeEnd(event) {
 
     path = [];
     let currentNode = endNode;
+
+    let chartData = [];
     while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
+        chartData.push({x: dijkstraFromStart[0][currentNode], y: nodeElevations[currentNode]})
         currentNode = dijkstraFromStart[1][currentNode]
     }
 
@@ -580,14 +620,51 @@ async function changeEnd(event) {
     routeLine = L.polyline(path, {
         fillOpacity: 1,
         color: 'green'
-    }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km`, {
+    }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
         autoPan: false
     });
+
+
+    routeLine.on('popupopen',
+    function(){
+        if (currentChart!=null){
+            currentChart.destroy();
+        }
+        currentChart = new Chart(
+            document.getElementById('elevationGraph'),
+            {
+                type: "line",
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        label: 'Elevation of journey',
+                        pointRadius: 0
+                    }]
+
+                },
+                options: {
+                    scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    }
+                    }
+                }
+                
+            }
+        )
+    })
+
+
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
         routeLine.openPopup();
+
+
     }
+
+    
     connectToEndNode();
 }
 
@@ -662,7 +739,7 @@ async function initialise() {
 
     // get the lat/lons of all nodes
     nodeLatLons = await nodeLatLonsResponse.json()
-
+    nodeElevations = await (await fetch("/api/get/elevations")).json();
 
     if (sessionStorage.getItem("settings")) {
         settings = JSON.parse(sessionStorage.getItem("settings"));
