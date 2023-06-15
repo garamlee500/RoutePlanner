@@ -590,11 +590,15 @@ function showChart(){
             },
             options: {
                 scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom'
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    }
+                },
+                animation: {
+                    duration: 0
                 }
-                }
+
             }
 
         }
