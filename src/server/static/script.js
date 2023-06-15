@@ -534,29 +534,28 @@ async function changeStart(event) {
     let path = [];
     let currentNode = startNode;
 
-    let chartData = [];
+    currentChartData = [];
 
     while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
-        chartData.push({x: dijkstraFromEnd[0][startNode] - dijkstraFromEnd[0][currentNode], y: nodeElevations[currentNode]})
+        currentChartData.push({x: dijkstraFromEnd[0][startNode] - dijkstraFromEnd[0][currentNode], y: nodeElevations[currentNode]})
         currentNode = dijkstraFromEnd[1][currentNode]
     }
 
 
     if (routeLine != null) {
-        routeLine.remove(map);
+        routeLine.setLatLngs(path);
+        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
     }
-
-    routeLine = L.polyline(path, {
-        fillOpacity: 1,
-        color: 'green'
-
-    }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
-        autoPan: false
-    })
-
-
-    routeLine.on('popupopen',
+    else{
+        routeLine = L.polyline(path, {
+            fillOpacity: 1,
+            color: 'green'
+    
+        }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
+            autoPan: false
+        })
+        routeLine.on('popupopen',
     function(){
         if (currentChart!=null){
             currentChart.destroy();
@@ -567,7 +566,7 @@ async function changeStart(event) {
                 type: "line",
                 data: {
                     datasets: [{
-                        data: chartData,
+                        data: currentChartData,
                         label: 'Elevation of journey',
                         pointRadius: 0
                     }]
@@ -586,6 +585,11 @@ async function changeStart(event) {
         )
     })
 
+    }
+    
+
+
+    
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
@@ -604,56 +608,57 @@ async function changeEnd(event) {
     let path = [];
     let currentNode = endNode;
 
-    let chartData = [];
+    currentChartData = [];
     while (currentNode !== -1) {
         path.push(nodeLatLons[currentNode])
-        chartData.push({x: dijkstraFromStart[0][currentNode], y: nodeElevations[currentNode]})
+        currentChartData.push({x: dijkstraFromStart[0][currentNode], y: nodeElevations[currentNode]})
         currentNode = dijkstraFromStart[1][currentNode]
     }
 
 
     if (routeLine != null) {
-        routeLine.remove(map);
+        routeLine.setLatLngs(path);
+        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
     }
-
-    routeLine = L.polyline(path, {
-        fillOpacity: 1,
-        color: 'green'
-    }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
-        autoPan: false
-    });
-
-
-    routeLine.on('popupopen',
-    function(){
-        if (currentChart!=null){
-            currentChart.destroy();
-        }
-        currentChart = new Chart(
-            document.getElementById('elevationGraph'),
-            {
-                type: "line",
-                data: {
-                    datasets: [{
-                        data: chartData,
-                        label: 'Elevation of journey',
-                        pointRadius: 0
-                    }]
-
-                },
-                options: {
-                    scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom'
-                    }
-                    }
-                }
-                
+    else{
+        routeLine = L.polyline(path, {
+            fillOpacity: 1,
+            color: 'green'
+    
+        }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
+            autoPan: false
+        })
+        routeLine.on('popupopen',
+        function(){
+            if (currentChart!=null){
+                currentChart.destroy();
             }
-        )
+            currentChart = new Chart(
+                document.getElementById('elevationGraph'),
+                {
+                    type: "line",
+                    data: {
+                        datasets: [{
+                            data: currentChartData,
+                            label: 'Elevation of journey',
+                            pointRadius: 0
+                        }]
+
+                    },
+                    options: {
+                        scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        }
+                        }
+                    }
+                    
+                }
+            )
     })
 
+    }
 
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
