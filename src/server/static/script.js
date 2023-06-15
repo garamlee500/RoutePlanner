@@ -618,7 +618,7 @@ async function changeEnd(event) {
 
     if (routeLine != null) {
         routeLine.setLatLngs(path);
-        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
+        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
     }
     else{
         routeLine = L.polyline(path, {
