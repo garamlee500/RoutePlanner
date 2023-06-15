@@ -317,6 +317,7 @@ document.getElementById('destination_show_checkbox').addEventListener(
         if (event.target.checked === true) {
             routeLine.addTo(map);
             routeLine.openPopup();
+            showChart();
         } else {
             routeLine.remove(map);
         }
@@ -555,50 +556,49 @@ async function changeStart(event) {
         }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
             autoPan: false
         })
-        routeLine.on('popupopen',
-    function(){
-        if (currentChart!=null){
-            currentChart.destroy();
-        }
-        currentChart = new Chart(
-            document.getElementById('elevationGraph'),
-            {
-                type: "line",
-                data: {
-                    datasets: [{
-                        data: currentChartData,
-                        label: 'Elevation of journey',
-                        pointRadius: 0
-                    }]
-
-                },
-                options: {
-                    scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom'
-                    }
-                    }
-                }
-                
-            }
-        )
-    })
 
     }
-    
 
-
-    
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
         routeLine.openPopup();
+        showChart();
     }
 
     connectToStartNode();
 
 
+}
+
+
+function showChart(){
+    if (currentChart!=null){
+            currentChart.destroy();
+    }
+    currentChart = new Chart(
+        document.getElementById('elevationGraph'),
+        {
+            type: "line",
+            data: {
+                datasets: [{
+                    data: currentChartData,
+                    label: 'Elevation of journey',
+                    pointRadius: 0
+                }]
+
+            },
+            options: {
+                scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom'
+                }
+                }
+            }
+
+        }
+    );
 }
 
 async function changeEnd(event) {
@@ -628,35 +628,6 @@ async function changeEnd(event) {
         }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
             autoPan: false
         })
-        routeLine.on('popupopen',
-        function(){
-            if (currentChart!=null){
-                currentChart.destroy();
-            }
-            currentChart = new Chart(
-                document.getElementById('elevationGraph'),
-                {
-                    type: "line",
-                    data: {
-                        datasets: [{
-                            data: currentChartData,
-                            label: 'Elevation of journey',
-                            pointRadius: 0
-                        }]
-
-                    },
-                    options: {
-                        scales: {
-                        x: {
-                            type: 'linear',
-                            position: 'bottom'
-                        }
-                        }
-                    }
-                    
-                }
-            )
-    })
 
     }
 
@@ -664,7 +635,7 @@ async function changeEnd(event) {
     if (document.getElementById('destination_show_checkbox').checked === true) {
         routeLine.addTo(map);
         routeLine.openPopup();
-
+        showChart();
 
     }
 
