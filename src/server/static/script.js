@@ -555,7 +555,7 @@ async function changeStart(event) {
     
         }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
             autoPan: false
-        })
+        }).on('click', showChart);
 
     }
 
@@ -631,7 +631,7 @@ async function changeEnd(event) {
     
         }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
             autoPan: false
-        })
+        }).on('click', showChart);
 
     }
 
