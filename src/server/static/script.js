@@ -589,16 +589,33 @@ function showChart(){
 
             },
             options: {
+                legend: {
+                    display: true,
+                    labels: {
+                    }
+                },
+        
                 scales: {
                     x: {
                         type: 'linear',
-                        position: 'bottom'
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Distance from start (m)',
+                            padding: 0,
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Height (m)',
+                            padding: 0,
+                        }
                     }
                 },
                 animation: {
                     duration: 0
                 }
-
             }
 
         }
@@ -629,7 +646,7 @@ async function changeEnd(event) {
             fillOpacity: 1,
             color: 'green'
     
-        }).bindPopup(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
+        }).bindPopup(`<p style="font: 'Noto Sans'">Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km</p><canvas id="elevationGraph"></canvas>`, {
             autoPan: false
         }).on('click', showChart);
 
