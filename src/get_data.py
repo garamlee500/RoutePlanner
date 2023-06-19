@@ -118,6 +118,7 @@ def _download_edges(edge_query: str,
                     adjacency_list_filename="map_data/edges.csv",
                     elevation_list_filename="map_data/elevation.csv",
                     overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                    aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                     incremental=False,
                     verbose=True):
     # Make request to overpass for data - note query has been prebuilt
@@ -257,7 +258,8 @@ def _download_edges(edge_query: str,
     if verbose:
         print("Regenerated graph")
 
-    elevations = elevation.downloader.get_elevation_for_nodes(nodes)
+    elevations = elevation.downloader.get_elevation_for_nodes(nodes,
+                                                              aster_gdem_api_endpoint=aster_gdem_api_endpoint)
     print("Found elevations of nodes")
 
     with open(node_filename, 'w') as file:
@@ -285,6 +287,7 @@ def download_edges_in_relation(area_relation_id,
                                adjacency_list_filename="map_data/edges.csv",
                                elevation_list_filename="map_data/elevation.csv",
                                overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                               aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                                incremental=False,
                                verbose=True):
     """
@@ -302,7 +305,7 @@ def download_edges_in_relation(area_relation_id,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, incremental, verbose)
+                    overpass_interpreter_url, aster_gdem_api_endpoint, incremental, verbose)
 
 
 def download_edges_around_point(node_lat: float,
@@ -314,6 +317,7 @@ def download_edges_around_point(node_lat: float,
                                 adjacency_list_filename="map_data/edges.csv",
                                 elevation_list_filename="map_data/elevation.csv",
                                 overpass_interpreter_url="https://overpass-api.de/api/interpreter",
+                                aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                                 incremental=False,
                                 verbose=True):
     """
@@ -327,4 +331,4 @@ def download_edges_around_point(node_lat: float,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, incremental, verbose)
+                    overpass_interpreter_url, aster_gdem_api_endpoint, incremental, verbose)

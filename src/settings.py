@@ -34,10 +34,12 @@ class Settings:
             # True - download region from area_relation_id. False - Download from radius/lat/lon
             "AREA_RADIUS": 3_000,
             "LAT_CENTRE": 50.9617786,
-            "LON_CENTRE": -1.3651394
+            "LON_CENTRE": -1.3651394,
+            "ASTER_GDEM_API_URL": "https://gdemdl.aster.jspacesystems.or.jp/download/"
         }
 
         self.reload()
+        
     def reset(self):
         self.settings_dict = self.default_settings
 

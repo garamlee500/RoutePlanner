@@ -16,6 +16,7 @@ def redownload_all_data(incremental=False):
         if current_settings["RELATION_REGION_MODE"]:
             download_edges_in_relation(current_settings["AREA_RELATION_ID"],
                                        overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
+                                       aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"],
                                        incremental=incremental)
 
         else:
@@ -23,6 +24,7 @@ def redownload_all_data(incremental=False):
                                         current_settings["LON_CENTRE"],
                                         current_settings["AREA_RADIUS"],
                                         overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
+                                        aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"],
                                         incremental=incremental)
     except ConnectionError:
         print("ERROR: Unable to connect to the Overpass API")
@@ -156,6 +158,13 @@ overpass_api_endpoint_menu: Menu = Menu(
     loop=False
 )
 
+aster_gdem_api_menu: Menu = Menu(
+    start_text=lambda: "Change the ASTER GDEM api server used when downloading elevation data. Use if "
+                       "struggling to download data from current ASTER GDEM server "
+                       "or want to use your own ASTER GDEM server.\n"
+                       f"Note the current ASTER GDEM server connected to is: {current_settings['ASTER_GDEM_API_URL']}",
+    loop=False
+)
 
 def set_overpass_endpoint(url):
     current_settings['OVERPASS_INTERPRETER_URL'] = url
@@ -168,11 +177,26 @@ def set_custom_overpass_endpoint():
     print("Note normally ends in /api/interpreter")
     new_url = input()
     if new_url.strip() != "":
-        current_settings['OVERPASS_INTERPRETER_URL'] = new_url
-        current_settings.save()
-        print("URL changed successfully!")
+        set_overpass_endpoint(new_url)
     else:
         print("No URL chosen. Going back.")
+
+
+def set_gdem_aster_endpoint(url):
+    current_settings['ASTER_GDEM_API_URL'] = url
+    current_settings.save()
+    print("URL changed successfully!")
+
+
+def set_custom_gdem_aster_endpoint():
+    print("Enter the new ASTER GDEM Api URL to use - leave blank to cancel")
+    print("Note data must be stored in same format as https://gdemdl.aster.jspacesystems.or.jp/download/")
+    new_url = input()
+    if new_url.strip() != "":
+        set_gdem_aster_endpoint(new_url)
+    else:
+        print("No URL chosen. Going back.")
+
 
 
 overpass_api_endpoint_menu.add_option(
@@ -192,8 +216,26 @@ overpass_api_endpoint_menu.add_option(
      set_custom_overpass_endpoint)
 )
 
+aster_gdem_api_menu.add_option(
+    ("Default ASTER GDEM server (Japan Space Systems) - https://gdemdl.aster.jspacesystems.or.jp/download/",
+     lambda: set_gdem_aster_endpoint("https://gdemdl.aster.jspacesystems.or.jp/download/"))
+)
+
+aster_gdem_api_menu.add_option(
+    ("Github ASTER GDEM backup (England only) - https://github.com/garamlee500/ASTER_GDEM_ENGLAND/raw/main/",
+    lambda: set_gdem_aster_endpoint("https://github.com/garamlee500/ASTER_GDEM_ENGLAND/raw/main/"))
+)
+aster_gdem_api_menu.add_option(
+    ("Custom URL",
+     set_custom_gdem_aster_endpoint)
+)
+
 main_menu.add_option(("Set overpass api instance",
                       overpass_api_endpoint_menu))
+
+main_menu.add_option(("Set ASTER GDEM api url",
+                     aster_gdem_api_menu))
+
 main_menu.add_option((
     "Benchmark device",
     benchmark_device

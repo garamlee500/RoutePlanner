@@ -57,7 +57,7 @@ def _generate_zip_filename_for_tile(lat_lon: Tuple[int, int]):
 
 def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]],
                             aster_gdem_api_endpoint: str = "https://gdemdl.aster.jspacesystems.or.jp/download/") -> List[float]:
-    
+
     required_tiles: List[Tuple[int, int]] = []
     tile_data = []
 
