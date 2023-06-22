@@ -28,7 +28,7 @@ class Settings:
         self.settings_file = settings_file
 
         self.default_settings = {
-            "AREA_RELATION_ID": 9691750,  # Area relation to download data from
+            "AREA_RELATION_ID": 127864,  # Area relation to download data from
             "OVERPASS_INTERPRETER_URL": "https://overpass-api.de/api/interpreter",
             "RELATION_REGION_MODE": True,
             # True - download region from area_relation_id. False - Download from radius/lat/lon
