@@ -87,9 +87,9 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]],
     for node in nodes:
         tile = (floor(node[1]), (floor(node[2])))
         tile_elevations = tile_data[required_tiles.index(tile)]
-        lat_index = ceil(node[1]) * 3600 - round(node[1]*3600)
-        lon_index = round(node[2]*3600) - floor(node[2]) * 3600
-        # Latitutdes index backwards of size
+        lat_index = ceil(node[1]) * 3600 - ceil(node[1]*3600)
+        lon_index = floor(node[2]*3600) - floor(node[2]) * 3600
+        # Latitudes index backwards of size
         try:
             elevations.append(tile_elevations[lat_index][lon_index])
         except IndexError:
