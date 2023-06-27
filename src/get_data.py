@@ -1,10 +1,11 @@
 import json
 from typing import Callable, List, Tuple, Set, Dict
 import requests
-from sphere_formula import haversine_node_distance
+from distance_formulas import haversine_node_distance, walking_time
 import exceptions
 from load_data import load_node_list, load_adjacency_list
 import elevation.downloader
+
 
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
@@ -269,8 +270,11 @@ def _download_edges(edge_query: str,
             file.write(str(node[0]) + ',' + str(node[1]) + ',' + str(node[2]) + '\n')
 
     with open(adjacency_list_filename, 'w') as file:
-        for row in adjacency_list:
-            file.write(','.join([str(edge[0]) + ',' + str(edge[1]) for edge in row]))
+        for node, row in enumerate(adjacency_list):
+            # Write node_index, edge_distance, walking time for each edge
+            file.write(','.join([str(edge[0])
+                                 + ',' + str(edge[1]) + ',' +
+                                 str(walking_time(edge[1], elevations[edge[0]]-elevations[node])) for edge in row]))
             file.write('\n')
 
     with open(elevation_list_filename, 'w') as file:

@@ -15,7 +15,7 @@ SOUTHAMPTON_RELATION_ID = 127864
 EARTH_RADIUS = 6_371_000
 
 from typing import Callable, List, Tuple
-from sphere_formula import haversine_node_distance
+from distance_formulas import haversine_node_distance
 from math import floor
 
 def mercator(lat, lon) -> Tuple[float, float]:

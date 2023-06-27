@@ -35,6 +35,13 @@ constexpr double PI = 3.14159265358979323846;
 random_device rd;  // a seed source for the random number engine
 mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
 
+struct Edge{
+    int endIndex;
+    double distance;
+    Edge (int endIndex, double distance):
+        endIndex(endIndex),
+        distance(distance){}
+};
 
 struct Node {
     int index;
@@ -442,16 +449,111 @@ vector<Node> convexHull(vector<Node> nodes) {
 
 }
 
+pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Edge>>& adjacencyList){
+    vector<double> distances(adjacencyList.size(), numeric_limits<int>::max());
+    vector<int> previousNodes(adjacencyList.size(), -1);
+
+    distances[startNode] = 0;
+    DijkstraHeap nodeMinHeap(adjacencyList.size(), [&distances](int x, int y){return distances[x] < distances[y];});
+
+    while (nodeMinHeap.size() > 0){
+        int currentNode = nodeMinHeap.popTop();
+        for (const Edge& edge : adjacencyList[currentNode]){
+            if (nodeMinHeap.nodePresent(edge.endIndex)){
+                double newDistance = edge.distance + distances[currentNode];
+                if (newDistance < distances[edge.endIndex]){
+                    distances[edge.endIndex] = newDistance;
+                    previousNodes[edge.endIndex] = currentNode;
+                    nodeMinHeap.updateNode(edge.endIndex);
+                }
+            }
+        }
+
+    }
+    return make_pair(distances, previousNodes);
+}
+
+tuple<double, double, vector<int>> aStarResult(int startNode,
+                                               int endNode,
+                                               vector<vector<Edge>>& adjacencyList,
+                                               vector<vector<Edge>>& subsidiaryAdjacencyList,
+                                               function<double(int, int)> heuristicFunction,
+                                               vector<double>& nodeLats,
+                                               vector<double>& nodeLons,
+                                               bool reversedPath=true){
+    unordered_map<int, double> distances;
+    unordered_map<int, double> subsidiaryDistances;
+    unordered_map<int, int> previousNodes;
+
+
+    distances[startNode] = 0;
+    subsidiaryDistances[startNode] = 0;
+
+    IndexedPriorityQueue<int, unordered_map<int, int>> nodeMinHeap(
+            [&distances, &heuristicFunction, endNode](int x, int y){return distances[x] + heuristicFunction(x, endNode) < distances[y] + heuristicFunction(y, endNode);});
+
+    unordered_set<int> visitedNodes;
+    visitedNodes.insert(startNode);
+    nodeMinHeap.insertItem(startNode);
+
+    while (nodeMinHeap.size() > 0){
+        int currentNode = nodeMinHeap.popTop();
+        if (currentNode==endNode){
+            break;
+        }
+        for (unsigned int i = 0; i < adjacencyList[currentNode].size(); i++){
+            Edge edge = adjacencyList[currentNode][i];
+            Edge subsidiaryEdge = subsidiaryAdjacencyList[currentNode][i];
+            if (visitedNodes.count(edge.endIndex)){
+                if (nodeMinHeap.itemPresent(edge.endIndex)){
+                    double newDistance = edge.distance + distances[currentNode];
+                    if (newDistance < distances[edge.endIndex]){
+                        distances[edge.endIndex] = newDistance;
+                        previousNodes[edge.endIndex] = currentNode;
+                        nodeMinHeap.reduceItem(edge.endIndex);
+
+                        // Overwrite subsidiary distances regardless of whether it is optimal or not
+                        // We are only interested in optimising for distance
+                        subsidiaryDistances[edge.endIndex] = subsidiaryEdge.distance + subsidiaryDistances[currentNode];
+                    }
+                }
+            }
+            else{
+                visitedNodes.insert(edge.endIndex);
+                distances[edge.endIndex] = edge.distance + distances[currentNode];
+                subsidiaryDistances[edge.endIndex] = subsidiaryEdge.distance + subsidiaryDistances[currentNode];
+                previousNodes[edge.endIndex] = currentNode;
+                nodeMinHeap.insertItem(edge.endIndex);
+            }
+        }
+    }
+    int currentNode = endNode;
+    vector<int> path;
+    while (currentNode!=startNode){
+        path.push_back(currentNode);
+        currentNode = previousNodes[currentNode];
+    }
+    path.push_back(startNode);
+    if (!reversedPath){
+        reverse(path.begin(), path.end());
+    }
+    return make_tuple(distances[endNode], subsidiaryDistances[endNode],path);
+
+}
+
 class MapGraphInstance{
 private:
-    vector<vector<pair<int, double>>> adjacencyList;
+    vector<vector<Edge>> distanceAdjacencyList;
+    vector<vector<Edge>> timeAdjacencyList;
+    vector<vector<Edge>> invertedTimeAdjacencyList;
     vector<Node> mercatorNodeList;
     vector<double> nodeLats;
     vector<double> nodeLons;
+    vector<double> nodeElevations;
     int nodeCount;
     string region_nodes;
     string nodeLatLons;
-    string nodeElevations;
+    string nodeElevationString;
 
     void computeRegionNodes(){
         region_nodes = "[";
@@ -464,59 +566,11 @@ private:
         region_nodes += ']';
     }
 
-    pair<double, vector<int>> aStarResult(int startNode, int endNode, bool reversedPath=true){
-        unordered_map<int, double> distances;
-        unordered_map<int, int> previousNodes;
-
-        function<double(int)> getHeuristicValue = [this, endNode](int node){
-            return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-        };
-
-        distances[startNode] = 0;
-        IndexedPriorityQueue<int, unordered_map<int, int>> nodeMinHeap(
-         [&distances, &getHeuristicValue](int x, int y){return distances[x] + getHeuristicValue(x) < distances[y] + getHeuristicValue(y);});
-
-        unordered_set<int> visitedNodes;
-        visitedNodes.insert(startNode);
-        nodeMinHeap.insertItem(startNode);
-
-        while (nodeMinHeap.size() > 0){
-            int currentNode = nodeMinHeap.popTop();
-            if (currentNode==endNode){
-                break;
-            }
-            for (const pair<int, double>& connectedNodeWeightPair : adjacencyList[currentNode]){
-                if (visitedNodes.count(connectedNodeWeightPair.first)){
-                    if (nodeMinHeap.itemPresent(connectedNodeWeightPair.first)){
-                        double newDistance = connectedNodeWeightPair.second + distances[currentNode];
-                        if (newDistance < distances[connectedNodeWeightPair.first]){
-                            distances[connectedNodeWeightPair.first] = newDistance;
-                            previousNodes[connectedNodeWeightPair.first] = currentNode;
-                            nodeMinHeap.reduceItem(connectedNodeWeightPair.first);
-                        }
-                    }
-                }
-                else{
-                    visitedNodes.insert(connectedNodeWeightPair.first);
-                    double newDistance = connectedNodeWeightPair.second;
-                    distances[connectedNodeWeightPair.first] = newDistance;
-                    previousNodes[connectedNodeWeightPair.first] = currentNode;
-                    nodeMinHeap.insertItem(connectedNodeWeightPair.first);
-                }
-            }
-        }
-        int currentNode = endNode;
-        vector<int> path;
-        while (currentNode!=startNode){
-            path.push_back(currentNode);
-            currentNode = previousNodes[currentNode];
-        }
-        path.push_back(startNode);
-        if (!reversedPath){
-            reverse(path.begin(), path.end());
-        }
-        return make_pair(distances[endNode], path);
-
+    double walkingTime(int startNode, int endNode){
+        double distance = haversineDistance(nodeLats[startNode], nodeLons[startNode], nodeLats[endNode], nodeLons[endNode]);
+        double slope = (nodeElevations[endNode]-nodeElevations[startNode])/distance;
+        double speed = 6*(exp(-3.5*abs(slope + 0.05))) / 3.6;
+        return distance/speed;
     }
 
     vector<int> reconstructDijkstraRoute(int endNode, vector<int>& prevNodes, bool reversedPath=true){
@@ -534,31 +588,8 @@ private:
         return result;
     }
 
-    pair<vector<double>, vector<int>> dijkstraResult(int startNode){
-        vector<double> distances(nodeCount, numeric_limits<int>::max());
-        vector<int> previousNodes(nodeCount, -1);
 
-        distances[startNode] = 0;
-        DijkstraHeap nodeMinHeap(nodeCount, [&distances](int x, int y){return distances[x] < distances[y];});
-
-        while (nodeMinHeap.size() > 0){
-            int currentNode = nodeMinHeap.popTop();
-            for (const pair<int, double>& connectedNodeWeightPair : adjacencyList[currentNode]){
-                if (nodeMinHeap.nodePresent(connectedNodeWeightPair.first)){
-                    double newDistance = connectedNodeWeightPair.second + distances[currentNode];
-                    if (newDistance < distances[connectedNodeWeightPair.first]){
-                        distances[connectedNodeWeightPair.first] = newDistance;
-                        previousNodes[connectedNodeWeightPair.first] = currentNode;
-                        nodeMinHeap.updateNode(connectedNodeWeightPair.first);
-                    }
-                }
-            }
-
-        }
-        return make_pair(distances, previousNodes);
-    }
-
-    LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x);}};
+    LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x, distanceAdjacencyList);}};
 
 public:
     MapGraphInstance(string nodeFilename="map_data/nodes.csv", string adjacencyListFilename="map_data/edges.csv",
@@ -589,20 +620,29 @@ public:
         nodeLatLons += ']';
 
         for (int i = 0; i < nodeCount; i++){
-            vector<pair<int,double>> edges;
+            distanceAdjacencyList.push_back(vector<Edge>());
+            timeAdjacencyList.push_back(vector<Edge>());
+            invertedTimeAdjacencyList.push_back(vector<Edge>());
+        }
+        for (int i = 0; i < nodeCount; i++){
             getline(edgeIn, line);
             vector<string> lineEntries = split(line, ',');
-            for (unsigned int j = 0; 2 * j + 1 < lineEntries.size(); j++){
-                edges.push_back(make_pair(stoi(lineEntries[2*j]), stod(lineEntries[2*j+1])));
+            for (unsigned int j = 0; 3 * j + 2 < lineEntries.size(); j++){
+                distanceAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+1])));
+                timeAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+2])));
+                invertedTimeAdjacencyList[stoi(lineEntries[3*j])].push_back(Edge(i, stod(lineEntries[3*j+2])));
             }
-
-            adjacencyList.push_back(edges);
         }
 
-        nodeElevations = "[";
+        nodeElevationString = "[";
         getline(elevationIn, line);
-        nodeElevations += line;
-        nodeElevations += ']';
+        nodeElevationString += line;
+        nodeElevationString += ']';
+
+        vector<string> lineEntries = split(line, ',');
+        for (string s : lineEntries){
+            nodeElevations.push_back(stod(s));
+        }
 
         computeRegionNodes();
     }
@@ -632,8 +672,19 @@ public:
             int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){//&& distances[node1] + distances[node2] < targetLength){
                 // Path is reversed by default - just flip inputs!
-                pair<double, vector<int>> secondaryAstar = aStarResult(node2, node1);
-                if ( abs(secondaryAstar.first + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
+                tuple<double, double, vector<int>> secondaryAstar = aStarResult(node2,
+                                                                                node1,
+                                                                                distanceAdjacencyList,
+                                                                                timeAdjacencyList,
+                                                                                [this](int node, int endNode){
+                    return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
+                    },
+                                                                                nodeLats,
+                                                                                nodeLons);
+                double distance = get<0>(secondaryAstar);
+                double subsidiaryDistance = get<1>(secondaryAstar);
+                vector<int> route = get<2>(secondaryAstar);
+                if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
                     // Valid cycle found
                     // Return distance and path
                     vector<int> pathA = reconstructDijkstraRoute(node1, prevNodes, false);
@@ -645,10 +696,10 @@ public:
                     // following makes sure no overlaps in cycles
                     pathA.pop_back();
                     pathC.pop_back();
-                    secondaryAstar.second.pop_back();
+                    route.pop_back();
 
                     string result = "[";
-                    result += to_string(secondaryAstar.first + distances[node1] + distances[node2]);
+                    result += to_string(distance + distances[node1] + distances[node2]);
                     result += ",[";
 
                     for (int x : pathA){
@@ -657,7 +708,7 @@ public:
                             duplicateCount++;
                         }
                     }
-                    for (int x : secondaryAstar.second){
+                    for (int x : route){
                         result += to_string(x) + ',';
                         if (!usedNodes.insert(x).second){
                             duplicateCount++;
@@ -674,7 +725,7 @@ public:
                     result.pop_back();
                     result += "]]";
 
-                    if ( ((double)duplicateCount)/(pathA.size() + secondaryAstar.second.size() + pathC.size()) < overlapTolerance){
+                    if ( ((double)duplicateCount)/(pathA.size() + route.size() + pathC.size()) < overlapTolerance){
                         return result;
                     }
                     overlapTolerance *= 1.1;
@@ -686,6 +737,44 @@ public:
 
         }
         return "[0,[]]";
+    }
+
+    string a_star(int startNode, int endNode, bool useTime){
+        tuple<double, double, vector<int>> completedAstar;
+        string result = "[";
+        if (useTime) {
+            completedAstar = aStarResult(startNode,
+                                         endNode,
+                                         timeAdjacencyList,
+                                         distanceAdjacencyList,
+                                         [this](int node, int endNode){
+                                             return walkingTime(node, endNode);
+                                         },
+                                        nodeLats,
+                                         nodeLons
+                                         );
+            // Output of distance, time is flipped in a star if time is seen as metric to be optimised
+            result += to_string(get<1>(completedAstar)) + "," + to_string(get<0>(completedAstar)) + ",[";
+        }
+        else{
+            completedAstar = aStarResult(startNode,
+                                         endNode,
+                                         distanceAdjacencyList,
+                                         timeAdjacencyList,
+                                         [this](int node, int endNode){
+                                             return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
+                                         },
+                                         nodeLats,
+                                         nodeLons
+                                         );
+            result += to_string(get<0>(completedAstar)) + "," + to_string(get<1>(completedAstar)) + ",[";
+        }
+        for (int node : get<2>(completedAstar)){
+            result += to_string(node) + ',';
+        }
+        result.pop_back();
+        result += "]]";
+        return result;
     }
 
     string map_dijkstra(int startNode){
@@ -752,7 +841,7 @@ public:
         return region_nodes;
     }
     string get_node_elevations(){
-        return nodeElevations;
+        return nodeElevationString;
     }
 };
 
@@ -778,6 +867,10 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("target_length"),
             py::arg("distance_tolerance")=0.05,
             py::arg("overlap_tolerance")=0.05,
-            py::arg("max_tries")=numeric_limits<int>::max());
+            py::arg("max_tries")=numeric_limits<int>::max())
+        .def("a_star", &MapGraphInstance::a_star,
+             py::arg("start_node"),
+             py::arg("end_node"),
+             py::arg("use_time"));
 
 }

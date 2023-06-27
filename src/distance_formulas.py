@@ -1,7 +1,18 @@
-from math import radians, sin, cos, asin
+from math import radians, sin, cos, asin, e
 
 EARTH_RADIUS = 6_371_000
 
+
+def walking_time(distance: float,
+                 elevation_gain: float) -> float:
+    """
+    Uses Tobler's hiking function to find walking distance between two nodes (presuming straight road between two)
+    https://en.wikipedia.org/wiki/Tobler%27s_hiking_function
+    """
+    slope = elevation_gain/distance
+    # Factor of 3.6 is for km/h -> m/s
+    speed = 6*(e**(-3.5*(abs(slope + 0.05)))) / 3.6
+    return distance / speed
 
 def haversine_node_distance(node1lat, node1lon, node2lat, node2lon) -> float:
     """
