@@ -473,7 +473,28 @@ pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Ed
     return make_pair(distances, previousNodes);
 }
 
-tuple<double, double, vector<int>> aStarResult(int startNode,
+
+struct aStarResultObject{
+    double distance;
+    double subsidiaryDistance;
+    vector<int> path;
+    vector<double> distancesAlongPath;
+    vector<double> subsidiaryDistancesAlongPath;
+    aStarResultObject(double distance,
+                      double subsidiaryDistance,
+                      vector<int> path,
+                      vector<double> distancesAlongPath,
+                      vector<double> subsidiaryDistancesAlongPath):
+                      distance(distance),
+                      subsidiaryDistance(subsidiaryDistance),
+                      path(path),
+                      distancesAlongPath(distancesAlongPath),
+                      subsidiaryDistancesAlongPath(subsidiaryDistancesAlongPath)
+                      {}
+  aStarResultObject(){}
+};
+
+aStarResultObject aStarResult(int startNode,
                                                int endNode,
                                                vector<vector<Edge>>& adjacencyList,
                                                vector<vector<Edge>>& subsidiaryAdjacencyList,
@@ -529,15 +550,24 @@ tuple<double, double, vector<int>> aStarResult(int startNode,
     }
     int currentNode = endNode;
     vector<int> path;
+    vector<double> distancesAlongPath;
+    vector<double> subsidiaryDistancesAlongPath;
     while (currentNode!=startNode){
         path.push_back(currentNode);
+        distancesAlongPath.push_back(distances[currentNode]);
+        subsidiaryDistancesAlongPath.push_back(subsidiaryDistances[currentNode]);
         currentNode = previousNodes[currentNode];
     }
     path.push_back(startNode);
+    distancesAlongPath.push_back(0);
+    subsidiaryDistancesAlongPath.push_back(0);
     if (!reversedPath){
         reverse(path.begin(), path.end());
+        reverse(distancesAlongPath.begin(), distancesAlongPath.end());
+        reverse(subsidiaryDistancesAlongPath.begin(), subsidiaryDistancesAlongPath.end());
+
     }
-    return make_tuple(distances[endNode], subsidiaryDistances[endNode],path);
+    return aStarResultObject(distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath);
 
 }
 
@@ -672,7 +702,7 @@ public:
             int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){//&& distances[node1] + distances[node2] < targetLength){
                 // Path is reversed by default - just flip inputs!
-                tuple<double, double, vector<int>> secondaryAstar = aStarResult(node2,
+                aStarResultObject secondaryAstar = aStarResult(node2,
                                                                                 node1,
                                                                                 distanceAdjacencyList,
                                                                                 timeAdjacencyList,
@@ -681,9 +711,9 @@ public:
                     },
                                                                                 nodeLats,
                                                                                 nodeLons);
-                double distance = get<0>(secondaryAstar);
-                double subsidiaryDistance = get<1>(secondaryAstar);
-                vector<int> route = get<2>(secondaryAstar);
+                double distance = secondaryAstar.distance;
+                double subsidiaryDistance = secondaryAstar.subsidiaryDistance;
+                vector<int> route = secondaryAstar.path;
                 if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
                     // Valid cycle found
                     // Return distance and path
@@ -740,7 +770,7 @@ public:
     }
 
     string a_star(int startNode, int endNode, bool useTime){
-        tuple<double, double, vector<int>> completedAstar;
+        aStarResultObject completedAstar;
         string result = "[";
         if (useTime) {
             completedAstar = aStarResult(startNode,
@@ -754,7 +784,7 @@ public:
                                          nodeLons
                                          );
             // Output of distance, time is flipped in a star if time is seen as metric to be optimised
-            result += to_string(get<1>(completedAstar)) + "," + to_string(get<0>(completedAstar)) + ",[";
+            result += to_string(completedAstar.subsidiaryDistance) + "," + to_string(completedAstar.distance) + ",[";
         }
         else{
             completedAstar = aStarResult(startNode,
@@ -767,13 +797,28 @@ public:
                                          nodeLats,
                                          nodeLons
                                          );
-            result += to_string(get<0>(completedAstar)) + "," + to_string(get<1>(completedAstar)) + ",[";
+            result += to_string(completedAstar.distance) + "," + to_string(completedAstar.subsidiaryDistance) + ",[";
         }
-        for (int node : get<2>(completedAstar)){
+        for (int node : completedAstar.path){
             result += to_string(node) + ',';
         }
         result.pop_back();
+        result += "],[";
+
+        // Record all distances in route for purposes of elevation graph
+        if (useTime){
+            for (double node_distance : completedAstar.subsidiaryDistancesAlongPath){
+                result += to_string(node_distance) + ',';
+            }
+        }
+        else{
+            for (double node_distance : completedAstar.distancesAlongPath){
+                result += to_string(node_distance) + ',';
+            }
+        }
+        result.pop_back();
         result += "]]";
+
         return result;
     }
 

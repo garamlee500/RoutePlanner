@@ -42,6 +42,16 @@ def get_cycle(node_index, length):
     return serverMapGraphInstance.generate_cycle(int(node_index), float(length))
 
 
+@app.get('/api/get/a_star_distance/<start_node_index>/<end_node_index>')
+def get_a_star_distance(start_node_index, end_node_index):
+    return serverMapGraphInstance.a_star(int(start_node_index), int(end_node_index), False)
+
+
+@app.get('/api/get/a_star_time/<start_node_index>/<end_node_index>')
+def a_star_time(start_node_index, end_node_index):
+    return serverMapGraphInstance.a_star(int(start_node_index), int(end_node_index), True)
+
+
 def reload_map_graph():
     global serverMapGraphInstance
     serverMapGraphInstance = MapGraphInstance()

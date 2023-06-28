@@ -210,7 +210,8 @@ async function suggestRoute(useEndNode = false) {
     buttonElement.classList.add("redOnlyButton");
     // Ask for a suggested cycle and parse to get lat lons
     let suggestedCycleObject;
-    if (document.getElementById("include_destination_in_cycle_checkbox").checked === true) {
+    if (false){
+    //if (document.getElementById("include_destination_in_cycle_checkbox").checked === true) {
         //suggestedCycle = await fetch(`api/get/fixed_cycle/${startNode}/${endNode}/${walkSuggestionDistance * 1000}`);
         try {
             suggestedCycleObject = generateCycleWithDestination(walkSuggestionDistance * 1000);
@@ -266,19 +267,17 @@ function displayConvexHull() {
     }
 }
 
-// Following functions are needed when markers move
-// But too slow to run while dragging - run when dragging ends
-async function fixEnd() {
-    await changeEnd();
+
+async function fixEnd(){
     document.getElementById('destination_search').value =
         await searchReverseGeocode(endMarker.getLatLng());
-    dijkstraFromEnd = await dijkstraDetails(endNode);
+    await applyRoute();
 }
 async function fixStart() {
-    await changeStart();
-    dijkstraFromStart = await dijkstraDetails(startNode);
     document.getElementById('start_search').value =
         await searchReverseGeocode(startMarker.getLatLng());
+    await applyRoute();
+    dijkstraFromStart = await dijkstraDetails(startNode);
     await generateIsochrone();
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
     document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
@@ -356,7 +355,7 @@ document.getElementById('destination_search').addEventListener("keydown", async 
             endMarker.setLatLng([geo_code_data[0],
                 geo_code_data[1]
             ]);
-            await fixEnd();
+            await applyRoute();
         }
     }
 });
@@ -529,31 +528,53 @@ function connectToEndNode() {
 }
 
 
-async function changeStart(event) {
+function secondsToString(seconds){
+    if (seconds < 60){
+        return `${seconds} seconds`;
+    }
+    else if (seconds < 3600){
+        return `${Math.round(seconds/60)} minutes`
+    }
+    else{
+        return `${Math.round(seconds/3600)} hours, ${Math.round((seconds%3600)/60)} minutes`
+    }
+}
+
+async function applyRoute(event) {
     startNode = closestNode(startMarker.getLatLng());
+    endNode = closestNode(endMarker.getLatLng());
+
     // Redraw route from start
     let path = [];
     let currentNode = startNode;
 
+
+    let a_star_data = await(await fetch(`api/get/a_star_distance/${startNode}/${endNode}`)).json();
+
     currentChartData = [];
 
-    while (currentNode !== -1) {
-        path.push(nodeLatLons[currentNode])
-        currentChartData.push({x: dijkstraFromEnd[0][startNode] - dijkstraFromEnd[0][currentNode], y: nodeElevations[currentNode]})
-        currentNode = dijkstraFromEnd[1][currentNode]
+
+    for (let i = 0; i < a_star_data[2].length; i++){
+        path.push(nodeLatLons[a_star_data[2][i]]);
+        currentChartData.push({x: a_star_data[3][i],
+            y: nodeElevations[a_star_data[2][i]]})
     }
 
 
     if (routeLine != null) {
         routeLine.setLatLngs(path);
-        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
+        routeLine.setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
+            `Time: ${secondsToString(a_star_data[1])}` +
+            "<canvas id=\"elevationGraph\"></canvas>");
     }
     else{
         routeLine = L.polyline(path, {
             fillOpacity: 1,
             color: 'green'
     
-        }).bindPopup(`Distance: ${Math.round(dijkstraFromEnd[0][startNode]) / 1000}km<canvas id="elevationGraph"></canvas>`, {
+        }).bindPopup(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
+            `Time: ${secondsToString(a_star_data[1])}` +
+            "<canvas id=\"elevationGraph\"></canvas>", {
             autoPan: false
         }).on('click', showChart);
 
@@ -567,6 +588,7 @@ async function changeStart(event) {
     }
 
     connectToStartNode();
+    connectToEndNode();
 
 
 }
@@ -620,48 +642,6 @@ function showChart(){
 
         }
     );
-}
-
-async function changeEnd(event) {
-    endNode = closestNode(endMarker.getLatLng());
-    // Redraw route from end
-
-    let path = [];
-    let currentNode = endNode;
-
-    currentChartData = [];
-    while (currentNode !== -1) {
-        path.push(nodeLatLons[currentNode])
-        currentChartData.push({x: dijkstraFromStart[0][currentNode], y: nodeElevations[currentNode]})
-        currentNode = dijkstraFromStart[1][currentNode]
-    }
-
-
-    if (routeLine != null) {
-        routeLine.setLatLngs(path);
-        routeLine.setPopupContent(`Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km<canvas id="elevationGraph"></canvas>`);
-    }
-    else{
-        routeLine = L.polyline(path, {
-            fillOpacity: 1,
-            color: 'green'
-    
-        }).bindPopup(`<p style="font: 'Noto Sans'">Distance: ${Math.round(dijkstraFromStart[0][endNode]) / 1000}km</p><canvas id="elevationGraph"></canvas>`, {
-            autoPan: false
-        }).on('click', showChart);
-
-    }
-
-    // Don't draw route if not needed - but get everything else ready for when it is checked
-    if (document.getElementById('destination_show_checkbox').checked === true) {
-        routeLine.addTo(map);
-        routeLine.openPopup();
-        showChart();
-
-    }
-
-    
-    connectToEndNode();
 }
 
 
@@ -812,8 +792,7 @@ async function initialise() {
     startNode = closestNode(startMarker.getLatLng());
     dijkstraFromStart = await dijkstraDetails(startNode)
     dijkstraFromEnd = await dijkstraDetails(endNode);
-    changeStart();
-    connectToEndNode();
+    applyRoute();
     await generateIsochrone();
 
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
@@ -830,10 +809,17 @@ async function initialise() {
     document.getElementById("start_search").value = await searchReverseGeocode(startMarker.getLatLng());
 
 
-    startMarker.on('drag', changeStart)
-    endMarker.on('drag', changeEnd)
+    startMarker.on('drag', function(){
+        startNode = closestNode(startMarker.getLatLng());
+        connectToStartNode();});
+
+    endMarker.on('drag', function(){
+        endNode = closestNode(endMarker.getLatLng());
+        connectToEndNode();
+    });
+
     // Ensure finalised route is correct once dragging ends
-    startMarker.on('dragend', fixStart)
+    startMarker.on('dragend', fixStart);
     endMarker.on('dragend', fixEnd);
 }
 
