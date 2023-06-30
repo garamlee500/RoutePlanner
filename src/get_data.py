@@ -63,30 +63,6 @@ def search_relation(search_term,
 
     return relations
 
-def _add_edges_from_prev_graph(original_node_count: int,
-                               adjacency_list: List[List[Tuple[int, float]]],
-                               old_adjacency_list: List[List[Tuple[int, float]]]):
-    """
-    Adds edegs that were in the old adjacency list to the new graph, if nodes were completely removed
-    """
-    removed_node_indexes = []
-    for i in range(original_node_count):
-        # Try and preserve edges of removed nodes, but not removed edges of present nodes
-        if len(adjacency_list[i]) == 0:
-            removed_node_indexes.append(i)
-
-    for removed_node in removed_node_indexes:
-        for edge in old_adjacency_list[removed_node]:
-            # Check if any edge in the current adjacency list has a matching index
-            if not any(test_edge[0] == edge[0] for test_edge in adjacency_list[removed_node]):
-                adjacency_list[removed_node].append(edge)
-
-            # Do the same for the other node of the edge
-            if not any(test_edge[0] == removed_node for test_edge in adjacency_list[edge[0]]):
-                # Reconstruct edge to go other way
-                adjacency_list[edge[0]].append((removed_node, edge[1]))
-
-
 def _process_ways(data: Dict,
                   present_nodes: Set[int],
                   node_indexes: Dict[int, int],
@@ -120,7 +96,6 @@ def _download_edges(edge_query: str,
                     elevation_list_filename="map_data/elevation.csv",
                     overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                     aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
-                    incremental=False,
                     verbose=True):
     # Make request to overpass for data - note query has been prebuilt
     response = requests.get(overpass_interpreter_url, params={'data': edge_query})
@@ -146,16 +121,7 @@ def _download_edges(edge_query: str,
     duplicate_nodes = set()
     original_node_count = 0
     old_adjacency_list = []
-
-    if incremental:
-        nodes = load_node_list(node_filename, include_id=True)
-        original_node_count = len(nodes)
-        old_adjacency_list = load_adjacency_list(adjacency_list_filename)
-        for i, node in enumerate(nodes):
-            node_indexes[node[0]] = i
-            node_lat_lng_indexes[(node[1], node[2])] = i
-    else:
-        nodes = []
+    nodes = []
 
     for item in data:
         if item["type"] == "node" and item['id'] in present_nodes and item['id'] not in node_indexes:
@@ -179,9 +145,6 @@ def _download_edges(edge_query: str,
 
     # Iterate separately to ensure all nodes have been detected before processing ways
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, set(), node_distance_formula)
-
-    if incremental:
-        _add_edges_from_prev_graph(original_node_count, adjacency_list, old_adjacency_list)
 
 
     if verbose:
@@ -225,15 +188,7 @@ def _download_edges(edge_query: str,
     node_lat_lng_indexes = {}
     original_node_count = 0
     old_adjacency_list = []
-    if incremental:
-        nodes = load_node_list(node_filename, include_id=True)
-        original_node_count = len(nodes)
-        old_adjacency_list = load_adjacency_list(adjacency_list_filename)
-        for i, node in enumerate(nodes):
-            node_indexes[node[0]] = i
-            node_lat_lng_indexes[(node[1], node[2])] = i
-    else:
-        nodes = []
+    nodes = []
 
     for item in data:
         if item["type"] == "node":
@@ -252,9 +207,6 @@ def _download_edges(edge_query: str,
     adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
 
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, dead_nodes, node_distance_formula)
-
-    if incremental:
-        _add_edges_from_prev_graph(original_node_count, adjacency_list, old_adjacency_list)
 
     if verbose:
         print("Regenerated graph")
@@ -292,7 +244,6 @@ def download_edges_in_relation(area_relation_id,
                                elevation_list_filename="map_data/elevation.csv",
                                overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                                aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
-                               incremental=False,
                                verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -309,7 +260,7 @@ def download_edges_in_relation(area_relation_id,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, aster_gdem_api_endpoint, incremental, verbose)
+                    overpass_interpreter_url, aster_gdem_api_endpoint, verbose)
 
 
 def download_edges_around_point(node_lat: float,
@@ -322,7 +273,6 @@ def download_edges_around_point(node_lat: float,
                                 elevation_list_filename="map_data/elevation.csv",
                                 overpass_interpreter_url="https://overpass-api.de/api/interpreter",
                                 aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
-                                incremental=False,
                                 verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -335,4 +285,4 @@ def download_edges_around_point(node_lat: float,
                  "(._;>;);out;"
 
     _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, aster_gdem_api_endpoint, incremental, verbose)
+                    overpass_interpreter_url, aster_gdem_api_endpoint, verbose)

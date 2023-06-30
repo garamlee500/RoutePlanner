@@ -10,22 +10,20 @@ import exceptions
 current_settings = Settings()
 
 
-def redownload_all_data(incremental=False):
+def redownload_all_data():
     try:
 
         if current_settings["RELATION_REGION_MODE"]:
             download_edges_in_relation(current_settings["AREA_RELATION_ID"],
                                        overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
-                                       aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"],
-                                       incremental=incremental)
+                                       aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"])
 
         else:
             download_edges_around_point(current_settings["LAT_CENTRE"],
                                         current_settings["LON_CENTRE"],
                                         current_settings["AREA_RADIUS"],
                                         overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
-                                        aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"],
-                                        incremental=incremental)
+                                        aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"])
     except ConnectionError:
         print("ERROR: Unable to connect to the Overpass API")
         print("Try checking your internet connection, or changing the Overpass API instance used")
@@ -140,7 +138,6 @@ def set_area_by_point_radius():
 
 main_menu: Menu = Menu(start_text="Welcome to server configuration")
 main_menu.add_option(("Redownload all data", redownload_all_data))
-main_menu.add_option(("Update data - use if region has not changed", lambda: redownload_all_data(True)))
 main_menu.add_option(("Run server", run_server))
 
 area_setting_menu: Menu = Menu(start_text=lambda: "Map target area selection\n"+current_region_string())
