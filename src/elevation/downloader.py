@@ -55,7 +55,7 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]],
                             aster_gdem_api_endpoint: str = "https://gdemdl.aster.jspacesystems.or.jp/download/") -> \
 List[float]:
 
-    # Moved import into only submodule that requires it due to large loading times 
+    # Moved import into only submodule that requires it due to large loading times
     # on start up of main.py despite not needing it most of the time
     import rasterio
 

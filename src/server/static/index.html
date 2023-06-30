@@ -57,12 +57,16 @@
                       >
                <label for="partition1000">1km</label>
            </div>
-           <h1 style="grid-column: 2; grid-row: 8">Statistics</h1>
+
+           <p style="grid-column: 3; grid-row: 8;">Classify shortest paths by time (untick to sort by distance)</p>
+           <input type="checkbox" style="grid-column: 4; grid-row: 8;" id="findShortestPathsByTimeCheckBox"/>
+
+           <h1 style="grid-column: 2; grid-row: 9">Statistics</h1>
 
 
-           <p id="statsStartLocation" style="grid-column: 3 / span 2; grid-row: 9;"></p>
-           <p id="statsDestinationLocation" style="grid-column: 3 / span 2; grid-row: 10;"></p>
-           <p id="statsGpsAccuracy" style="grid-column: 3 / span 2; grid-row: 11;"></p>
+           <p id="statsStartLocation" style="grid-column: 3 / span 2; grid-row: 10;"></p>
+           <p id="statsDestinationLocation" style="grid-column: 3 / span 2; grid-row: 11;"></p>
+           <p id="statsGpsAccuracy" style="grid-column: 3 / span 2; grid-row: 12;"></p>
 <!--       Set settings to default then refresh settings>-->
            <button class="textButton" id="default_settings" style="grid-row: 14; grid-column: 3/span 2;"
            onclick="settings={...defaultSettings};displaySettings();">

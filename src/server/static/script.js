@@ -26,7 +26,8 @@ let settings;
 let defaultSettings = {
     partitionDistance: 100,
     isochroneOpacity: 0.5,
-    isochroneDelay: 0
+    isochroneDelay: 0,
+    findShortestPathsByTime: false
 };
 
 function centreMap() {
@@ -44,6 +45,7 @@ async function hideSettings() {
     document.getElementById('settings').style.display = 'none';
 
     settings.isochroneDelay = parseInt(document.getElementById('isochroneDelay').value)
+    settings.findShortestPathsByTime = document.getElementById('findShortestPathsByTimeCheckBox').checked;
 
 
     if (settings.partitionDistance !== parseInt(document.querySelector('input[name="partitionDistance"]:checked').value)) {
@@ -74,13 +76,14 @@ function displaySettings() {
     //map.dragging.disable()
     //map.doubleClickZoom.disable()
     //map.scrollWheelZoom.disable()
-    document.getElementById('isochroneDelay').value = settings.isochroneDelay
-    document.getElementById('regionOpacity').value = settings.isochroneOpacity
+    document.getElementById('isochroneDelay').value = settings.isochroneDelay;
+    document.getElementById('regionOpacity').value = settings.isochroneOpacity;
+    document.getElementById('findShortestPathsByTimeCheckBox').checked = settings.findShortestPathsByTime;
 
 
     document.getElementById('clickBlocker').style.width = '100%';
-    document.getElementById('map').classList.add('settingsHide')
-    document.getElementById('main_controls').classList.add('settingsHide')
+    document.getElementById('map').classList.add('settingsHide');
+    document.getElementById('main_controls').classList.add('settingsHide');
     document.getElementById('settings').style.display = 'grid';
 
     document.getElementById('partition' + settings.partitionDistance.toString()).checked = true;
@@ -549,7 +552,13 @@ async function applyRoute(event) {
     let currentNode = startNode;
 
 
-    let a_star_data = await(await fetch(`api/get/a_star_distance/${startNode}/${endNode}`)).json();
+    let a_star_data;
+    if (settings.findShortestPathsByTime){
+        a_star_data = await(await fetch(`api/get/a_star_time/${startNode}/${endNode}`)).json();
+    }
+    else{
+        a_star_data = await(await fetch(`api/get/a_star_distance/${startNode}/${endNode}`)).json();
+    }
 
     currentChartData = [];
 
