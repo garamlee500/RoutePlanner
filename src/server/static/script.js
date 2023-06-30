@@ -1,9 +1,6 @@
-let startMarker;
 let startNode;
-let endMarker;
 let endNode;
 let dijkstraFromStart;
-let dijkstraFromEnd;
 let nodeLatLons;
 let nodeElevations;
 let routeLine = null;
@@ -22,6 +19,13 @@ let gpsAccuracy = null;
 let currentChart = null;
 let currentChartData;
 
+
+let routeMarkers = [];
+let routeNodes = [];
+let routeNodeMarkers = [];
+let routeLines = [];
+
+
 let settings;
 let defaultSettings = {
     partitionDistance: 100,
@@ -32,8 +36,8 @@ let defaultSettings = {
 
 function centreMap() {
     map.fitBounds([
-        startMarker.getLatLng(),
-        endMarker.getLatLng()
+        routeMarkers[0].getLatLng(),
+        routeMarkers[routeMarkers.length-1].getLatLng()
     ]);
 
 }
@@ -88,8 +92,8 @@ function displaySettings() {
 
     document.getElementById('partition' + settings.partitionDistance.toString()).checked = true;
 
-    document.getElementById('statsStartLocation').textContent = `Start Location: Latitude: ${startMarker.getLatLng().lat}, Longitude: ${startMarker.getLatLng().lng}`
-    document.getElementById('statsDestinationLocation').textContent = `Destination Location: Latitude: ${endMarker.getLatLng().lat}, Longitude: ${endMarker.getLatLng().lng}`
+    document.getElementById('statsStartLocation').textContent = `Start Location: Latitude: ${routeMarkers[0].getLatLng().lat}, Longitude: ${routeMarkers[0].getLatLng().lng}`
+    document.getElementById('statsDestinationLocation').textContent = `Destination Location: Latitude: ${routeMarkers[routeMarkers.length-1].getLatLng().lat}, Longitude: ${routeMarkers[routeMarkers.length-1].getLatLng().lng}`
     if (gpsAccuracy != null) {
         document.getElementById('statsGpsAccuracy').textContent = `Gps Accuracy (95% chance of being within this distance): ${Math.round(gpsAccuracy*100)/100}m`
     }
@@ -110,7 +114,7 @@ function getStartGPSLocation() {
 }
 
 function setStartGPSLocation(position) {
-    startMarker.setLatLng([position.coords.latitude,
+    routeMarkers[0].setLatLng([position.coords.latitude,
         position.coords.longitude
     ]);
 
@@ -273,12 +277,12 @@ function displayConvexHull() {
 
 async function fixEnd(){
     document.getElementById('destination_search').value =
-        await searchReverseGeocode(endMarker.getLatLng());
+        await searchReverseGeocode(routeMarkers[routeMarkers.length-1].getLatLng());
     await applyRoute();
 }
 async function fixStart() {
     document.getElementById('start_search').value =
-        await searchReverseGeocode(startMarker.getLatLng());
+        await searchReverseGeocode(routeMarkers[0].getLatLng());
     await applyRoute();
     dijkstraFromStart = await dijkstraDetails(startNode);
     await generateIsochrone();
@@ -355,7 +359,7 @@ document.getElementById('destination_search').addEventListener("keydown", async 
         } else {
             e.target.value = geo_code_data[2];
             // Need to generate function here to prevent code repetition
-            endMarker.setLatLng([geo_code_data[0],
+            routeMarkers[routeMarkers.length-1].setLatLng([geo_code_data[0],
                 geo_code_data[1]
             ]);
             await applyRoute();
@@ -370,7 +374,7 @@ document.getElementById('start_search').addEventListener("keydown", async functi
         } else {
             e.target.value = geo_code_data[2];
             // Need to generate function here to prevent code repetition
-            startMarker.setLatLng([geo_code_data[0],
+            routeMarkers[0].setLatLng([geo_code_data[0],
                 geo_code_data[1]
             ]);
             await fixStart();
@@ -457,7 +461,7 @@ function connectToStartNode() {
     }
 
     startNodeConnector = L.polyline(
-        [startMarker.getLatLng(),
+        [routeMarkers[0].getLatLng(),
             [nodeLatLons[startNode][0],
                 nodeLatLons[startNode][1]
             ]
@@ -497,7 +501,7 @@ function connectToEndNode() {
     }
 
     endNodeConnector = L.polyline(
-        [endMarker.getLatLng(),
+        [routeMarkers[routeMarkers.length-1].getLatLng(),
             [nodeLatLons[endNode][0],
                 nodeLatLons[endNode][1]
             ]
@@ -544,8 +548,8 @@ function secondsToString(seconds){
 }
 
 async function applyRoute(event) {
-    startNode = closestNode(startMarker.getLatLng());
-    endNode = closestNode(endMarker.getLatLng());
+    startNode = closestNode(routeMarkers[0].getLatLng());
+    endNode = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
 
     // Redraw route from start
     let path = [];
@@ -780,26 +784,27 @@ async function initialise() {
 
 
     map = map.fitBounds(regionPolygon.getBounds());
-    startMarker = L.marker(regionPolygon.getBounds().getCenter(), {
+    
+    routeMarkers.push(L.marker(regionPolygon.getBounds().getCenter(), {
         draggable: true,
         autoPan: true,
         title: "Start"
-    }).addTo(map)
+    }).addTo(map));
 
     endNode = 0;
 
 
-    endMarker = L.marker(nodeLatLons[0], {
+    routeMarkers.push(L.marker(nodeLatLons[0], {
         draggable: true,
         autoPan: true,
         title: "Destination"
-    }).addTo(map)
+    }).addTo(map));
 
-    endMarker._icon.classList.add("redMarker");
+    routeMarkers[routeMarkers.length-1]._icon.classList.add("redMarker");
 
     // Get all dijkstra information before setting up
-    startNode = closestNode(startMarker.getLatLng());
-    dijkstraFromStart = await dijkstraDetails(startNode)
+    routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
+    dijkstraFromStart = await dijkstraDetails(routeNodes[0])
     dijkstraFromEnd = await dijkstraDetails(endNode);
     applyRoute();
     await generateIsochrone();
@@ -814,22 +819,22 @@ async function initialise() {
 
 
 
-    document.getElementById("destination_search").value = await searchReverseGeocode(endMarker.getLatLng());
-    document.getElementById("start_search").value = await searchReverseGeocode(startMarker.getLatLng());
+    document.getElementById("destination_search").value = await searchReverseGeocode(routeMarkers[routeMarkers.length-1].getLatLng());
+    document.getElementById("start_search").value = await searchReverseGeocode(routeMarkers[0].getLatLng());
 
 
-    startMarker.on('drag', function(){
-        startNode = closestNode(startMarker.getLatLng());
+    routeMarkers[0].on('drag', function(){
+        startNode = closestNode(routeMarkers[0].getLatLng());
         connectToStartNode();});
 
-    endMarker.on('drag', function(){
-        endNode = closestNode(endMarker.getLatLng());
+        routeMarkers[routeMarkers.length-1].on('drag', function(){
+        endNode = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
         connectToEndNode();
     });
 
     // Ensure finalised route is correct once dragging ends
-    startMarker.on('dragend', fixStart);
-    endMarker.on('dragend', fixEnd);
+    routeMarkers[0].on('dragend', fixStart);
+    routeMarkers[routeMarkers.length-1].on('dragend', fixEnd);
 }
 
 initialise();
