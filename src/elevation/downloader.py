@@ -4,7 +4,6 @@ Automatically downloads and parses elevation data for a given set of nodes
 
 from typing import List, Tuple, Set
 from math import floor, ceil
-import rasterio
 import zipfile
 import requests
 from io import BytesIO
@@ -55,6 +54,12 @@ def _generate_zip_filename_for_tile(lat_lon: Tuple[int, int]):
 def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]],
                             aster_gdem_api_endpoint: str = "https://gdemdl.aster.jspacesystems.or.jp/download/") -> \
 List[float]:
+
+    # Moved import into only submodule that requires it due to large loading times 
+    # on start up of main.py despite not needing it most of the time
+    import rasterio
+
+
     required_tiles: List[Tuple[int, int]] = []
     tile_data = []
 
@@ -128,7 +133,7 @@ List[float]:
         # Additionally interpolation is mainly to smooth out points rather than to make accurate predictions
         # This prevents 'vertical wall' edges which are really short but have huge elevation gain
         # with a slope of approximately 5-6: this really messes with Tobler's hiking function and creates an
-        # untraversable edge due to traversal time measured in hours/days
+        # untraversable edge leading to traversal time measured in hours/days
         # The other alternative would be to just set some min speed to Tobler's hiking function, but this would
         # break the convexity of the inverse of Tobler's hiking function, which would mean a star would no longer be
         # provable optimal (although I doubt the effect would be serious)
