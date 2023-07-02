@@ -21,7 +21,8 @@ let routeMarkers = [];
 let routeNodes = [];
 
 // i'th route line connects i'th node to i+1'th node
-let routeLines = [];
+let routeNodeLatLons = [];
+let routeLine;
 
 
 let settings;
@@ -325,11 +326,12 @@ document.getElementById('destination_show_checkbox').addEventListener(
     'change',
     (event) => {
         if (event.target.checked === true) {
-            routeLines.forEach(routeLine => routeLine.addTo(map));
-            routeLines[0].openPopup();
+            routeLine.addTo(map);
+            routeLine.openPopup();
             showChart();
         } else {
-            routeLines.forEach(routeLine => routeLine.remove(map));
+            routeLine.addTo(map);
+
         }
     }
 )
@@ -551,21 +553,23 @@ function secondsToString(seconds){
     }
 }
 
-async function applyRoute(event) {
-    routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
-    routeNodes[routeNodes.length-1] = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
+async function applyRoute(routeLineindex) {
+    // Connects node at routeLineIndex to node at routeLineIndex + 1
+
+    routeNodes[routeLineIndex] = closestNode(routeMarkers[routeLineIndex].getLatLng());
+    routeNodes[routeLineIndex+1] = closestNode(routeMarkers[routeLineIndex+1].getLatLng());
 
     // Redraw route from start
     let path = [];
-    let currentNode = routeNodes[0];
+    let currentNode = routeNodes[routeLineindex];
 
 
     let a_star_data;
     if (settings.findShortestPathsByTime){
-        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[0]}/${routeNodes[routeNodes.length-1]}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[routeLineindex]}/${routeNodes[routeLineindex+1]}`)).json();
     }
     else{
-        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[0]}/${routeNodes[routeNodes.length-1]}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[routeLineindex]}/${routeNodes[routeLineindex+1]}`)).json();
     }
 
     currentChartData = [];
@@ -578,14 +582,14 @@ async function applyRoute(event) {
     }
 
 
-    if (routeLines[0] != null) {
-        routeLines[0].setLatLngs(path);
-        routeLines[0].setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
+    if (routeLine != null) {
+        routeLine.setLatLngs(path);
+        routeLine.setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
             `Time: ${secondsToString(a_star_data[1])}` +
             "<canvas id=\"elevationGraph\"></canvas>");
     }
     else{
-        routeLines[0] = L.polyline(path, {
+        routeLine = L.polyline(path, {
             fillOpacity: 1,
             color: 'green'
     
@@ -599,8 +603,8 @@ async function applyRoute(event) {
 
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
-        routeLines[0].addTo(map);
-        routeLines[0].openPopup();
+        routeLine.addTo(map);
+        routeLine.openPopup();
         showChart();
     }
 
