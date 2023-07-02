@@ -3,7 +3,6 @@ let endNode;
 let dijkstraFromStart;
 let nodeLatLons;
 let nodeElevations;
-let routeLine = null;
 let suggestedRoutePolygon = null;
 // used to connect user's markers to nodes used in calculations
 let startNodeMarker;
@@ -328,11 +327,11 @@ document.getElementById('destination_show_checkbox').addEventListener(
     'change',
     (event) => {
         if (event.target.checked === true) {
-            routeLine.addTo(map);
-            routeLine.openPopup();
+            routeLines.forEach(routeLine => routeLine.addTo(map));
+            routeLines[0].openPopup();
             showChart();
         } else {
-            routeLine.remove(map);
+            routeLines.forEach(routeLine => routeLine.remove(map));
         }
     }
 )
@@ -581,14 +580,14 @@ async function applyRoute(event) {
     }
 
 
-    if (routeLine != null) {
-        routeLine.setLatLngs(path);
-        routeLine.setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
+    if (routeLines[0] != null) {
+        routeLines[0].setLatLngs(path);
+        routeLines[0].setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
             `Time: ${secondsToString(a_star_data[1])}` +
             "<canvas id=\"elevationGraph\"></canvas>");
     }
     else{
-        routeLine = L.polyline(path, {
+        routeLines[0] = L.polyline(path, {
             fillOpacity: 1,
             color: 'green'
     
@@ -602,8 +601,8 @@ async function applyRoute(event) {
 
     // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
-        routeLine.addTo(map);
-        routeLine.openPopup();
+        routeLines[0].addTo(map);
+        routeLines[0].openPopup();
         showChart();
     }
 
