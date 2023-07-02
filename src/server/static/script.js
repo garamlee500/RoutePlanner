@@ -1,5 +1,3 @@
-let startNode;
-let endNode;
 let dijkstraFromStart;
 let nodeLatLons;
 let nodeElevations;
@@ -135,8 +133,8 @@ function generateCycleWithDestination(targetLength,
     // and no need to convert to json string when sending data
     let possibleNodes = [];
     for (let node = 0; node < nodeLatLons.length; node++) {
-        if (dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] > targetLength * 0.75 &&
-            dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] < targetLength * 1.5) {
+        if (dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] > targetLength * 0.75 &&
+            dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] < targetLength * 1.5) {
             possibleNodes.push(node);
         }
     }
@@ -145,7 +143,7 @@ function generateCycleWithDestination(targetLength,
     }
     for (let i = 0; i < maxTries; i++) {
         let node = possibleNodes[Math.floor(Math.random() * possibleNodes.length)];
-        if (Math.abs(dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode] - targetLength) / targetLength < distanceTolerance) {
+        if (Math.abs(dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] - targetLength) / targetLength < distanceTolerance) {
             // Valid cycle found
             // Return distance and path
 
@@ -156,7 +154,7 @@ function generateCycleWithDestination(targetLength,
 
             let currentPathNode = node;
             // start -> node excluding start
-            while (currentPathNode !== startNode) {
+            while (currentPathNode !== routeNodes[0]) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromStart[1][currentPathNode];
                 if (usedNodes.has(currentPathNode)) {
@@ -172,7 +170,7 @@ function generateCycleWithDestination(targetLength,
             totalPath.pop();
             // node -> endNode excluding endNode
             currentPathNode = node;
-            while (currentPathNode !== endNode) {
+            while (currentPathNode !== routeNodes[routeNodes.length-1]) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromEnd[1][currentPathNode];
                 if (usedNodes.has(currentPathNode)) {
@@ -183,8 +181,8 @@ function generateCycleWithDestination(targetLength,
             }
 
             // endNode -> startNode excluding startNode
-            currentPathNode = endNode;
-            while (currentPathNode !== startNode) {
+            currentPathNode = routeNodes[routeNodes.length-1];
+            while (currentPathNode !== routeNodes[0]) {
                 totalPath.push(currentPathNode);
                 currentPathNode = dijkstraFromStart[1][currentPathNode];
                 if (usedNodes.has(currentPathNode)) {
@@ -194,10 +192,10 @@ function generateCycleWithDestination(targetLength,
                 }
             }
             // Add missing entry of startNode
-            totalPath.push(startNode);
+            totalPath.push(routeNodes[0]);
 
             if (duplicateCount / totalPath.length < overlapTolerance) {
-                return [dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][endNode],
+                return [dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]],
                     totalPath
                 ];
             }
@@ -227,7 +225,7 @@ async function suggestRoute(useEndNode = false) {
             suggestedCycleObject = [0, []];
         }
     } else {
-        let suggestedCycle = await fetch(`api/get/cycle/${startNode}/${walkSuggestionDistance * 1000}`);
+        let suggestedCycle = await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`);
         suggestedCycleObject = await suggestedCycle.json();
 
     }
@@ -290,7 +288,7 @@ async function fixEnd(){
 async function fixStart() {
     setStartSearchAddress();
     await applyRoute();
-    dijkstraFromStart = await dijkstraDetails(startNode);
+    dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
     await generateIsochrone();
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
     document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
@@ -468,8 +466,8 @@ function connectToStartNode() {
 
     startNodeConnector = L.polyline(
         [routeMarkers[0].getLatLng(),
-            [nodeLatLons[startNode][0],
-                nodeLatLons[startNode][1]
+            [nodeLatLons[routeNodes[0]][0],
+                nodeLatLons[routeNodes[0]][1]
             ]
         ], {
             weight: 5,
@@ -485,8 +483,8 @@ function connectToStartNode() {
     ).addTo(map);
 
     startNodeMarker = L.circleMarker(
-        [nodeLatLons[startNode][0],
-            nodeLatLons[startNode][1]
+        [nodeLatLons[routeNodes[0]][0],
+            nodeLatLons[routeNodes[0]][1]
         ], {
             radius: 5,
             color: 'black',
@@ -508,8 +506,8 @@ function connectToEndNode() {
 
     endNodeConnector = L.polyline(
         [routeMarkers[routeMarkers.length-1].getLatLng(),
-            [nodeLatLons[endNode][0],
-                nodeLatLons[endNode][1]
+            [nodeLatLons[routeNodes[routeNodes.length-1]][0],
+                nodeLatLons[routeNodes[routeNodes.length-1]][1]
             ]
         ], {
             weight: 5,
@@ -525,8 +523,8 @@ function connectToEndNode() {
     ).addTo(map);
 
     endNodeMarker = L.circleMarker(
-        [nodeLatLons[endNode][0],
-            nodeLatLons[endNode][1]
+        [nodeLatLons[routeNodes[routeNodes.length-1]][0],
+            nodeLatLons[routeNodes[routeNodes.length-1]][1]
         ],
 
         {
@@ -554,20 +552,20 @@ function secondsToString(seconds){
 }
 
 async function applyRoute(event) {
-    startNode = closestNode(routeMarkers[0].getLatLng());
-    endNode = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
+    routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
+    routeNodes[routeNodes.length-1] = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
 
     // Redraw route from start
     let path = [];
-    let currentNode = startNode;
+    let currentNode = routeNodes[0];
 
 
     let a_star_data;
     if (settings.findShortestPathsByTime){
-        a_star_data = await(await fetch(`api/get/a_star_time/${startNode}/${endNode}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[0]}/${routeNodes[routeNodes.length-1]}`)).json();
     }
     else{
-        a_star_data = await(await fetch(`api/get/a_star_distance/${startNode}/${endNode}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[0]}/${routeNodes[routeNodes.length-1]}`)).json();
     }
 
     currentChartData = [];
@@ -665,7 +663,7 @@ function showChart(){
 
 
 async function generateIsochrone() {
-    const convex_hull_response = await fetch(`/api/get/convex/${startNode}/${settings.partitionDistance}`);
+    const convex_hull_response = await fetch(`/api/get/convex/${routeNodes[0]}/${settings.partitionDistance}`);
     data = await convex_hull_response.json();
 
     for (let i = 0; i < convexHullRegions.length; i++) {
@@ -797,7 +795,6 @@ async function initialise() {
         title: "Start"
     }).addTo(map));
 
-    endNode = 0;
 
 
     routeMarkers.push(L.marker(nodeLatLons[0], {
@@ -810,8 +807,10 @@ async function initialise() {
 
     // Get all dijkstra information before setting up
     routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
+    routeNodes[1] = 0;
+
     dijkstraFromStart = await dijkstraDetails(routeNodes[0])
-    dijkstraFromEnd = await dijkstraDetails(endNode);
+    dijkstraFromEnd = await dijkstraDetails(routeNodes[routeNodes.length-1]);
     applyRoute();
     await generateIsochrone();
 
@@ -830,11 +829,11 @@ async function initialise() {
 
 
     routeMarkers[0].on('drag', function(){
-        startNode = closestNode(routeMarkers[0].getLatLng());
+        routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
         connectToStartNode();});
 
         routeMarkers[routeMarkers.length-1].on('drag', function(){
-        endNode = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
+        routeNodes[routeNodes.length-1] = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
         connectToEndNode();
     });
 
