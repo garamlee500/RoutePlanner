@@ -22,7 +22,8 @@ let currentChartData;
 
 let routeMarkers = [];
 let routeNodes = [];
-let routeNodeMarkers = [];
+
+// i'th route line connects i'th node to i+1'th node
 let routeLines = [];
 
 
@@ -274,15 +275,21 @@ function displayConvexHull() {
     }
 }
 
+async function setDestinationSearchAddress() {
+    document.getElementById('destination_search').value =
+        await searchReverseGeocode(routeMarkers[routeMarkers.length - 1].getLatLng());
+}
+async function setStartSearchAddress() {
+    document.getElementById('start_search').value =
+        await searchReverseGeocode(routeMarkers[0].getLatLng());
+}
 
 async function fixEnd(){
-    document.getElementById('destination_search').value =
-        await searchReverseGeocode(routeMarkers[routeMarkers.length-1].getLatLng());
+    setDestinationSearchAddress();
     await applyRoute();
 }
 async function fixStart() {
-    document.getElementById('start_search').value =
-        await searchReverseGeocode(routeMarkers[0].getLatLng());
+    setStartSearchAddress();
     await applyRoute();
     dijkstraFromStart = await dijkstraDetails(startNode);
     await generateIsochrone();
