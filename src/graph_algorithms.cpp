@@ -781,7 +781,8 @@ public:
                                              return walkingTime(node, endNode);
                                          },
                                         nodeLats,
-                                         nodeLons
+                                         nodeLons,
+                                         false
                                          );
             // Output of distance, time is flipped in a star if time is seen as metric to be optimised
             result += to_string(completedAstar.subsidiaryDistance) + "," + to_string(completedAstar.distance) + ",[";
@@ -795,7 +796,8 @@ public:
                                              return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
                                          },
                                          nodeLats,
-                                         nodeLons
+                                         nodeLons,
+                                         false
                                          );
             result += to_string(completedAstar.distance) + "," + to_string(completedAstar.subsidiaryDistance) + ",[";
         }

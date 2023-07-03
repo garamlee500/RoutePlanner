@@ -21,7 +21,9 @@ let routeNodes = [];
 
 // i'th route line connects i'th node to i+1'th node
 let routeNodeLatLons = [];
-let routeChartData = []
+let routeChartData = [];
+let routeDistances = [];
+let routeTimes = [];
 let routeLine;
 
 
@@ -32,6 +34,47 @@ let defaultSettings = {
     isochroneDelay: 0,
     findShortestPathsByTime: false
 };
+
+
+async function partitionRouteLine(routeLineIndex){
+    // Partitions the route line at routeLineIndex at around the middle
+
+    if (routeNodeLatLons[routeLineIndex].length < 3){
+        // Too short a route to partition properly
+        return;
+    }
+    let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length/2);
+
+    // Probably suffers from some performance hit rather than just tracking all 
+    // node ids on routeLine
+    let chosenNode = closestNode(
+        {lat: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][0],
+        lng: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][1],});
+    
+    routeNodes.splice(routeLineIndex+1, 0, chosenNode);
+    let newNodeMarker =  L.circleMarker(
+        nodeLatLons[chosenNode], {
+            radius: 5,
+            color: 'black',
+            fill: true,
+            fillColor: 'white',
+            fillOpacity: 1,
+            pane: "node_markers" // display marker above paths
+        }).addTo(map);
+    routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
+    routeNodeLatLons.splice(routeLineIndex+1, 0, []);
+    routeChartData.splice(routeLineIndex+1, 0, []);
+    routeTimes.splice(routeLineIndex+1, 0, 0);
+    routeDistances.splice(routeLineIndex+1, 0, 0);
+
+    //routeNodeLatLons[routeLineIndex+1] = routeNodeLatLons[routeLineIndex].slice(chosenNodeIndexInRouteLine);
+    //routeNodeLatLons[routeLineIndex] = routeNodeLatLons[routeLineIndex].slice(0, chosenNodeIndexInRouteLine+1);
+
+    await applyRoute(routeLineIndex);
+    await applyRoute(routeLineIndex+1);
+}
+
+
 
 function centreMap() {
     map.fitBounds([
@@ -468,9 +511,7 @@ function connectToStartNode() {
 
     startNodeConnector = L.polyline(
         [routeMarkers[0].getLatLng(),
-            [nodeLatLons[routeNodes[0]][0],
-                nodeLatLons[routeNodes[0]][1]
-            ]
+            nodeLatLons[routeNodes[0]]
         ], {
             weight: 5,
             color: 'black',
@@ -485,9 +526,7 @@ function connectToStartNode() {
     ).addTo(map);
 
     startNodeMarker = L.circleMarker(
-        [nodeLatLons[routeNodes[0]][0],
-            nodeLatLons[routeNodes[0]][1]
-        ], {
+        nodeLatLons[routeNodes[0]], {
             radius: 5,
             color: 'black',
             fill: true,
@@ -508,9 +547,7 @@ function connectToEndNode() {
 
     endNodeConnector = L.polyline(
         [routeMarkers[routeMarkers.length-1].getLatLng(),
-            [nodeLatLons[routeNodes[routeNodes.length-1]][0],
-                nodeLatLons[routeNodes[routeNodes.length-1]][1]
-            ]
+            nodeLatLons[routeNodes[routeNodes.length-1]]
         ], {
             weight: 5,
             color: 'black',
@@ -525,9 +562,7 @@ function connectToEndNode() {
     ).addTo(map);
 
     endNodeMarker = L.circleMarker(
-        [nodeLatLons[routeNodes[routeNodes.length-1]][0],
-            nodeLatLons[routeNodes[routeNodes.length-1]][1]
-        ],
+        nodeLatLons[routeNodes[routeNodes.length-1]],
 
         {
             radius: 5,
@@ -561,7 +596,6 @@ async function applyRoute(routeLineIndex) {
 
     // Redraw route from start
     let path = [];
-    let currentNode = routeNodes[routeLineIndex];
 
 
     let a_star_data;
@@ -590,10 +624,16 @@ async function applyRoute(routeLineIndex) {
         assembledPath = assembledPath.concat(routeNodeLatLonSegment);
     }
 
+    routeDistances[routeLineIndex] = a_star_data[0];
+    routeTimes[routeLineIndex] = a_star_data[1];
+
+    let totalDistance = routeDistances.reduce((a, b) => a + b, 0);
+    let totalTime = routeTimes.reduce((a, b) => a + b, 0);
+
     if (routeLine != null) {
         routeLine.setLatLngs(assembledPath);
-        routeLine.setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
-            `Time: ${secondsToString(a_star_data[1])}` +
+        routeLine.setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, `+
+            `Time: ${secondsToString(totalTime)}` +
             "<canvas id=\"elevationGraph\"></canvas>");
     }
     else{
@@ -601,8 +641,8 @@ async function applyRoute(routeLineIndex) {
             fillOpacity: 1,
             color: 'green'
     
-        }).bindPopup(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
-            `Time: ${secondsToString(a_star_data[1])}` +
+        }).bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
+            `Time: ${secondsToString(totalTime)}` +
             "<canvas id=\"elevationGraph\"></canvas>", {
             autoPan: false
         }).on('click', showChart);
@@ -632,10 +672,12 @@ function showChart(){
     let chartData = [];
     let offset = 0;
     for (const chartDataSegment of routeChartData){
+        let maxEntry = 0;
         for (const entry of chartDataSegment){
             chartData.push({x: entry.x+offset, y: entry.y});
+            maxEntry = Math.max(entry.x, maxEntry);
         }
-        offset += chartDataSegment[chartDataSegment.length - 1].x;
+        offset += maxEntry;
     }
 
 
