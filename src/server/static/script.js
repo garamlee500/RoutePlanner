@@ -14,7 +14,6 @@ let convexHullIndex = 0;
 let walkSuggestionDistance = 5;
 let gpsAccuracy = null;
 let currentChart = null;
-let currentChartData;
 
 
 let routeMarkers = [];
@@ -22,6 +21,7 @@ let routeNodes = [];
 
 // i'th route line connects i'th node to i+1'th node
 let routeNodeLatLons = [];
+let routeChartData = []
 let routeLine;
 
 
@@ -284,11 +284,11 @@ async function setStartSearchAddress() {
 
 async function fixEnd(){
     setDestinationSearchAddress();
-    await applyRoute();
+    await applyRoute(routeMarkers.length-2);
 }
 async function fixStart() {
     setStartSearchAddress();
-    await applyRoute();
+    await applyRoute(0);
     dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
     await generateIsochrone();
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
@@ -330,7 +330,7 @@ document.getElementById('destination_show_checkbox').addEventListener(
             routeLine.openPopup();
             showChart();
         } else {
-            routeLine.addTo(map);
+            routeLine.remove(map);
 
         }
     }
@@ -368,7 +368,7 @@ document.getElementById('destination_search').addEventListener("keydown", async 
             routeMarkers[routeMarkers.length-1].setLatLng([geo_code_data[0],
                 geo_code_data[1]
             ]);
-            await applyRoute();
+            await applyRoute(routeMarkers.length-2);
         }
     }
 });
@@ -553,7 +553,7 @@ function secondsToString(seconds){
     }
 }
 
-async function applyRoute(routeLineindex) {
+async function applyRoute(routeLineIndex) {
     // Connects node at routeLineIndex to node at routeLineIndex + 1
 
     routeNodes[routeLineIndex] = closestNode(routeMarkers[routeLineIndex].getLatLng());
@@ -561,35 +561,43 @@ async function applyRoute(routeLineindex) {
 
     // Redraw route from start
     let path = [];
-    let currentNode = routeNodes[routeLineindex];
+    let currentNode = routeNodes[routeLineIndex];
 
 
     let a_star_data;
     if (settings.findShortestPathsByTime){
-        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[routeLineindex]}/${routeNodes[routeLineindex+1]}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
     else{
-        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[routeLineindex]}/${routeNodes[routeLineindex+1]}`)).json();
+        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
 
-    currentChartData = [];
+    let chartData = [];
 
 
     for (let i = 0; i < a_star_data[2].length; i++){
         path.push(nodeLatLons[a_star_data[2][i]]);
-        currentChartData.push({x: a_star_data[3][i],
+        chartData.push({x: a_star_data[3][i],
             y: nodeElevations[a_star_data[2][i]]})
     }
 
+    routeNodeLatLons[routeLineIndex] = path;
+    routeChartData[routeLineIndex] = chartData;
+
+    let assembledPath = [];
+
+    for (const routeNodeLatLonSegment of routeNodeLatLons){
+        assembledPath = assembledPath.concat(routeNodeLatLonSegment);
+    }
 
     if (routeLine != null) {
-        routeLine.setLatLngs(path);
+        routeLine.setLatLngs(assembledPath);
         routeLine.setPopupContent(`Distance: ${Math.round(a_star_data[0]) / 1000}km, `+
             `Time: ${secondsToString(a_star_data[1])}` +
             "<canvas id=\"elevationGraph\"></canvas>");
     }
     else{
-        routeLine = L.polyline(path, {
+        routeLine = L.polyline(assembledPath, {
             fillOpacity: 1,
             color: 'green'
     
@@ -619,13 +627,25 @@ function showChart(){
     if (currentChart!=null){
             currentChart.destroy();
     }
+
+    // Assemble elevations by patching together elevation data for each segment
+    let chartData = [];
+    let offset = 0;
+    for (const chartDataSegment of routeChartData){
+        for (const entry of chartDataSegment){
+            chartData.push({x: entry.x+offset, y: entry.y});
+        }
+        offset += chartDataSegment[chartDataSegment.length - 1].x;
+    }
+
+
     currentChart = new Chart(
         document.getElementById('elevationGraph'),
         {
             type: "line",
             data: {
                 datasets: [{
-                    data: currentChartData,
+                    data: chartData,
                     label: 'Elevation of journey',
                     pointRadius: 0
                 }]
@@ -815,7 +835,7 @@ async function initialise() {
 
     dijkstraFromStart = await dijkstraDetails(routeNodes[0])
     dijkstraFromEnd = await dijkstraDetails(routeNodes[routeNodes.length-1]);
-    applyRoute();
+    applyRoute(0);
     await generateIsochrone();
 
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
