@@ -52,23 +52,17 @@ async function partitionRouteLine(routeLineIndex){
         lng: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][1],});
     
     routeNodes.splice(routeLineIndex+1, 0, chosenNode);
-    let newNodeMarker =  L.circleMarker(
+    let newNodeMarker =  L.marker(
         nodeLatLons[chosenNode], {
-            radius: 5,
-            color: 'black',
-            fill: true,
-            fillColor: 'white',
-            fillOpacity: 1,
+            draggable: true,
             pane: "node_markers" // display marker above paths
         }).addTo(map);
+    newNodeMarker._icon.classList.add("grayMarker");
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
     routeChartData.splice(routeLineIndex+1, 0, []);
     routeTimes.splice(routeLineIndex+1, 0, 0);
     routeDistances.splice(routeLineIndex+1, 0, 0);
-
-    //routeNodeLatLons[routeLineIndex+1] = routeNodeLatLons[routeLineIndex].slice(chosenNodeIndexInRouteLine);
-    //routeNodeLatLons[routeLineIndex] = routeNodeLatLons[routeLineIndex].slice(0, chosenNodeIndexInRouteLine+1);
 
     await applyRoute(routeLineIndex);
     await applyRoute(routeLineIndex+1);

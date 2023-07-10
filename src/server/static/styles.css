@@ -191,6 +191,9 @@ background-color: white;
 .redMarker{
   filter: hue-rotate(140deg) contrast(150%);
 }
+.grayMarker{
+  filter: grayscale(100%);
+}
 #map {
   height: 100%; width:100%
 }
