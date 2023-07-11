@@ -58,11 +58,26 @@ async function partitionRouteLine(routeLineIndex){
             pane: "node_markers" // display marker above paths
         }).addTo(map);
     newNodeMarker._icon.classList.add("grayMarker");
+    newNodeMarker.on("dragend", async function(){
+        newNodeMarker.setLatLng(nodeLatLons[closestNode(newNodeMarker.getLatLng())]);
+        await applyRoute(routeLineIndex);
+        await applyRoute(routeLineIndex+1)});
+
+
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
     routeChartData.splice(routeLineIndex+1, 0, []);
     routeTimes.splice(routeLineIndex+1, 0, 0);
     routeDistances.splice(routeLineIndex+1, 0, 0);
+
+    for (let i = routeLineIndex+2; i < routeMarkers.length - 1; i++){
+        routeMarkers[i].off();
+        routeMarkers[i].on("dragend", async function(){
+            newNodeMarker.setLatLng(nodeLatLons[closestNode(newNodeMarker.getLatLng())]);
+            await applyRoute(i-1);
+            await applyRoute(i)});
+    }
+
 
     await applyRoute(routeLineIndex);
     await applyRoute(routeLineIndex+1);
