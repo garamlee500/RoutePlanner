@@ -73,7 +73,7 @@ async function partitionRouteLine(routeLineIndex){
     for (let i = routeLineIndex+2; i < routeMarkers.length - 1; i++){
         routeMarkers[i].off();
         routeMarkers[i].on("dragend", async function(){
-            newNodeMarker.setLatLng(nodeLatLons[closestNode(newNodeMarker.getLatLng())]);
+            routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
             await applyRoute(i-1);
             await applyRoute(i)});
     }
