@@ -51,7 +51,7 @@ async function deleteStop(stopIndex){
             await applyRoute(i)});
 
             
-        routeMarkers[i].bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
 
@@ -87,7 +87,7 @@ async function addStop(routeLineIndex){
         await applyRoute(routeLineIndex);
         await applyRoute(routeLineIndex+1)});
 
-    newNodeMarker.bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
+    newNodeMarker.bindPopup(`<button class='textButton' onClick='addStop(${routeLineIndex});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
 
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
@@ -102,7 +102,7 @@ async function addStop(routeLineIndex){
             await applyRoute(i-1);
             await applyRoute(i)});
 
-        routeMarkers[i].bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
     }
@@ -908,6 +908,9 @@ async function initialise() {
     }).addTo(map));
 
     routeMarkers[routeMarkers.length-1]._icon.classList.add("redMarker");
+
+    routeMarkers[0].bindPopup(`<button class='textButton' onClick='addStop(0);'>Add stop after</button>`);
+    routeMarkers[routeMarkers.length-1].bindPopup(`<button class='textButton' onClick='addStop(routeMarkers.length-2);'>Add stop before</button>`);
 
     // Get all dijkstra information before setting up
     routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
