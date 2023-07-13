@@ -49,12 +49,18 @@ async function deleteStop(stopIndex){
             routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
             await applyRoute(i-1);
             await applyRoute(i)});
+
+            
+        routeMarkers[i].bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        // Rebind popup click event listener - erased by routeMarkers[i].off();
+        routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
+
     }
 
     await applyRoute(stopIndex-1);
 }
 
-async function partitionRouteLine(routeLineIndex){
+async function addStop(routeLineIndex){
     // Partitions the route line at routeLineIndex at around the middle
 
     if (routeNodeLatLons[routeLineIndex].length < 3){
@@ -81,6 +87,7 @@ async function partitionRouteLine(routeLineIndex){
         await applyRoute(routeLineIndex);
         await applyRoute(routeLineIndex+1)});
 
+    newNodeMarker.bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
 
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
@@ -94,6 +101,10 @@ async function partitionRouteLine(routeLineIndex){
             routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
             await applyRoute(i-1);
             await applyRoute(i)});
+
+        routeMarkers[i].bindPopup(`<button class='textButton'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        // Rebind popup click event listener - erased by routeMarkers[i].off();
+        routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
     }
 
 
