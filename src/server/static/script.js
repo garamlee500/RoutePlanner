@@ -35,6 +35,24 @@ let defaultSettings = {
     findShortestPathsByTime: false
 };
 
+async function deleteStop(stopIndex){
+    routeMarkers[stopIndex].remove(map);
+    routeMarkers.splice(stopIndex, 1);
+    routeNodeLatLons.splice(stopIndex, 1);
+    routeChartData.splice(stopIndex, 1);
+    routeTimes.splice(stopIndex, 1);
+    routeDistances.splice(stopIndex, 1);
+
+    for (let i = stopIndex; i < routeMarkers.length - 1; i++){
+        routeMarkers[i].off();
+        routeMarkers[i].on("dragend", async function(){
+            routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
+            await applyRoute(i-1);
+            await applyRoute(i)});
+    }
+
+    await applyRoute(stopIndex-1);
+}
 
 async function partitionRouteLine(routeLineIndex){
     // Partitions the route line at routeLineIndex at around the middle
@@ -593,7 +611,7 @@ function secondsToString(seconds){
         return `${Math.round(seconds/60)} minutes`
     }
     else{
-        return `${Math.round(seconds/3600)} hours, ${Math.round((seconds%3600)/60)} minutes`
+        return `${Math.floor(seconds/3600)} hours, ${Math.round((seconds%3600)/60)} minutes`
     }
 }
 
