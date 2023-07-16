@@ -576,8 +576,6 @@ async function applyRoute(routeLineIndex) {
     else{
         routeLine = L.polyline(assembledPath, {
             fillOpacity: 1,
-            color: 'green'
-    
         }).bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
             "<canvas id=\"elevationGraph\"></canvas>", {
