@@ -744,7 +744,7 @@ async function initialise() {
 
     // Apply all (default) settings to checkboxes/sliders/inputs
     document.getElementById("convex_hull_slider_checkbox").checked = false;
-    document.getElementById("destination_show_checkbox").checked = false;
+    document.getElementById("destination_show_checkbox").checked = true;
     // Set default value of suggested route to 5k
     document.getElementById("walk_generator_slider").value = 5;
     document.getElementById("walk_generator_slider_text").value = 5;
