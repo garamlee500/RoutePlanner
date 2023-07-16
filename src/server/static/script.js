@@ -217,7 +217,7 @@ async function suggestRoute(useEndNode = false) {
         for (let i = 1; i < routeMarkers.length - 1; i++){
             routeMarkers[i].remove(map);
         }
-
+        routeNodes.splice(1, routeNodes.length-2);
         routeMarkers.splice(1, routeMarkers.length-2);
         routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
         routeChartData.splice(0, routeChartData.length-1);
