@@ -679,40 +679,38 @@ public:
 
     string generate_cycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
         // Dijkstra should hopefully have been recently executed for start node
+        // Note dijkstra is not that computationally expensive - the main problem is delivering the results
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
         vector<double> distances = computedDijkstra.first;
         vector<int> prevNodes = computedDijkstra.second;
         vector<int> possibleNodes;
 
         for (int node = 0; node < nodeCount; node++){
-            // Theoretically start node should have distance > target length
-            if (distances[node] > targetLength/4 && distances[node] < (targetLength*2)/3){
+            if (distances[node] > targetLength/6 && distances[node] < (targetLength)/3){
                 possibleNodes.push_back(node);
             }
         }
 
-
         if (possibleNodes.size() < 2){
-            return "[0,[]]";
+            return "[0,0]";
         }
         // Creates a random number generator to generate numbers from 0 to n-1
         uniform_int_distribution<> distrib(0, possibleNodes.size() - 1);
         for (int i = 0; i < maxTries; i++){
             int node1 = possibleNodes[distrib(gen)];
             int node2 = possibleNodes[distrib(gen)];
-            if (node1 != node2){//&& distances[node1] + distances[node2] < targetLength){
+            if (node1 != node2){
                 // Path is reversed by default - just flip inputs!
                 aStarResultObject secondaryAstar = aStarResult(node2,
-                                                                                node1,
-                                                                                distanceAdjacencyList,
-                                                                                timeAdjacencyList,
-                                                                                [this](int node, int endNode){
+                                                                node1,
+                                                                distanceAdjacencyList,
+                                                                timeAdjacencyList,
+                                                                [this](int node, int endNode){
                     return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
                     },
                                                                                 nodeLats,
                                                                                 nodeLons);
                 double distance = secondaryAstar.distance;
-                double subsidiaryDistance = secondaryAstar.subsidiaryDistance;
                 vector<int> route = secondaryAstar.path;
                 if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
                     // Valid cycle found
@@ -729,31 +727,22 @@ public:
                     route.pop_back();
 
                     string result = "[";
-                    result += to_string(distance + distances[node1] + distances[node2]);
-                    result += ",[";
-
+                    result += to_string(node1) + ',' + to_string(node2) + ']';
                     for (int x : pathA){
-                        result += to_string(x) + ',';
                         if (!usedNodes.insert(x).second){
                             duplicateCount++;
                         }
                     }
                     for (int x : route){
-                        result += to_string(x) + ',';
                         if (!usedNodes.insert(x).second){
                             duplicateCount++;
                         }
                     }
                     for (int x : pathC){
-                        result += to_string(x) + ',';
                         if (!usedNodes.insert(x).second){
                             duplicateCount++;
                         }
                     }
-
-                    // Remove trailing comma;
-                    result.pop_back();
-                    result += "]]";
 
                     if ( ((double)duplicateCount)/(pathA.size() + route.size() + pathC.size()) < overlapTolerance){
                         return result;
@@ -766,7 +755,7 @@ public:
             }
 
         }
-        return "[0,[]]";
+        return "[0,0]";
     }
 
     string a_star(int startNode, int endNode, bool useTime){

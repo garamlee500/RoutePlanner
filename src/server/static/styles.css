@@ -47,12 +47,12 @@ background-color: white;
 
 #route_suggestor{
     top: 80%;
-    left: 15%;
+    left: 25%;
     height: 15%;
-    width: 70%;
+    width: 50%;
     z-index: 999;
     grid-template-rows: 10% 40% 40% 10%;
-    grid-template-columns: 6% 22% 11% 11% 22% 2% 20% 3% 3%;
+    grid-template-columns: 5% 22.5% 22.5% 22.5% 22.5% 5%;
 }
 
 

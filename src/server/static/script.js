@@ -60,13 +60,8 @@ async function deleteStop(stopIndex){
     await applyRoute(stopIndex-1);
 }
 
-async function addStop(routeLineIndex){
+async function addStop(routeLineIndex, adjustRoute=true){
     // Partitions the route line at routeLineIndex at around the middle
-
-    if (routeNodeLatLons[routeLineIndex].length < 3){
-        // Too short a route to partition properly
-        return;
-    }
     let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length/2);
 
     // Probably suffers from some performance hit rather than just tracking all 
@@ -107,9 +102,10 @@ async function addStop(routeLineIndex){
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
     }
 
-
-    await applyRoute(routeLineIndex);
-    await applyRoute(routeLineIndex+1);
+    if (adjustRoute) {
+        await applyRoute(routeLineIndex);
+        await applyRoute(routeLineIndex + 1);
+    }
 }
 
 
@@ -157,9 +153,6 @@ async function hideSettings() {
 }
 
 function displaySettings() {
-    //map.dragging.disable()
-    //map.doubleClickZoom.disable()
-    //map.scrollWheelZoom.disable()
     document.getElementById('isochroneDelay').value = settings.isochroneDelay;
     document.getElementById('regionOpacity').value = settings.isochroneOpacity;
     document.getElementById('findShortestPathsByTimeCheckBox').checked = settings.findShortestPathsByTime;
@@ -203,134 +196,46 @@ function setStartGPSLocation(position) {
     fixStart();
 }
 
-function generateCycleWithDestination(targetLength,
-    distanceTolerance = 0.05,
-    overlapTolerance = 0.05,
-    maxTries = 2 << 25) {
-    // We are talking approximately 20-30 ms to run this in javascript
-    // while c++ takes about 10 ms for the same call
-    // While javascript is slower (even throttling for wifi), javascript has the advantage
-    // of loosening server load, while the slowdown is unnoticeable for consumers,
-    // additionally has required dijkstra cached without need for lookup
-    // and no need to convert to json string when sending data
-    let possibleNodes = [];
-    for (let node = 0; node < nodeLatLons.length; node++) {
-        if (dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] > targetLength * 0.75 &&
-            dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] < targetLength * 1.5) {
-            possibleNodes.push(node);
-        }
-    }
-    if (possibleNodes.length < 2) {
-        return [0, []];
-    }
-    for (let i = 0; i < maxTries; i++) {
-        let node = possibleNodes[Math.floor(Math.random() * possibleNodes.length)];
-        if (Math.abs(dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]] - targetLength) / targetLength < distanceTolerance) {
-            // Valid cycle found
-            // Return distance and path
 
-            let totalPath = [];
-            // 1 duplicate is erroneously placed by selected node
-            let duplicateCount = -1;
-            let usedNodes = new Set();
-
-            let currentPathNode = node;
-            // start -> node excluding start
-            while (currentPathNode !== routeNodes[0]) {
-                totalPath.push(currentPathNode);
-                currentPathNode = dijkstraFromStart[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)) {
-                    duplicateCount++;
-                } else {
-                    usedNodes.add(currentPathNode);
-                }
-            }
-
-            totalPath.reverse();
-
-            // Remove extra entry of selected node
-            totalPath.pop();
-            // node -> endNode excluding endNode
-            currentPathNode = node;
-            while (currentPathNode !== routeNodes[routeNodes.length-1]) {
-                totalPath.push(currentPathNode);
-                currentPathNode = dijkstraFromEnd[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)) {
-                    duplicateCount++;
-                } else {
-                    usedNodes.add(currentPathNode);
-                }
-            }
-
-            // endNode -> startNode excluding startNode
-            currentPathNode = routeNodes[routeNodes.length-1];
-            while (currentPathNode !== routeNodes[0]) {
-                totalPath.push(currentPathNode);
-                currentPathNode = dijkstraFromStart[1][currentPathNode];
-                if (usedNodes.has(currentPathNode)) {
-                    duplicateCount++;
-                } else {
-                    usedNodes.add(currentPathNode);
-                }
-            }
-            // Add missing entry of startNode
-            totalPath.push(routeNodes[0]);
-
-            if (duplicateCount / totalPath.length < overlapTolerance) {
-                return [dijkstraFromStart[0][node] + dijkstraFromEnd[0][node] + dijkstraFromStart[0][routeNodes[routeNodes.length-1]],
-                    totalPath
-                ];
-            }
-            overlapTolerance *= 1.1;
-
-        } else {
-            distanceTolerance *= 1.1;
-        }
-    }
-    return [0, []];
-}
 async function suggestRoute(useEndNode = false) {
     // Set generate button to red and prevent clicks
     let buttonElement = document.getElementById("route_suggestor_button");
     buttonElement.disabled = true;
     buttonElement.textContent = "Generating...";
     buttonElement.classList.add("redOnlyButton");
-    // Ask for a suggested cycle and parse to get lat lons
-    let suggestedCycleObject;
-    if (false){
-    //if (document.getElementById("include_destination_in_cycle_checkbox").checked === true) {
-        //suggestedCycle = await fetch(`api/get/fixed_cycle/${startNode}/${endNode}/${walkSuggestionDistance * 1000}`);
-        try {
-            suggestedCycleObject = generateCycleWithDestination(walkSuggestionDistance * 1000);
-        } catch {
-            // When website is not fully loaded yet
-            suggestedCycleObject = [0, []];
+
+    let suggestedCycle = await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`);
+    let suggestedCycleObject = await suggestedCycle.json();
+
+
+    if (suggestedCycleObject[0] === suggestedCycleObject[1]) {
+        // Failed to find cycle if second node = third node
+        alert("Failed to generate walk. Ensure the walk distance input is suitable.")
+
+    } else {
+
+        for (let i = 1; i < routeMarkers.length - 1; i++){
+            routeMarkers[i].remove(map);
         }
-    } else {
-        let suggestedCycle = await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`);
-        suggestedCycleObject = await suggestedCycle.json();
 
+        routeMarkers.splice(1, routeMarkers.length-2);
+        routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
+        routeChartData.splice(0, routeChartData.length-1);
+        routeTimes.splice(0, routeTimes.length-1);
+        routeDistances.splice(1, routeDistances.length-2);
+        addStop(0, false);
+        addStop(0, false);
+        routeNodes[3] = routeNodes[0];
+        connectToEndNode();
+        routeMarkers[3].setLatLng(routeMarkers[0].getLatLng());
+        routeMarkers[1].setLatLng(nodeLatLons[suggestedCycleObject[0]]);
+        routeMarkers[2].setLatLng(nodeLatLons[suggestedCycleObject[1]]);
+        await applyRoute(0);
+        await applyRoute(1);
+        await fixEnd();
     }
-    let suggestedCycleNodeLatLons = (suggestedCycleObject)[1].map(x => nodeLatLons[x]);
 
-    // Remove previous route polygon if present on map
-    if (suggestedRoutePolygon !== null) {
-        suggestedRoutePolygon.remove(map);
-    }
-    suggestedRoutePolygon = L.polygon(suggestedCycleNodeLatLons, {
-        fillOpacity: 0
-    }).addTo(map);
 
-    if (suggestedCycleObject[0] === 0) {
-        // Failed to find cycle if distance is 0
-        document.getElementById("generated_walk_info").textContent =
-            `Failed to generate walk. Ensure the walk distance input is suitable.`
-
-    } else {
-        // Succesful cycle generation - add message with actual distance
-        document.getElementById("generated_walk_info").textContent =
-            `Generated walk length is ${Math.round(suggestedCycleObject[0]) / 1000}km long.`
-    }
     // Reactivate generate route button
     buttonElement.textContent = "Generate Route";
     buttonElement.disabled = false;
@@ -490,12 +395,6 @@ function colorGradient(colorCount,
         let r = Math.round(startR + rDiff * i);
         let g = Math.round(startG + gDiff * i);
         let b = Math.round(startB + bDiff * i);
-        // Pad zeroes on left if needed so that each
-        // colour used 2 hexadecimal digits
-        //colors.push('#'+
-        //r.toString(16).padStart(2, '0')+
-        //g.toString(16).padStart(2, '0')+
-        //b.toString(16).padStart(2, '0'))
 
         colors.push(`rgb(${r}, ${g}, ${b})`)
     }
@@ -846,7 +745,6 @@ async function initialise() {
     }
 
     // Apply all (default) settings to checkboxes/sliders/inputs
-    document.getElementById("include_destination_in_cycle_checkbox").checked = true;
     document.getElementById("convex_hull_slider_checkbox").checked = false;
     document.getElementById("destination_show_checkbox").checked = false;
     // Set default value of suggested route to 5k
@@ -937,9 +835,10 @@ async function initialise() {
 
     routeMarkers[0].on('drag', function(){
         routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
-        connectToStartNode();});
+        connectToStartNode();
+    });
 
-        routeMarkers[routeMarkers.length-1].on('drag', function(){
+    routeMarkers[routeMarkers.length-1].on('drag', function(){
         routeNodes[routeNodes.length-1] = closestNode(routeMarkers[routeMarkers.length-1].getLatLng());
         connectToEndNode();
     });
