@@ -35,6 +35,60 @@ let defaultSettings = {
     findShortestPathsByTime: false
 };
 
+function resetRoute(){
+    for (let i = 1; i < routeMarkers.length - 1; i++){
+        routeMarkers[i].remove(map);
+    }
+
+    routeNodes.splice(1, routeNodes.length-2);
+    routeMarkers.splice(1, routeMarkers.length-2);
+    routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
+    routeChartData.splice(0, routeChartData.length-1);
+    routeTimes.splice(0, routeTimes.length-1);
+    routeDistances.splice(1, routeDistances.length-2);
+}
+
+
+async function loadRouteUrl(routeString){
+
+    if (routeString === null || routeString === ''){
+        return;
+    }
+
+    let route = JSON.parse(routeString);
+    resetRoute();
+
+
+    while (routeNodes.length < route.length){
+        await addStop(0, false);
+    }
+    for (let i = 0; i < route.length; i++){
+        routeMarkers[i].setLatLng(route[i]);
+    }
+
+    connectToEndNode();
+    connectToStartNode();
+    for (let i = 0; i < route.length-1; i++){
+        await applyRoute(i);
+    }
+
+}
+
+function setUrl(){
+    let urlObject = new URL(window.location.origin);
+    let routeString = "[";
+    for (const routeMarker of routeMarkers){
+        routeString += '[' + routeMarker.getLatLng().lat + ',' + routeMarker.getLatLng().lng + "],";
+    }
+    routeString = routeString.substring(0, routeString.length-1);
+    routeString += ']';
+    urlObject.searchParams.append(
+        "route",
+        routeString
+    );
+    window.history.pushState(routeString, document.title, urlObject.toString());
+}
+
 async function deleteStop(stopIndex){
     routeMarkers[stopIndex].remove(map);
     routeMarkers.splice(stopIndex, 1);
@@ -54,9 +108,9 @@ async function deleteStop(stopIndex){
         routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
-
+        routeMarkers[i].on("dragend", function(){setUrl();});
     }
-
+    setUrl();
     await applyRoute(stopIndex-1);
 }
 
@@ -83,6 +137,7 @@ async function addStop(routeLineIndex, adjustRoute=true){
         await applyRoute(routeLineIndex+1)});
 
     newNodeMarker.bindPopup(`<button class='textButton' onClick='addStop(${routeLineIndex});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
+    newNodeMarker.on("dragend", function(){setUrl();});
 
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
@@ -100,9 +155,11 @@ async function addStop(routeLineIndex, adjustRoute=true){
         routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
+        routeMarkers[i].on("dragend", function(){setUrl();});
     }
 
     if (adjustRoute) {
+        setUrl();
         await applyRoute(routeLineIndex);
         await applyRoute(routeLineIndex + 1);
     }
@@ -214,15 +271,9 @@ async function suggestRoute(useEndNode = false) {
 
     } else {
 
-        for (let i = 1; i < routeMarkers.length - 1; i++){
-            routeMarkers[i].remove(map);
-        }
-        routeNodes.splice(1, routeNodes.length-2);
-        routeMarkers.splice(1, routeMarkers.length-2);
-        routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
-        routeChartData.splice(0, routeChartData.length-1);
-        routeTimes.splice(0, routeTimes.length-1);
-        routeDistances.splice(1, routeDistances.length-2);
+
+        resetRoute();
+
         addStop(0, false);
         addStop(0, false);
         routeNodes[3] = routeNodes[0];
@@ -230,6 +281,7 @@ async function suggestRoute(useEndNode = false) {
         routeMarkers[3].setLatLng(routeMarkers[0].getLatLng());
         routeMarkers[1].setLatLng(nodeLatLons[suggestedCycleObject[0]]);
         routeMarkers[2].setLatLng(nodeLatLons[suggestedCycleObject[1]]);
+        setUrl();
         await applyRoute(0);
         await applyRoute(1);
         await fixEnd();
@@ -270,10 +322,12 @@ async function setStartSearchAddress() {
 
 async function fixEnd(){
     setDestinationSearchAddress();
+    setUrl();
     await applyRoute(routeMarkers.length-2);
 }
 async function fixStart() {
     setStartSearchAddress();
+    setUrl();
     await applyRoute(0);
     dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
     await generateIsochrone();
@@ -844,6 +898,10 @@ async function initialise() {
     // Ensure finalised route is correct once dragging ends
     routeMarkers[0].on('dragend', fixStart);
     routeMarkers[routeMarkers.length-1].on('dragend', fixEnd);
+
+    addEventListener("popstate", (event) => {loadRouteUrl(event.state)});
+    let currentURL = new URL(window.location.href);
+    loadRouteUrl(currentURL.searchParams.get("route"));
 }
 
 initialise();
