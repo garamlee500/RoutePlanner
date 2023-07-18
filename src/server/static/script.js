@@ -74,7 +74,16 @@ async function loadRouteUrl(routeString){
 
 }
 
-function setUrl(){
+function copyUrlToClipboard(){
+    navigator.clipboard.writeText(setUrl(false));
+    document.getElementById("routeLinkCopier").textContent = "Copied to clipboard!";
+    setTimeout(function(){
+            document.getElementById("routeLinkCopier").textContent = "Share route";
+    },
+        500);
+}
+
+function setUrl(pushState=true){
     let urlObject = new URL(window.location.origin);
     let routeString = "[";
     for (const routeMarker of routeMarkers){
@@ -86,7 +95,10 @@ function setUrl(){
         "route",
         routeString
     );
-    window.history.pushState(routeString, document.title, urlObject.toString());
+    if (pushState){
+        window.history.pushState(routeString, document.title, urlObject.toString());
+    }
+    return urlObject.toString();
 }
 
 async function deleteStop(stopIndex){
