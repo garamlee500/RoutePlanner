@@ -105,7 +105,9 @@ async function deleteStop(stopIndex){
             await applyRoute(i)});
 
             
-        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button>
+                            <button class='textButton' onClick='addStop(${i});'>Add stop after</button>
+                            <button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
         routeMarkers[i].on("dragend", function(){setUrl();});
@@ -136,7 +138,9 @@ async function addStop(routeLineIndex, adjustRoute=true){
         await applyRoute(routeLineIndex);
         await applyRoute(routeLineIndex+1)});
 
-    newNodeMarker.bindPopup(`<button class='textButton' onClick='addStop(${routeLineIndex});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
+    newNodeMarker.bindPopup(`<button class='textButton' onClick='addStop(${routeLineIndex});'>Add stop before</button>
+                            <button class='textButton' onClick='addStop(${routeLineIndex+1});'>Add stop after</button>
+                            <button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
     newNodeMarker.on("dragend", function(){setUrl();});
 
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
@@ -152,7 +156,9 @@ async function addStop(routeLineIndex, adjustRoute=true){
             await applyRoute(i-1);
             await applyRoute(i)});
 
-        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button><button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
+        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button>
+                                <button class='textButton' onClick='addStop(${i});'>Add stop after</button>
+                                <button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
         // Rebind popup click event listener - erased by routeMarkers[i].off();
         routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
         routeMarkers[i].on("dragend", function(){setUrl();});
