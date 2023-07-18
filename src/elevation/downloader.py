@@ -77,8 +77,6 @@ List[float]:
     for tile in required_tiles:
         try:
             response = requests.get(aster_gdem_api_endpoint + _generate_zip_filename_for_tile(tile))
-            # with open('temp.zip', 'wb') as f:
-            #     f.write(response.content)
             with zipfile.ZipFile(BytesIO(response.content)) as download_zip:
                 with download_zip.open(_generate_subzip_filename_for_tile(tile)) as sub_download_zip_file:
                     with zipfile.ZipFile(sub_download_zip_file) as sub_download_zip:

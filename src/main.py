@@ -219,8 +219,8 @@ aster_gdem_api_menu.add_option(
 )
 
 aster_gdem_api_menu.add_option(
-    ("Github ASTER GDEM backup (England only) - https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND/",
-    lambda: set_gdem_aster_endpoint("https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND/"))
+    ("Github ASTER GDEM backup (England only) - https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND@main/",
+    lambda: set_gdem_aster_endpoint("https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND@main/"))
 )
 aster_gdem_api_menu.add_option(
     ("Custom URL",
