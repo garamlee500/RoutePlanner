@@ -5,9 +5,3 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-
-
-// Make search container draggable and lock to map
-// Only allow to the right
-$('#main_controls').resizable({containment: "#map", handles: 'e, w'}).draggable({ scroll: false,
-    containment: "#map"});

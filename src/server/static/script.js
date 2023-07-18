@@ -45,7 +45,7 @@ function resetRoute(){
     routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
     routeChartData.splice(0, routeChartData.length-1);
     routeTimes.splice(0, routeTimes.length-1);
-    routeDistances.splice(1, routeDistances.length-2);
+    routeDistances.splice(0, routeDistances.length-1);
 }
 
 
@@ -575,7 +575,7 @@ function connectToEndNode() {
 
 function secondsToString(seconds){
     if (seconds < 60){
-        return `${seconds} seconds`;
+        return `${Math.round(seconds)} seconds`;
     }
     else if (seconds < 3600){
         return `${Math.round(seconds/60)} minutes`

@@ -15,10 +15,7 @@
       <link rel="stylesheet" href="static/styles.css"/>
 
        <!--Add libraries-->
-      <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet-src.min.js"></script>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-      <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.js" integrity="sha512-CMF3tQtjOoOJoOKlsS7/2loJlkyctwzSoDK/S40iAB+MqWSaf50uObGQSk5Ny/gfRhRCjNLvoxuCvdnERU4WGg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>   </head>
 
    <body style="height:100%;margin: 0;padding: 0;font-family:'Noto Sans',sans-serif">
@@ -83,7 +80,9 @@
           <input type="range" id="walk_generator_slider" min=1 max=100 step=1 style="grid-column: 3/span 2; grid-row: 2"/>
            <input type="number" id="walk_generator_slider_text" min=1 max=100 step=1 style="grid-column: 3; grid-row: 3"/>
            <div style="grid-column: 4; grid-row: 3; font: inherit">km</div>
-
+            <button class="textButton redOnlyButton" onclick="resetRoute();applyRoute(0);setUrl();" style="grid-row: 2; grid-column: 6;">
+               Delete all stops
+           </button>
        </div>
        <!--Search bar-->
        <div id="main_controls" class="control_box">
