@@ -59,12 +59,12 @@ async function loadRouteUrl(routeString){
     resetRoute();
 
 
-    while (routeNodes.length < route.length){
-        await addStop(0, false);
+
+    routeMarkers[0].setLatLng(route[0]);
+    for (let i = route.length - 2; i > 0; i--){
+        await addStop(0, false, route[i]);
     }
-    for (let i = 0; i < route.length; i++){
-        routeMarkers[i].setLatLng(route[i]);
-    }
+    routeMarkers[routeMarkers.length-1].setLatLng(route[route.length-1]);
 
     connectToEndNode();
     connectToStartNode();
@@ -128,16 +128,24 @@ async function deleteStop(stopIndex){
     await applyRoute(stopIndex-1);
 }
 
-async function addStop(routeLineIndex, adjustRoute=true){
-    // Partitions the route line at routeLineIndex at around the middle
-    let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length/2);
+async function addStop(routeLineIndex, adjustRoute=true, stopPostion=null){
+    let chosenNode;
+    if (stopPostion===null) {
+        // Partitions the route line at routeLineIndex at around the middle
+        let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length / 2);
 
-    // Probably suffers from some performance hit rather than just tracking all 
-    // node ids on routeLine
-    let chosenNode = closestNode(
-        {lat: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][0],
-        lng: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][1],});
-    
+        // Probably suffers from some performance hit rather than just tracking all
+        // node ids on routeLine
+        chosenNode = closestNode(
+            {
+                lat: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][0],
+                lng: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][1],
+            });
+    }
+    else{
+        chosenNode = closestNode({lat: stopPostion[0], lng: stopPostion[1]});
+    }
+
     routeNodes.splice(routeLineIndex+1, 0, chosenNode);
     let newNodeMarker =  L.marker(
         nodeLatLons[chosenNode], {
@@ -292,13 +300,11 @@ async function suggestRoute(useEndNode = false) {
 
         resetRoute();
 
-        addStop(0, false);
-        addStop(0, false);
+        addStop(0, false, nodeLatLons[suggestedCycleObject[0]]);
+        addStop(0, false, nodeLatLons[suggestedCycleObject[1]]);
         routeNodes[3] = routeNodes[0];
         connectToEndNode();
         routeMarkers[3].setLatLng(routeMarkers[0].getLatLng());
-        routeMarkers[1].setLatLng(nodeLatLons[suggestedCycleObject[0]]);
-        routeMarkers[2].setLatLng(nodeLatLons[suggestedCycleObject[1]]);
         setUrl();
         await applyRoute(0);
         await applyRoute(1);
@@ -884,6 +890,10 @@ async function initialise() {
     routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
     routeNodes[1] = 0;
 
+    let currentURL = new URL(window.location.href);
+    loadRouteUrl(currentURL.searchParams.get("route"));
+
+
     dijkstraFromStart = await dijkstraDetails(routeNodes[0])
     dijkstraFromEnd = await dijkstraDetails(routeNodes[routeNodes.length-1]);
     applyRoute(0);
@@ -918,8 +928,6 @@ async function initialise() {
     routeMarkers[routeMarkers.length-1].on('dragend', fixEnd);
 
     addEventListener("popstate", (event) => {loadRouteUrl(event.state)});
-    let currentURL = new URL(window.location.href);
-    loadRouteUrl(currentURL.searchParams.get("route"));
 }
 
 initialise();
