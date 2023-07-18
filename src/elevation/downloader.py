@@ -32,7 +32,7 @@ def _generate_zip_filename_for_tile(lat_lon: Tuple[int, int]):
     return f"Download_{_generate_tile_identifier(lat_lon)}.zip"
 
 
-def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_api_endpoint) -> List[float]:
+def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_api_endpoint: str) -> List[float]:
     """
     Gets the elevation of all nodes in a given list of nodes
     See https://www.jspacesystems.or.jp/ersdac/GDEM/E/2.html for format of geotiff files
