@@ -1,36 +1,29 @@
-
 async function hideSettings() {
     document.getElementById('clickBlocker').style.width = '0%';
-    document.getElementById('map').classList.remove('settingsHide')
-    document.getElementById('main_controls').classList.remove('settingsHide')
+    document.getElementById('map').classList.remove('settingsHide');
+    document.getElementById('main_controls').classList.remove('settingsHide');
     document.getElementById('settings').style.display = 'none';
 
-    settings.isochroneDelay = parseInt(document.getElementById('isochroneDelay').value)
+    settings.isochroneDelay = parseInt(document.getElementById('isochroneDelay').value);
     settings.findShortestPathsByTime = document.getElementById('findShortestPathsByTimeCheckBox').checked;
-
 
     if (settings.partitionDistance !== parseInt(document.querySelector('input[name="partitionDistance"]:checked').value)) {
         // Must regenerate if changed partition distance and reindex
-        settings.partitionDistance = parseInt(document.querySelector('input[name="partitionDistance"]:checked').value)
-        settings.isochroneOpacity = parseFloat(document.getElementById('regionOpacity').value)
-        await generateIsochrone()
-        document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-        document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
+        settings.partitionDistance = parseInt(document.querySelector('input[name="partitionDistance"]:checked').value);
+        settings.isochroneOpacity = parseFloat(document.getElementById('regionOpacity').value);
+        await generateIsochrone();
+        setupConvexHullInputs();
 
-        // Need to change steps of convex hull viewer too
-        document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
-
-        convexHullIndex = Math.min(convexHullRegions.length - 1, convexHullIndex)
         displayConvexHull();
 
 
     } else if (settings.isochroneOpacity !== parseFloat(document.getElementById('regionOpacity').value)) {
-        settings.isochroneOpacity = parseFloat(document.getElementById('regionOpacity').value)
+        settings.isochroneOpacity = parseFloat(document.getElementById('regionOpacity').value);
 
         // No need to reconsider reindexing region selection since same as before
-        generateIsochrone()
+        generateIsochrone();
     }
-    sessionStorage.setItem("settings", JSON.stringify(settings))
+    sessionStorage.setItem("settings", JSON.stringify(settings));
 }
 
 function displaySettings() {
