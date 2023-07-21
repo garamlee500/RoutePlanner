@@ -161,12 +161,12 @@ async function initialise() {
       routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
       connectToStartNode();
    });
-   routeMarkers[1].on('drag', function () {
+   routeMarkers[routeMarkers.length-1].on('drag', function () {
       routeNodes[routeNodes.length - 1] = closestNode(routeMarkers[routeMarkers.length - 1].getLatLng());
       connectToEndNode();
    });
    routeMarkers[0].on('dragend', fixStart);
-   routeMarkers[1].on('dragend', fixEnd);
+   routeMarkers[routeMarkers.length-1].on('dragend', fixEnd);
    addEventListener("popstate", (event) => {
       loadRouteUrl(event.state)
    });

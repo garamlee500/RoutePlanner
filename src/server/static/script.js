@@ -2,7 +2,6 @@ function resetRoute(){
     for (let i = 1; i < routeMarkers.length - 1; i++){
         routeMarkers[i].remove(map);
     }
-
     routeNodes.splice(1, routeNodes.length-2);
     routeMarkers.splice(1, routeMarkers.length-2);
     routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
@@ -13,37 +12,30 @@ function resetRoute(){
 
 
 async function loadRouteUrl(routeString){
-
     if (routeString === null || routeString === ''){
         return;
     }
-
     let route = JSON.parse(routeString);
     resetRoute();
-
-
 
     routeMarkers[0].setLatLng(route[0]);
     for (let i = route.length - 2; i > 0; i--){
         await addStop(0, false, route[i]);
     }
     routeMarkers[routeMarkers.length-1].setLatLng(route[route.length-1]);
-
     connectToEndNode();
     connectToStartNode();
     for (let i = 0; i < route.length-1; i++){
         await applyRoute(i);
     }
-
 }
 
-function copyUrlToClipboard(){
-    navigator.clipboard.writeText(setUrl(false));
+async function copyUrlToClipboard(){
+    await navigator.clipboard.writeText(setUrl(false));
     document.getElementById("routeLinkCopier").textContent = "Copied to clipboard!";
     setTimeout(function(){
             document.getElementById("routeLinkCopier").textContent = "Share route";
-    },
-        500);
+    }, 500);
 }
 
 function setUrl(pushState=true){
@@ -64,6 +56,22 @@ function setUrl(pushState=true){
     return urlObject.toString();
 }
 
+function rebindStopEventListeners(stopIndex){
+    routeMarkers[stopIndex].off();
+    routeMarkers[stopIndex].on("dragend", async function(){
+        routeMarkers[stopIndex].setLatLng(nodeLatLons[closestNode(routeMarkers[stopIndex].getLatLng())]);
+        await applyRoute(stopIndex-1);
+        await applyRoute(stopIndex)
+    });
+    routeMarkers[stopIndex].bindPopup(
+        `<button class='textButton' onClick='addStop(${stopIndex-1});'>Add stop before</button>
+        <button class='textButton' onClick='addStop(${stopIndex});'>Add stop after</button>
+        <button class='textButton redOnlyButton' onClick='deleteStop(${stopIndex});'>Delete stop</button>`);
+    // Rebind popup/drag event listeners - erased by routeMarkers[stopIndex].off();
+    routeMarkers[stopIndex].on("click", function(){routeMarkers[stopIndex].openPopup();});
+    routeMarkers[stopIndex].on("dragend", function(){setUrl();});
+}
+
 async function deleteStop(stopIndex){
     routeMarkers[stopIndex].remove(map);
     routeMarkers.splice(stopIndex, 1);
@@ -71,21 +79,8 @@ async function deleteStop(stopIndex){
     routeChartData.splice(stopIndex, 1);
     routeTimes.splice(stopIndex, 1);
     routeDistances.splice(stopIndex, 1);
-
     for (let i = stopIndex; i < routeMarkers.length - 1; i++){
-        routeMarkers[i].off();
-        routeMarkers[i].on("dragend", async function(){
-            routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
-            await applyRoute(i-1);
-            await applyRoute(i)});
-
-            
-        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button>
-                            <button class='textButton' onClick='addStop(${i});'>Add stop after</button>
-                            <button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
-        // Rebind popup click event listener - erased by routeMarkers[i].off();
-        routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
-        routeMarkers[i].on("dragend", function(){setUrl();});
+        rebindStopEventListeners(i);
     }
     setUrl();
     await applyRoute(stopIndex-1);
@@ -96,9 +91,6 @@ async function addStop(routeLineIndex, adjustRoute=true, stopPostion=null){
     if (stopPostion===null) {
         // Partitions the route line at routeLineIndex at around the middle
         let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length / 2);
-
-        // Probably suffers from some performance hit rather than just tracking all
-        // node ids on routeLine
         chosenNode = closestNode(
             {
                 lat: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][0],
@@ -108,45 +100,21 @@ async function addStop(routeLineIndex, adjustRoute=true, stopPostion=null){
     else{
         chosenNode = closestNode({lat: stopPostion[0], lng: stopPostion[1]});
     }
-
-    routeNodes.splice(routeLineIndex+1, 0, chosenNode);
     let newNodeMarker =  L.marker(
         nodeLatLons[chosenNode], {
             draggable: true,
             pane: "node_markers" // display marker above paths
         }).addTo(map);
     newNodeMarker._icon.classList.add("grayMarker");
-    newNodeMarker.on("dragend", async function(){
-        newNodeMarker.setLatLng(nodeLatLons[closestNode(newNodeMarker.getLatLng())]);
-        await applyRoute(routeLineIndex);
-        await applyRoute(routeLineIndex+1)});
-
-    newNodeMarker.bindPopup(`<button class='textButton' onClick='addStop(${routeLineIndex});'>Add stop before</button>
-                            <button class='textButton' onClick='addStop(${routeLineIndex+1});'>Add stop after</button>
-                            <button class='textButton redOnlyButton' onClick='deleteStop(${routeLineIndex+1});'>Delete stop</button>`);
-    newNodeMarker.on("dragend", function(){setUrl();});
-
+    routeNodes.splice(routeLineIndex+1, 0, chosenNode);
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
     routeChartData.splice(routeLineIndex+1, 0, []);
     routeTimes.splice(routeLineIndex+1, 0, 0);
     routeDistances.splice(routeLineIndex+1, 0, 0);
-
-    for (let i = routeLineIndex+2; i < routeMarkers.length - 1; i++){
-        routeMarkers[i].off();
-        routeMarkers[i].on("dragend", async function(){
-            routeMarkers[i].setLatLng(nodeLatLons[closestNode(routeMarkers[i].getLatLng())]);
-            await applyRoute(i-1);
-            await applyRoute(i)});
-
-        routeMarkers[i].bindPopup(`<button class='textButton' onClick='addStop(${i-1});'>Add stop before</button>
-                                <button class='textButton' onClick='addStop(${i});'>Add stop after</button>
-                                <button class='textButton redOnlyButton' onClick='deleteStop(${i});'>Delete stop</button>`);
-        // Rebind popup click event listener - erased by routeMarkers[i].off();
-        routeMarkers[i].on("click", function(){routeMarkers[i].openPopup();});
-        routeMarkers[i].on("dragend", function(){setUrl();});
+    for (let i = routeLineIndex+1; i < routeMarkers.length - 1; i++){
+        rebindStopEventListeners(i);
     }
-
     if (adjustRoute) {
         setUrl();
         await applyRoute(routeLineIndex);
@@ -154,17 +122,9 @@ async function addStop(routeLineIndex, adjustRoute=true, stopPostion=null){
     }
 }
 
-
-
 function centreMap() {
-    map.fitBounds([
-        routeMarkers[0].getLatLng(),
-        routeMarkers[routeMarkers.length-1].getLatLng()
-    ]);
-
+    map.fitBounds([routeMarkers[0].getLatLng(), routeMarkers[routeMarkers.length-1].getLatLng()]);
 }
-
-
 
 function getStartGPSLocation() {
     try {
@@ -173,7 +133,8 @@ function getStartGPSLocation() {
         } else {
             alert("This browser does not support geolocation.")
         }
-    } catch (error) {
+    }
+    catch (error) {
         alert("Browser did not respond with location. Please check you have set location permissions properly for this website.")
     }
 }
@@ -182,52 +143,43 @@ function setStartGPSLocation(position) {
     routeMarkers[0].setLatLng([position.coords.latitude,
         position.coords.longitude
     ]);
-
     gpsAccuracy = position.coords.accuracy;
-
     fixStart();
 }
 
-
-async function suggestRoute(useEndNode = false) {
+async function suggestRoute() {
     // Set generate button to red and prevent clicks
     let buttonElement = document.getElementById("route_suggestor_button");
     buttonElement.disabled = true;
     buttonElement.textContent = "Generating...";
     buttonElement.classList.add("redOnlyButton");
 
-    let suggestedCycle = await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`);
-    let suggestedCycleObject = await suggestedCycle.json();
-
+    let suggestedCycleObject = await (
+        await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`)
+    ).json();
 
     if (suggestedCycleObject[0] === suggestedCycleObject[1]) {
-        // Failed to find cycle if second node = third node
+        // Failed to find cycle if duplicate nodes
         alert("Failed to generate walk. Ensure the walk distance input is suitable.")
-
-    } else {
-
-
+    }
+    else {
         resetRoute();
-
-        addStop(0, false, nodeLatLons[suggestedCycleObject[0]]);
         addStop(0, false, nodeLatLons[suggestedCycleObject[1]]);
+        addStop(0, false, nodeLatLons[suggestedCycleObject[0]]);
         routeNodes[3] = routeNodes[0];
-        connectToEndNode();
         routeMarkers[3].setLatLng(routeMarkers[0].getLatLng());
+        connectToEndNode();
         setUrl();
         await applyRoute(0);
         await applyRoute(1);
         await fixEnd();
     }
 
-
     // Reactivate generate route button
     buttonElement.textContent = "Generate Route";
     buttonElement.disabled = false;
     buttonElement.classList.remove("redOnlyButton");
 }
-
-
 
 async function setDestinationSearchAddress() {
     document.getElementById('destination_search').value =
@@ -254,43 +206,31 @@ async function fixStart(updateSearchAddress=true) {
 }
 
 async function searchReverseGeocode(latLon) {
-    let data =
+    const data =
         await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latLon.lat}&lon=${latLon.lng}&format=json`)).json();
     return data["display_name"];
 }
 
 async function searchGeocode(query) {
-
-
     // Make sure url is created safely since can be arbitrarily set
-    // e.g. special characters such as & or ?
+    // e.g. special characters such as & or ? - although nothing malicious is likely
+    // could probably mess with stuff
     let requestURL = new URL("https://nominatim.openstreetmap.org/search?format=json");
     requestURL.searchParams.append('q', query);
-    let data = await (await fetch(requestURL)).json();
+    const data = await (await fetch(requestURL)).json();
     if (data.length > 0) {
-
-        // Everyone needs to get together and decide whether its lon or lng
-        return [parseFloat(data[0]["lat"]),
-            parseFloat(data[0]["lon"]),
-            data[0]["display_name"]
-        ]
+        return [parseFloat(data[0]["lat"]), parseFloat(data[0]["lon"]), data[0]["display_name"]];
     }
     return null;
-
 }
-
-
-
-
 
 function closestNode(latLng) {
     let closest = 0
-    let closest_distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
-
+    let closestDistance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
     for (let i = 1; i < nodeLatLons.length; i++) {
-        let distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
-        if (distance < closest_distance) {
-            closest_distance = distance;
+        const distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
+        if (distance < closestDistance) {
+            closestDistance = distance;
             closest = i;
         }
     }
@@ -298,8 +238,7 @@ function closestNode(latLng) {
 }
 
 async function dijkstraDetails(node) {
-    const response = await fetch(`/api/get/dijkstra/${node}`);
-    return await response.json();
+    return await (await fetch(`/api/get/dijkstra/${node}`)).json();
 }
 
 function connectToStartNode() {
@@ -309,11 +248,9 @@ function connectToStartNode() {
     if (startNodeMarker != null) {
         startNodeMarker.remove(map);
     }
-
     startNodeConnector = L.polyline(
-        [routeMarkers[0].getLatLng(),
-            nodeLatLons[routeNodes[0]]
-        ], {
+        [routeMarkers[0].getLatLng(), nodeLatLons[routeNodes[0]]],
+        {
             weight: 5,
             color: 'black',
             fill: true,
@@ -321,21 +258,20 @@ function connectToStartNode() {
             fillOpacity: 1,
             dashArray: [6],
             interactive: false
-
         }
-
     ).addTo(map);
-
     startNodeMarker = L.circleMarker(
-        nodeLatLons[routeNodes[0]], {
+        nodeLatLons[routeNodes[0]],
+        {
             radius: 5,
             color: 'black',
             fill: true,
             fillColor: 'white',
             fillOpacity: 1,
-            pane: "node_markers", // display marker above paths
+            pane: "node_markers",
             interactive: false
-        }).addTo(map);
+        }
+    ).addTo(map);
 }
 
 function connectToEndNode() {
@@ -345,11 +281,9 @@ function connectToEndNode() {
     if (endNodeMarker != null) {
         endNodeMarker.remove(map);
     }
-
     endNodeConnector = L.polyline(
-        [routeMarkers[routeMarkers.length-1].getLatLng(),
-            nodeLatLons[routeNodes[routeNodes.length-1]]
-        ], {
+        [routeMarkers[routeMarkers.length-1].getLatLng(), nodeLatLons[routeNodes[routeNodes.length-1]]],
+        {
             weight: 5,
             color: 'black',
             fill: true,
@@ -357,14 +291,9 @@ function connectToEndNode() {
             fillOpacity: 1,
             dashArray: [6],
             interactive: false
-
         }
-
     ).addTo(map);
-
-    endNodeMarker = L.circleMarker(
-        nodeLatLons[routeNodes[routeNodes.length-1]],
-
+    endNodeMarker = L.circleMarker(nodeLatLons[routeNodes[routeNodes.length-1]],
         {
             radius: 5,
             color: 'black',
@@ -373,22 +302,20 @@ function connectToEndNode() {
             fillOpacity: 1,
             pane: "node_markers",
             interactive: false
-        }).addTo(map);
+        }
+    ).addTo(map);
 }
-
-
 
 async function applyRoute(routeLineIndex) {
     // Connects node at routeLineIndex to node at routeLineIndex + 1
-
     routeNodes[routeLineIndex] = closestNode(routeMarkers[routeLineIndex].getLatLng());
     routeNodes[routeLineIndex+1] = closestNode(routeMarkers[routeLineIndex+1].getLatLng());
 
-    // Redraw route from start
+    let chartData = [];
     let path = [];
-
-
+    let assembledPath = [];
     let a_star_data;
+
     if (settings.findShortestPathsByTime){
         a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
@@ -396,67 +323,55 @@ async function applyRoute(routeLineIndex) {
         a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
 
-    let chartData = [];
-
-
     for (let i = 0; i < a_star_data[2].length; i++){
         path.push(nodeLatLons[a_star_data[2][i]]);
-        chartData.push({x: a_star_data[3][i],
-            y: nodeElevations[a_star_data[2][i]]})
+        chartData.push({x: a_star_data[3][i], y: nodeElevations[a_star_data[2][i]]});
     }
 
     routeNodeLatLons[routeLineIndex] = path;
     routeChartData[routeLineIndex] = chartData;
-
-    let assembledPath = [];
+    routeDistances[routeLineIndex] = a_star_data[0];
+    routeTimes[routeLineIndex] = a_star_data[1];
 
     for (const routeNodeLatLonSegment of routeNodeLatLons){
         assembledPath = assembledPath.concat(routeNodeLatLonSegment);
     }
 
-    routeDistances[routeLineIndex] = a_star_data[0];
-    routeTimes[routeLineIndex] = a_star_data[1];
-
     let totalDistance = routeDistances.reduce((a, b) => a + b, 0);
     let totalTime = routeTimes.reduce((a, b) => a + b, 0);
-
     if (routeLine != null) {
-        routeLine.setLatLngs(assembledPath);
-        routeLine.setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, `+
+        routeLine.setLatLngs(assembledPath)
+        .setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id=\"elevationGraph\"></canvas>");
+            "<canvas id='elevationGraph'></canvas>");
     }
     else{
         routeLine = L.polyline(assembledPath, {
             fillOpacity: 1,
-        }).bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
+        })
+        .bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id=\"elevationGraph\"></canvas>", {
+            "<canvas id='elevationGraph'></canvas>", {
             autoPan: false
-        }).on('click', showChart);
-
+        })
+        .on('click', showChart)
+        .addTo(map);
     }
 
-    // Don't draw route if not needed - but get everything else ready for when it is checked
     if (document.getElementById('destination_show_checkbox').checked === true) {
-        routeLine.addTo(map);
         routeLine.openPopup();
         showChart();
     }
-
     connectToStartNode();
     connectToEndNode();
-
-
 }
-
 
 function showChart(){
     if (currentChart!=null){
-            currentChart.destroy();
+        currentChart.destroy();
     }
-
     // Assemble elevations by patching together elevation data for each segment
+    // Offset x value by tracking how far along path each segment goes
     let chartData = [];
     let offset = 0;
     for (const chartDataSegment of routeChartData){
@@ -467,8 +382,6 @@ function showChart(){
         }
         offset += maxEntry;
     }
-
-
     currentChart = new Chart(
         document.getElementById('elevationGraph'),
         {
@@ -479,15 +392,9 @@ function showChart(){
                     label: 'Elevation of journey',
                     pointRadius: 0
                 }]
-
             },
             options: {
-                legend: {
-                    display: true,
-                    labels: {
-                    }
-                },
-        
+                legend: {display: true},
                 scales: {
                     x: {
                         type: 'linear',
@@ -506,17 +413,8 @@ function showChart(){
                         }
                     }
                 },
-                animation: {
-                    duration: 0
-                }
+                animation: {duration: 0}
             }
-
         }
     );
 }
-
-
-
-
-
-
