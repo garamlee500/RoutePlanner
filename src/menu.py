@@ -1,14 +1,10 @@
 from typing import Union, Tuple, List, Callable, Literal
 import math
 
+
 class Menu:
-    """
-    A modular way to create a menu
-    """
-
-    # Options should have a name with either be a submenu to call
+    # Options should have a name with either a submenu to call
     # or a function to call that is completely void with no arguments
-
     def __init__(self, options: List[Tuple[str, Union['Menu', Callable[[], None]]]] = None, start_text=None, loop=True):
         if options is None:
             self._options = []
@@ -45,10 +41,10 @@ class Menu:
                 current = float(input_string)
                 if current < lower_bound or current >= upper_bound:
                     print("Invalid number entered. Please try again:")
-
             except ValueError:
                 print("Invalid number entered. Please try again:")
         return current
+
 
     def run(self):
         while True:

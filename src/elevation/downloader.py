@@ -73,7 +73,7 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
                             tile_data.append(data.read(1))
                             data.close()
         except:
-            print("Unable to get all tiles")
+            print("Unable to get all elevation tiles")
             tile_data.append([])
 
     elevations = []

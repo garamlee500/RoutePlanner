@@ -3,14 +3,13 @@ from typing import Callable, List, Tuple, Set, Dict
 import requests
 from distance_formulas import haversine_node_distance, walking_time
 import exceptions
-from load_data import load_node_list, load_adjacency_list
 import elevation.downloader
 
 
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
     connected_nodes = [False for _ in adjacency_list]
-    connected_nodes[start_node] = False
+    connected_nodes[start_node] = True
     bfs_queue = [start_node]
     while len(bfs_queue) > 0:
         current_node = bfs_queue.pop(0)
@@ -19,15 +18,10 @@ def bfs_connected_nodes(start_node: int,
                 # Add unvisited node to bfs queue
                 connected_nodes[connected_node_pair[0]] = True
                 bfs_queue.append(connected_node_pair[0])
-
     return connected_nodes
 
 
 def name_match_score(name, search):
-    """
-    Simple function to give score to how well name matches search
-    Numbers are arbitrary, but should be descending
-    """
     if search == name:
         return 100
 
@@ -35,12 +29,10 @@ def name_match_score(name, search):
     name = ' ' + name + ' '
     if ' ' + search + ' ' in name:
         return 10
-
     return 1
 
 
-def search_relation(search_term,
-                    overpass_interpreter_url="https://overpass-api.de/api/interpreter"):
+def search_relation(search_term, overpass_interpreter_url):
     """
     Performs a case-insensitive for all relations that are boundaries
     containing search_term
@@ -51,17 +43,16 @@ def search_relation(search_term,
 
     response = requests.get(overpass_interpreter_url, params={'data': query})
     if response.status_code != 200:
-        # print(response.text)
         raise ConnectionError("Unable to successfully connect to Overpass Api")
 
     relations = json.loads(response.text)["elements"]
-    # Sort by descending order by descending tag count, then by name match to give more important results first
+    # Sort by descending order by descending tag count,
+    # then by name match to give more important results first
     # Uses fact .sort() is stable (but have to reverse order of sorts)
-    # relations.sort(key=lambda x: int(x['tags']['admin_level']) if 'admin_level' in x['tags'] else 11)
     relations.sort(key=lambda x: name_match_score(x['tags']['name'], search_term), reverse=True)
     relations.sort(key=lambda x: len(x['tags']), reverse=True)
-
     return relations
+
 
 def _process_ways(data: Dict,
                   present_nodes: Set[int],
@@ -88,17 +79,20 @@ def _process_ways(data: Dict,
                         adjacency_list[node_index1].append((node_index2, distance))
                         adjacency_list[node_index2].append((node_index1, distance))
 
+
 def _download_edges(edge_query: str,
                     node_query: str,
+                    overpass_interpreter_url: str,
+                    aster_gdem_api_endpoint: str,
                     node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance,
                     node_filename="map_data/nodes.csv",
                     adjacency_list_filename="map_data/edges.csv",
                     elevation_list_filename="map_data/elevation.csv",
-                    overpass_interpreter_url="https://overpass-api.de/api/interpreter",
-                    aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                     verbose=True):
-    # Make request to overpass for data - note query has been prebuilt
+
     response = requests.get(overpass_interpreter_url, params={'data': edge_query})
+    if response.status_code != 200:
+        raise ConnectionError("Unable to succesfully connect to Overpass Api")
 
     data = json.loads(response.text)["elements"]
 
@@ -119,8 +113,6 @@ def _download_edges(edge_query: str,
     node_indexes = {}
     node_lat_lng_indexes = {}
     duplicate_nodes = set()
-    original_node_count = 0
-    old_adjacency_list = []
     nodes = []
 
     for item in data:
@@ -142,10 +134,7 @@ def _download_edges(edge_query: str,
                 nodes.append((item["id"], item["lat"], item["lon"]))
 
     adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
-
-    # Iterate separately to ensure all nodes have been detected before processing ways
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, set(), node_distance_formula)
-
 
     if verbose:
         print("Loaded preliminary graph")
@@ -161,7 +150,8 @@ def _download_edges(edge_query: str,
             break
         safe_node += 1
         while safe_node < len(adjacency_list):
-            # Any node connected to a dead node is also dead, so keep going until node unconnected to dead node is found
+            # Any node connected to a dead node is also dead,
+            # so keep going until node unconnected to dead node is found
             if not connected_nodes[safe_node]:
                 break
             safe_node += 1
@@ -186,8 +176,6 @@ def _download_edges(edge_query: str,
     # Regenerate everything but with knowledge of dead + duplicate nodes
     node_indexes = {}
     node_lat_lng_indexes = {}
-    original_node_count = 0
-    old_adjacency_list = []
     nodes = []
 
     for item in data:
@@ -205,7 +193,6 @@ def _download_edges(edge_query: str,
                     nodes.append((item["id"], item["lat"], item["lon"]))
 
     adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
-
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, dead_nodes, node_distance_formula)
 
     if verbose:
@@ -213,7 +200,8 @@ def _download_edges(edge_query: str,
 
     elevations = elevation.downloader.get_elevation_for_nodes(nodes,
                                                               aster_gdem_api_endpoint=aster_gdem_api_endpoint)
-    print("Found elevations of nodes")
+    if verbose:
+        print("Found elevations of nodes")
 
     with open(node_filename, 'w') as file:
         # Write node count at top of file
@@ -226,7 +214,8 @@ def _download_edges(edge_query: str,
             # Write node_index, edge_distance, walking time for each edge
             file.write(','.join([str(edge[0])
                                  + ',' + str(edge[1]) + ',' +
-                                 str(walking_time(edge[1], elevations[edge[0]]-elevations[node])) for edge in row]))
+                                 str(walking_time(edge[1], elevations[edge[0]]-elevations[node]))
+                                 for edge in row]))
             file.write('\n')
 
     with open(elevation_list_filename, 'w') as file:
@@ -236,14 +225,14 @@ def _download_edges(edge_query: str,
         print("Saved graph to files")
 
 
-def download_edges_in_relation(area_relation_id,
+def download_edges_in_relation(area_relation_id: int,
+                               overpass_interpreter_url: str,
+                               aster_gdem_api_endpoint: str,
                                node_distance_formula: Callable[
                                    [float, float, float, float], float] = haversine_node_distance,
                                node_filename="map_data/nodes.csv",
                                adjacency_list_filename="map_data/edges.csv",
                                elevation_list_filename="map_data/elevation.csv",
-                               overpass_interpreter_url="https://overpass-api.de/api/interpreter",
-                               aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                                verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -259,20 +248,21 @@ def download_edges_in_relation(area_relation_id,
                  "node(area.searchArea);" + \
                  "(._;>;);out;"
 
-    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, aster_gdem_api_endpoint, verbose)
+    _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
+                    node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
+                    verbose)
 
 
 def download_edges_around_point(node_lat: float,
                                 node_lon: float,
                                 node_radius: int,
+                                overpass_interpreter_url,
+                                aster_gdem_api_endpoint,
                                 node_distance_formula: Callable[
                                     [float, float, float, float], float] = haversine_node_distance,
                                 node_filename="map_data/nodes.csv",
                                 adjacency_list_filename="map_data/edges.csv",
                                 elevation_list_filename="map_data/elevation.csv",
-                                overpass_interpreter_url="https://overpass-api.de/api/interpreter",
-                                aster_gdem_api_endpoint = "https://gdemdl.aster.jspacesystems.or.jp/download/",
                                 verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -284,5 +274,6 @@ def download_edges_around_point(node_lat: float,
                  f"node(around:{node_radius},{node_lat},{node_lon});" + \
                  "(._;>;);out;"
 
-    _download_edges(edge_query, node_query, node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    overpass_interpreter_url, aster_gdem_api_endpoint, verbose)
+    _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
+                    node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
+                    verbose)

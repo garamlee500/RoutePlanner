@@ -12,12 +12,10 @@ current_settings = Settings()
 
 def redownload_all_data():
     try:
-
         if current_settings["RELATION_REGION_MODE"]:
             download_edges_in_relation(current_settings["AREA_RELATION_ID"],
                                        overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"],
                                        aster_gdem_api_endpoint=current_settings["ASTER_GDEM_API_URL"])
-
         else:
             download_edges_around_point(current_settings["LAT_CENTRE"],
                                         current_settings["LON_CENTRE"],
@@ -32,11 +30,6 @@ def redownload_all_data():
         print("Please ensure valid and sensible region has been selected")
 
 
-def run_development_server():
-    server.reload_map_graph()
-    server.app.run(host="0.0.0.0")
-
-
 def run_server():
     server.reload_map_graph()
     print("Running server!")
@@ -48,9 +41,8 @@ def set_area_by_relation_id():
     print("Enter OpenStreetMap relation id - enter -1 to go back")
 
     new_area_relation_id = Menu.prompt_integer(-1, math.inf)
-
     if new_area_relation_id >= 0:
-        current_settings["AREA_RELATION_ID"] = int(new_area_relation_id)
+        current_settings["AREA_RELATION_ID"] = new_area_relation_id
         current_settings["RELATION_REGION_MODE"] = True
         current_settings.save()
         print("Settings saved!")
@@ -63,12 +55,10 @@ def set_area_by_searching():
     if search_term == "":
         print("Going back.")
         return
-
     try:
         areas = search_relation(search_term,
                                 overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"])
         set_area_menu = Menu(start_text=f"Found {len(areas)} results: ", loop=False)
-
         def create_set_area_function(region_index):
             def set_area_function():
                 current_settings["AREA_RELATION_ID"] = areas[region_index]['id']
