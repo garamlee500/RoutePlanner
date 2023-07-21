@@ -238,13 +238,13 @@ async function setStartSearchAddress() {
         await searchReverseGeocode(routeMarkers[0].getLatLng());
 }
 
-async function fixEnd(){
-    setDestinationSearchAddress();
+async function fixEnd(updateSearchAddress=true){
+    if (updateSearchAddress) setDestinationSearchAddress();
     setUrl();
     await applyRoute(routeMarkers.length-2);
 }
-async function fixStart() {
-    setStartSearchAddress();
+async function fixStart(updateSearchAddress=true) {
+    if(updateSearchAddress) setStartSearchAddress();
     setUrl();
     await applyRoute(0);
     dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
@@ -281,56 +281,14 @@ async function searchGeocode(query) {
 
 
 
-function colorGradient(colorCount,
-    startR = 0, startG = 255, startB = 0,
-    endR = 255, endG = 0, endB = 0,
-) {
 
-    if (colorCount === 1) {
-        // Zero division error occurs if colorCount is 1
-        return [`rgb(${startR}, ${startG}, ${startB})`]
-    }
-
-    // Uses a linear colour gradient
-    let colors = []
-
-    let rDiff = (endR - startR) / (colorCount - 1);
-    let gDiff = (endG - startG) / (colorCount - 1);
-    let bDiff = (endB - startB) / (colorCount - 1);
-    for (let i = 0; i < colorCount; i++) {
-        let r = Math.round(startR + rDiff * i);
-        let g = Math.round(startG + gDiff * i);
-        let b = Math.round(startB + bDiff * i);
-
-        colors.push(`rgb(${r}, ${g}, ${b})`)
-    }
-    return colors;
-
-
-}
-
-function scaled_haversine_node_distance(node1lat, node1lon, node2lat, node2lon) {
-    // computes the haversine node distance up to what is required
-    // for distance comparisons
-    // no need to scale to earths radius, use arcsin or squareroot
-    // since they are all increasing functions
-    //const EARTH_RADIUS = 6_371_000;
-
-    let lat2 = Math.PI * node2lat / 180;
-    let lat1 = Math.PI * node1lat / 180;
-    let lon2 = Math.PI * node2lon / 180;
-    let lon1 = Math.PI * node1lon / 180;
-    let term1 = Math.sin((lat2 - lat1) / 2) ** 2;
-    let term2 = Math.cos(lat1) * Math.cos(lat2) * (Math.sin((lon2 - lon1) / 2) ** 2);
-    return term1 + term2
-}
 
 function closestNode(latLng) {
     let closest = 0
-    let closest_distance = scaled_haversine_node_distance(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
+    let closest_distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
 
     for (let i = 1; i < nodeLatLons.length; i++) {
-        let distance = scaled_haversine_node_distance(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
+        let distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
         if (distance < closest_distance) {
             closest_distance = distance;
             closest = i;
@@ -419,17 +377,6 @@ function connectToEndNode() {
 }
 
 
-function secondsToString(seconds){
-    if (seconds < 60){
-        return `${Math.round(seconds)} seconds`;
-    }
-    else if (seconds < 3600){
-        return `${Math.round(seconds/60)} minutes`
-    }
-    else{
-        return `${Math.floor(seconds/3600)} hours, ${Math.round((seconds%3600)/60)} minutes`
-    }
-}
 
 async function applyRoute(routeLineIndex) {
     // Connects node at routeLineIndex to node at routeLineIndex + 1

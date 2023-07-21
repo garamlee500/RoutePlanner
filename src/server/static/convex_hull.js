@@ -2,30 +2,31 @@ function setupConvexHullInputs(){
     document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
     document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
     document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
-    convexHullIndex = Math.min(convexHullRegions.length - 1, convexHullIndex)
+    convexHullIndex = Math.min(convexHullRegions.length - 1, convexHullIndex);
 }
 
 async function generateIsochrone() {
-    const convex_hull_response = await fetch(`/api/get/convex/${routeNodes[0]}/${settings.partitionDistance}`);
-    let data = await convex_hull_response.json();
+    const convexHullResponse = await fetch(`/api/get/convex/${routeNodes[0]}/${settings.partitionDistance}`);
+    let data = await convexHullResponse.json();
 
     for (let i = 0; i < convexHullRegions.length; i++) {
         convexHullRegions[i].remove(map);
     }
-    convexHullRegions = []
 
+    convexHullRegions = []
     convexHullRegionsLatLons = [];
-    let convex_hull_lat_lons = [];
-    let prev_convex_hull_lat_lons;
+    let currentConvexHullLatLons = [];
+    let prevConvexHullLatLons;
     let colors = colorGradient(data.length);
 
-
+    // Generate convex hull for very first region
     for (let i = 0; i < data[0].length; i++) {
-        convex_hull_lat_lons.push(nodeLatLons[data[0][i]]);
+        currentConvexHullLatLons.push(nodeLatLons[data[0][i]]);
     }
-    convexHullRegionsLatLons.push(convex_hull_lat_lons)
+    convexHullRegionsLatLons.push(currentConvexHullLatLons)
 
-    convexHullRegions.push(L.polygon(convex_hull_lat_lons, {
+    convexHullRegions.push(L.polygon(currentConvexHullLatLons,
+        {
             fillColor: colors[0],
             opacity: 0,
             fillOpacity: settings.isochroneOpacity,
@@ -33,32 +34,29 @@ async function generateIsochrone() {
             interactive: false
         }).addTo(map)
     );
-    prev_convex_hull_lat_lons = convex_hull_lat_lons
+    prevConvexHullLatLons = currentConvexHullLatLons;
     for (let j = 1; j < data.length; j++) {
-        convex_hull_lat_lons = []
-
+        currentConvexHullLatLons = [];
         for (let i = 0; i < data[j].length; i++) {
-            convex_hull_lat_lons.push(nodeLatLons[data[j][i]]);
+            currentConvexHullLatLons.push(nodeLatLons[data[j][i]]);
         }
+        convexHullRegionsLatLons.push(currentConvexHullLatLons);
 
-        convexHullRegionsLatLons.push(convex_hull_lat_lons)
-
-        // setTimeout incurs enough delay that even with 0 ms not instant
+        // Create delay if needed
         if (settings.isochroneDelay > 0) await new Promise(r => setTimeout(r, settings.isochroneDelay));
 
-        convexHullRegions.push(L.polygon([convex_hull_lat_lons, prev_convex_hull_lat_lons],
-
-            {
-                fillColor: colors[j],
-                opacity: 0,
-                fillOpacity: settings.isochroneOpacity,
-                pane: 'isochrone_colouring',
-                interactive: false
-            }).addTo(map));
-
-        prev_convex_hull_lat_lons = convex_hull_lat_lons;
+        convexHullRegions.push(L.polygon([currentConvexHullLatLons, prevConvexHullLatLons],
+        {
+            fillColor: colors[j],
+            opacity: 0,
+            fillOpacity: settings.isochroneOpacity,
+            pane: 'isochrone_colouring',
+            interactive: false
+        }).addTo(map));
+        prevConvexHullLatLons = currentConvexHullLatLons;
     }
 }
+
 function displayConvexHull() {
     document.getElementById("convex_hull_slider_text").value = (convexHullIndex * settings.partitionDistance / 1000);
     document.getElementById("convex_hull_slider").value = convexHullIndex;
