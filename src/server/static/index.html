@@ -46,7 +46,8 @@
            <p id="statsDestinationLocation" style="grid-column: 3 / span 2; grid-row: 11;"></p>
            <p id="statsGpsAccuracy" style="grid-column: 3 / span 2; grid-row: 12;"></p>
            <button class="textButton" id="default_settings" style="grid-row: 14; grid-column: 3/span 2;"
-                   onclick="settings={...defaultSettings};displaySettings();">
+                   onclick="settings={...defaultSettings};displaySettings();
+                   setupConvexHullInputs();generateIsochrone();displayConvexHull();">
                Reset settings to default
            </button>
        </div>
