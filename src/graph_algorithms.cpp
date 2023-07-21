@@ -53,6 +53,25 @@ struct Node {
     {}
 };
 
+struct aStarResultObject{
+    double distance;
+    double subsidiaryDistance;
+    vector<int> path;
+    vector<double> distancesAlongPath;
+    vector<double> subsidiaryDistancesAlongPath;
+    aStarResultObject(double distance,
+                      double subsidiaryDistance,
+                      vector<int> path,
+                      vector<double> distancesAlongPath,
+                      vector<double> subsidiaryDistancesAlongPath):
+            distance(distance),
+            subsidiaryDistance(subsidiaryDistance),
+            path(path),
+            distancesAlongPath(distancesAlongPath),
+            subsidiaryDistancesAlongPath(subsidiaryDistancesAlongPath)
+    {}
+    aStarResultObject(){}
+};
 
 // A Generic LRU cache that takes integers as inputs, with automatic data generation when cache miss occurs
 template <class T>
@@ -60,30 +79,27 @@ class LRUcache{
 private:
     unordered_map<int, T> cachedData;
     unordered_map<int, list<int>::iterator> locationOfInputsInLRUInputs;
-    // A queue of objects
     list<int> LRUInputs;
     function<T(int)> targetFunction;
     unsigned int maxSize;
-
-
     void storeDataWithoutCacheHitChecks(int x, T& data){
-        // Stores data without checking for cache hits
         cachedData[x] = data;
         LRUInputs.push_back(x);
         locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
-
         if (LRUInputs.size() > maxSize){
-            // Cache has got too big - erase element Least Recently Used
             int erasingInput = LRUInputs.front();
             cachedData.erase(erasingInput);
             locationOfInputsInLRUInputs.erase(erasingInput);
             LRUInputs.pop_front();
         }
     }
+    void cacheHit(int x){
+        LRUInputs.erase(locationOfInputsInLRUInputs[x]);
+        LRUInputs.push_back(x);
+        locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
+    }
 public:
-
     // Cache initialises with function to run if cache miss occurs
-    // Max size is point at which cache data is deleted
     LRUcache(function<T(int)> targetFunction, unsigned int maxSize = 100):
         targetFunction(targetFunction),
         maxSize(maxSize)
@@ -91,44 +107,31 @@ public:
 
     void storeData(int x, T& data){
         if (cachedData.count(x)){
-            LRUInputs.erase(locationOfInputsInLRUInputs[x]);
-            LRUInputs.push_back(x);
-            locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
+            cacheHit(x);
         }
         else{
             storeDataWithoutCacheHitChecks(x, data);
         }
     }
-
     T getData(int x){
         if (cachedData.count(x)){
-            // Cache hit
-            // Move input data to back of LRU list
-            LRUInputs.erase(locationOfInputsInLRUInputs[x]);
-            LRUInputs.push_back(x);
-            locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
+            cacheHit(x);
             return cachedData[x];
         }
         else{
-            // Cache miss
             T result = targetFunction(x);
             storeDataWithoutCacheHitChecks(x, result);
             return result;
         }
     }
-
-
 };
 
 template <class T, class IndexTracker>
 class IndexedPriorityQueue{
-    // A priority queue (minimum first) with all items tracked in heap, allowing for sift up operations
-    // A priority queue of item T, with indexTracker indexable with [] operator with type T to return type of int
 private:
-        vector<T> heap;
-        function<bool(T, T)> itemComparator;
-        IndexTracker itemIndices;
-
+    vector<T> heap;
+    function<bool(T, T)> itemComparator;
+    IndexTracker itemIndices;
 public:
     unsigned int size(){
         // Get the size of the heap
@@ -136,19 +139,14 @@ public:
     }
 
     IndexedPriorityQueue(function<bool(T, T)> itemComparator):
-        itemComparator(itemComparator){
-
-    }
-
+        itemComparator(itemComparator){}
     IndexedPriorityQueue(function<bool(T, T)> itemComparator, IndexTracker indexTracker):
         itemComparator(itemComparator),
-        itemIndices(indexTracker){
+        itemIndices(indexTracker){}
 
-    }
     bool itemPresent(T item, bool itemExistenceCheck=true){
         // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the
         // item is known to have previously been processed.
-        // All nodes removed from heap are marked as -1 on itemIndices - this can be used to check if a node
         if (itemExistenceCheck){
             try {
                 return itemIndices.at(item) != -1;
@@ -167,21 +165,14 @@ public:
     }
     T popTop(){
         T topItem = peekTop();
-
-        // Swap root with last item in heap (then delete former root) then reheapify to remove root from heap
         itemIndices[heap.back()] = 0;
         itemIndices[topItem] = -1;
         heap[0] = heap.back();
         heap.pop_back();
-
         unsigned int itemIndex = 0;
-
-        // Children items are 2*i + 1 and 2*i + 2
-
 
         // Loop until current item has no children
         while (itemIndex * 2 + 1 < heap.size()){
-
             // Check if current item has a second child
             if (itemIndex * 2 + 2 < heap.size()){
                 // First child is less than second child
@@ -201,7 +192,6 @@ public:
                         return topItem;
                     }
                 }
-
                 // Second child is less than first child
                 else{
                     // Second child is less than current item
@@ -220,7 +210,6 @@ public:
                     }
                 }
             }
-
             // Item only has one child
             else{
                 // First child is less than current item
@@ -237,15 +226,11 @@ public:
             }
         }
         return topItem;
-
     }
-
     void reduceItem(T item){
-        // Notifies priority queue that item might have reduced key
         unsigned int itemIndex = itemIndices[item];
         while (itemIndex > 0){
             unsigned int parentItemIndex = (itemIndex-1)/2;
-
             // Check if current node is less than parent node - swap if case otherwise end procedure
             if (itemComparator(heap[itemIndex], heap[parentItemIndex])){
                 int tempHeapValue = heap[itemIndex];
@@ -253,14 +238,11 @@ public:
                 itemIndices[heap[parentItemIndex]] = itemIndex;
                 heap[itemIndex] = heap[parentItemIndex];
                 heap[parentItemIndex] = tempHeapValue;
-
                 itemIndex = parentItemIndex;
-
             }
             else{
                 return;
             }
-
         }
     }
     void insertItem(T item){
@@ -268,56 +250,41 @@ public:
         heap.push_back(item);
         reduceItem(item);
     }
-
-
 };
 
 
 class DijkstraHeap{
-    /*
-    * DijkstraHeap is a highly specific binary heap, for use with standard dijkstra
-    * Expects nodes to be labelled from 0 to n-1, where n is the number of nodes
-    */
 private:
     IndexedPriorityQueue<int, vector<int>> priorityQueue;
 public:
     unsigned int size(){
-        // Get the size of the heap
         return priorityQueue.size();
     }
-
-    // Constructor of DijkstraHeap
-    // nodeCount - the total number of nodes - note nodes are expected to be named: 0, 1,..., nodeCount - 1
     // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
     //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
     DijkstraHeap(int nodeCount, function<bool(int, int)> nodeComparator)
     : priorityQueue(IndexedPriorityQueue<int, vector<int>>(nodeComparator, vector<int>(nodeCount)))
     {
-        for (int i = 0; i < nodeCount; i++){
-            // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indicices is not indexed out of bounds
+        for (int i = 0; i < nodeCount; i++) {
+            // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indices is not indexed out of bounds
+            // Not particularly performance affecting since all nodes will need to be eventually added anyway
             priorityQueue.insertItem(i);
         }
     }
-
     bool nodePresent(int node){
-        // We know all nodes have been processed at least once
+        // We know all nodes have been processed at least once so itemExistenceCheck is not needed
         return priorityQueue.itemPresent(node, false);
     }
-
     int peekTop(){
-        // Gets at top of DijkstraHeap
         return priorityQueue.peekTop();
     }
     int popTop(){
         return priorityQueue.popTop();
     }
-
-    void updateNode(int node){
+    void updateNode(int node) {
         priorityQueue.reduceItem(node);
     }
-
 };
-
 
 vector<string> split(string &s, char delim){
     vector<string> result;
@@ -356,34 +323,23 @@ double haversineDistance(double lat1deg, double lon1deg, double lat2deg, double 
     double lon1rad = lon1deg * PI / 180;
     double lat2rad = lat2deg * PI / 180;
     double lon2rad = lon2deg * PI / 180;
-
     double term1 = sin((lat2rad - lat1rad)/2) * sin((lat2rad - lat1rad)/2);
     double term2 = cos(lat1rad) * cos(lat2rad) * (sin((lon2rad-lon1rad)/2)*sin((lon2rad-lon1rad)/2));
-
     return 2 * EARTH_RADIUS * asin(sqrt(term1 + term2));
 }
 
-
 vector<Node> convexHull(vector<Node> nodes) {
-    // consider using deque or list instead
-
-    // Can't pass by reference - don't want to modify original vector
     if (nodes.size() <= 3){
         return nodes;
     }
-
     Node mostBottomLeft = nodes[0];
     unsigned int mostBottomLeftIndex = 0;
     for (unsigned int i = 1; i < nodes.size(); i++) {
-        if (nodes[i].y < mostBottomLeft.y
-            ||
-            (nodes[i].y == mostBottomLeft.y && nodes[i].x < mostBottomLeft.x)
-            ) {
+        if (nodes[i].y < mostBottomLeft.y || (nodes[i].y == mostBottomLeft.y && nodes[i].x < mostBottomLeft.x)) {
             mostBottomLeftIndex = i;
             mostBottomLeft = nodes[i];
         }
     }
-
     // Swap most bottom left element to front of list
     iter_swap(nodes.begin() + mostBottomLeftIndex, nodes.begin());
 
@@ -396,12 +352,8 @@ vector<Node> convexHull(vector<Node> nodes) {
         = [&mostBottomLeft](Node& nodeA, Node& nodeB) {
         // Custom comparator used to sort nodes for Graham's scan
         // Resolves by polar angle, then sorts by distance from mostBottomLeft
-
-
-
         double crossProduct = cross(nodeA.x-mostBottomLeft.x, nodeA.y-mostBottomLeft.y,
                         nodeB.x-mostBottomLeft.x, nodeB.y-mostBottomLeft.y );
-
         if (crossProduct>0) {
             // nodeB is left of nodeA
             return true;
@@ -413,7 +365,6 @@ vector<Node> convexHull(vector<Node> nodes) {
         else {
             // mostBottomLeft, nodeA, nodeB are collinear
             // extremely unlikely due to fp errors
-            // so must test separately
             // break ties by increasing distance
             // Could use manhattan distance due to co-linearity
             return pow(nodeA.x - mostBottomLeft.x, 2) +
@@ -423,30 +374,23 @@ vector<Node> convexHull(vector<Node> nodes) {
         }
     };
 
+    // Don't pop elements here - vectors have O(n) pop front - to avoid!
     sort(nodes.begin() + 1, nodes.end(), convexHullPolarSort);
 
     // Can't use std::stack, since access to top 2 elements required
-    // not just the top
     vector<Node> convexHullStack{ mostBottomLeft, nodes[1], nodes[2] };
-    // Don't pop elements here - vectors have O(n) pop front - to avoid!
-
-
     for (unsigned int i = 3; i < nodes.size(); i++) {
         while (!leftTurn(
             convexHullStack.back().x - (convexHullStack.end() - 2)->x,
             convexHullStack.back().y - (convexHullStack.end() - 2)->y,
             nodes[i].x - convexHullStack.back().x,
-            nodes[i].y - convexHullStack.back().y
-           )){
+            nodes[i].y - convexHullStack.back().y))
+        {
             convexHullStack.pop_back();
         }
         convexHullStack.push_back(nodes[i]);
-
     }
-
     return convexHullStack;
-
-
 }
 
 pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Edge>>& adjacencyList){
@@ -468,45 +412,19 @@ pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Ed
                 }
             }
         }
-
     }
     return make_pair(distances, previousNodes);
 }
 
-
-struct aStarResultObject{
-    double distance;
-    double subsidiaryDistance;
-    vector<int> path;
-    vector<double> distancesAlongPath;
-    vector<double> subsidiaryDistancesAlongPath;
-    aStarResultObject(double distance,
-                      double subsidiaryDistance,
-                      vector<int> path,
-                      vector<double> distancesAlongPath,
-                      vector<double> subsidiaryDistancesAlongPath):
-                      distance(distance),
-                      subsidiaryDistance(subsidiaryDistance),
-                      path(path),
-                      distancesAlongPath(distancesAlongPath),
-                      subsidiaryDistancesAlongPath(subsidiaryDistancesAlongPath)
-                      {}
-  aStarResultObject(){}
-};
-
 aStarResultObject aStarResult(int startNode,
-                                               int endNode,
-                                               vector<vector<Edge>>& adjacencyList,
-                                               vector<vector<Edge>>& subsidiaryAdjacencyList,
-                                               function<double(int, int)> heuristicFunction,
-                                               vector<double>& nodeLats,
-                                               vector<double>& nodeLons,
-                                               bool reversedPath=true){
+                              int endNode,
+                              vector<vector<Edge>>& adjacencyList,
+                              vector<vector<Edge>>& subsidiaryAdjacencyList,
+                              function<double(int, int)> heuristicFunction,
+                              bool reversedPath=true){
     unordered_map<int, double> distances;
     unordered_map<int, double> subsidiaryDistances;
     unordered_map<int, int> previousNodes;
-
-
     distances[startNode] = 0;
     subsidiaryDistances[startNode] = 0;
 
@@ -516,7 +434,6 @@ aStarResultObject aStarResult(int startNode,
     unordered_set<int> visitedNodes;
     visitedNodes.insert(startNode);
     nodeMinHeap.insertItem(startNode);
-
     while (nodeMinHeap.size() > 0){
         int currentNode = nodeMinHeap.popTop();
         if (currentNode==endNode){
@@ -532,7 +449,6 @@ aStarResultObject aStarResult(int startNode,
                         distances[edge.endIndex] = newDistance;
                         previousNodes[edge.endIndex] = currentNode;
                         nodeMinHeap.reduceItem(edge.endIndex);
-
                         // Overwrite subsidiary distances regardless of whether it is optimal or not
                         // We are only interested in optimising for distance
                         subsidiaryDistances[edge.endIndex] = subsidiaryEdge.distance + subsidiaryDistances[currentNode];
@@ -565,17 +481,14 @@ aStarResultObject aStarResult(int startNode,
         reverse(path.begin(), path.end());
         reverse(distancesAlongPath.begin(), distancesAlongPath.end());
         reverse(subsidiaryDistancesAlongPath.begin(), subsidiaryDistancesAlongPath.end());
-
     }
     return aStarResultObject(distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath);
-
 }
 
 class MapGraphInstance{
 private:
     vector<vector<Edge>> distanceAdjacencyList;
     vector<vector<Edge>> timeAdjacencyList;
-    vector<vector<Edge>> invertedTimeAdjacencyList;
     vector<Node> mercatorNodeList;
     vector<double> nodeLats;
     vector<double> nodeLons;
@@ -588,7 +501,6 @@ private:
     void computeRegionNodes(){
         region_nodes = "[";
         // Get the convex hull of all points to get outer region
-        // slightly off due to out poking edges
         for (const Node& outerNode : convexHull(mercatorNodeList)){
             region_nodes += '[' + to_string(outerNode.index) + ']' + ',';
         }
@@ -602,7 +514,6 @@ private:
         double speed = 6*(exp(-3.5*abs(slope + 0.05))) / 3.6;
         return distance/speed;
     }
-
     vector<int> reconstructDijkstraRoute(int endNode, vector<int>& prevNodes, bool reversedPath=true){
         vector<int> result;
         int currentNode = endNode;
@@ -611,18 +522,15 @@ private:
             currentNode = prevNodes[currentNode];
         }
         result.push_back(currentNode);
-
         if (!reversedPath){
             reverse(result.begin(), result.end());
         }
         return result;
     }
-
-
     LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x, distanceAdjacencyList);}};
-
 public:
-    MapGraphInstance(string nodeFilename="map_data/nodes.csv", string adjacencyListFilename="map_data/edges.csv",
+    MapGraphInstance(string nodeFilename="map_data/nodes.csv",
+                     string adjacencyListFilename="map_data/edges.csv",
                      string elevationListFilename="map_data/elevation.csv"){
         ifstream nodeIn(nodeFilename);
         ifstream edgeIn(adjacencyListFilename);
@@ -633,7 +541,6 @@ public:
         getline(nodeIn, line);
         nodeCount = stoi(line);
         nodeLatLons = "[";
-
         for (int i = 0; i < nodeCount; i++){
             getline(nodeIn, line);
             vector<string> lineEntries = split(line, ',');
@@ -648,11 +555,9 @@ public:
         }
         nodeLatLons.pop_back();
         nodeLatLons += ']';
-
         for (int i = 0; i < nodeCount; i++){
             distanceAdjacencyList.push_back(vector<Edge>());
             timeAdjacencyList.push_back(vector<Edge>());
-            invertedTimeAdjacencyList.push_back(vector<Edge>());
         }
         for (int i = 0; i < nodeCount; i++){
             getline(edgeIn, line);
@@ -660,20 +565,16 @@ public:
             for (unsigned int j = 0; 3 * j + 2 < lineEntries.size(); j++){
                 distanceAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+1])));
                 timeAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+2])));
-                invertedTimeAdjacencyList[stoi(lineEntries[3*j])].push_back(Edge(i, stod(lineEntries[3*j+2])));
             }
         }
-
         nodeElevationString = "[";
         getline(elevationIn, line);
         nodeElevationString += line;
         nodeElevationString += ']';
-
         vector<string> lineEntries = split(line, ',');
         for (string s : lineEntries){
             nodeElevations.push_back(stod(s));
         }
-
         computeRegionNodes();
     }
 
@@ -684,13 +585,11 @@ public:
         vector<double> distances = computedDijkstra.first;
         vector<int> prevNodes = computedDijkstra.second;
         vector<int> possibleNodes;
-
         for (int node = 0; node < nodeCount; node++){
             if (distances[node] > targetLength/6 && distances[node] < (targetLength)/3){
                 possibleNodes.push_back(node);
             }
         }
-
         if (possibleNodes.size() < 2){
             return "[0,0]";
         }
@@ -700,16 +599,13 @@ public:
             int node1 = possibleNodes[distrib(gen)];
             int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){
-                // Path is reversed by default - just flip inputs!
                 aStarResultObject secondaryAstar = aStarResult(node2,
                                                                 node1,
                                                                 distanceAdjacencyList,
                                                                 timeAdjacencyList,
                                                                 [this](int node, int endNode){
                     return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-                    },
-                                                                                nodeLats,
-                                                                                nodeLons);
+                    });
                 double distance = secondaryAstar.distance;
                 vector<int> route = secondaryAstar.path;
                 if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
@@ -717,7 +613,6 @@ public:
                     // Return distance and path
                     vector<int> pathA = reconstructDijkstraRoute(node1, prevNodes, false);
                     vector<int> pathC = reconstructDijkstraRoute(node2, prevNodes);
-
                     unordered_set<int> usedNodes;
                     int duplicateCount = 0;
 
@@ -743,7 +638,6 @@ public:
                             duplicateCount++;
                         }
                     }
-
                     if ( ((double)duplicateCount)/(pathA.size() + route.size() + pathC.size()) < overlapTolerance){
                         return result;
                     }
@@ -769,8 +663,6 @@ public:
                                          [this](int node, int endNode){
                                              return walkingTime(node, endNode);
                                          },
-                                        nodeLats,
-                                         nodeLons,
                                          false
                                          );
             // Output of distance, time is flipped in a star if time is seen as metric to be optimised
@@ -784,8 +676,6 @@ public:
                                          [this](int node, int endNode){
                                              return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
                                          },
-                                         nodeLats,
-                                         nodeLons,
                                          false
                                          );
             result += to_string(completedAstar.distance) + "," + to_string(completedAstar.subsidiaryDistance) + ",[";
@@ -809,7 +699,6 @@ public:
         }
         result.pop_back();
         result += "]]";
-
         return result;
     }
 
@@ -817,7 +706,6 @@ public:
         pair<vector<double>, vector<int>> completedDijkstra = dijkstraResultCache.getData(startNode);
         vector<double> distances = completedDijkstra.first;
         vector<int> previousNodes = completedDijkstra.second;
-
         string result = "[[" + to_string(distances[0]);
         for (unsigned int i = 1; i < distances.size(); i++){
             result+= ','+to_string(distances[i]);
@@ -826,10 +714,8 @@ public:
         for (unsigned int i = 1; i < previousNodes.size(); i++){
             result+= ','+to_string(previousNodes[i]);
         }
-
         result += "]]";
         return result;
-
     }
 
     string convex_hull_partition(int startNode, double partitionDistance=2000){
@@ -881,9 +767,6 @@ public:
     }
 };
 
-
-
-
 PYBIND11_MODULE(graph_algorithms, m) {
      py::class_<MapGraphInstance>(m, "MapGraphInstance")
          .def(py::init<string, string>(),
@@ -908,5 +791,4 @@ PYBIND11_MODULE(graph_algorithms, m) {
              py::arg("start_node"),
              py::arg("end_node"),
              py::arg("use_time"));
-
 }
