@@ -1,3 +1,30 @@
+#account_button{
+    background-color: blue;
+    color: white;
+}
+#account_button:hover{
+    background-color: lightblue;
+}
+
+#login_button{
+    background-color: green;
+    color: white;
+}
+#login_button:hover{
+    background-color: lightgreen;
+}
+
+.account_management_button{
+    position: absolute;
+    left: 90%;
+    top: 5%;
+    width: 5%;
+    height: 5%;
+    font-size: 1vw;
+    box-shadow: black 1px 1px 0 0;
+    z-index: 1001;
+}
+
 #main_controls{
   position: absolute;
   top: 3%;

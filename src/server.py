@@ -1,16 +1,91 @@
 import flask
+import flask_login
 from graph_algorithms import MapGraphInstance
+import authentication
 
 app = flask.Flask(__name__,
-                  static_folder='server/static')
+                  static_folder='server/static',
+                  template_folder='server/templates')
 
-# This way of setting up c++ extension allows for proper server reloading!
+app.secret_key = "TEST-SECRET-KEY-CHANGE-FOR-ACTUAL-SERVER-USAGE"
 serverMapGraphInstance = None
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+
+class User(flask_login.UserMixin):
+    pass
+
+# https://github.com/maxcountryman/flask-login
+@login_manager.user_loader
+def user_loader(username):
+    if not authentication.user_exists(username):
+        return
+
+    user = User()
+    user.id = username
+    return user
+
+# https://github.com/maxcountryman/flask-login
+@login_manager.request_loader
+def request_loader(request):
+    username = request.form.get('username')
+    if not authentication.user_exists(username):
+        return
+
+    user = User()
+    user.id = username
+    return user
+
+
+@app.route('/account')
+def account():
+    if flask_login.current_user.is_authenticated:
+        return flask.render_template('account.html')
+
+    return flask.redirect('/login')
+
+
+# https://github.com/maxcountryman/flask-login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if flask.request.method == 'GET':
+        if flask_login.current_user.is_authenticated:
+            return flask.redirect('/')
+
+        return '''
+               <form action='login' method='POST'>
+                <input type='text' name='username' id='username' placeholder='username'/>
+                <input type='password' name='password' id='password' placeholder='password'/>
+                <input type='submit' name='submit'></input>
+               </form>
+               '''
+
+    username = flask.request.form['username']
+    if authentication.check_password(username, flask.request.form["password"]):
+        user = User()
+        user.id = username
+        flask_login.login_user(user)
+        return flask.redirect('/')
+
+    return 'Bad login'
+
+# https://github.com/maxcountryman/flask-login
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    return 'Unauthorized', 401
+
+
+@app.route("/logout")
+def logout():
+    flask_login.logout_user()
+    return flask.redirect('/')
 
 
 @app.get('/')
 def get_main_page():
-    return flask.send_file('server/static/index.html')
+    return flask.render_template('index.html',
+                                 authenticated_user=flask_login.current_user.is_authenticated)
 
 
 @app.get('/api/get/dijkstra/<node_index>')

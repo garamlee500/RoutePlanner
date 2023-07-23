@@ -99,6 +99,14 @@
                <img class="imageIcon" src="static/settings.png">
            </button>
        </div>
+
+       {% if authenticated_user %}
+            <form action="/account"><input class="textButton account_management_button" id="account_button" type="submit" value="Account"/></form>
+       {% else %}
+            <form action="/login"><input class="textButton account_management_button" id="login_button" type="submit" value="Login"/></form>
+       {% endif %}
+
+
 <!--       Note in production environment would probably be all compiled into one minified .js file-->
        <script src="/static/functions.js"></script>
        <script src="/static/convex_hull.js"></script>
