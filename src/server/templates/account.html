@@ -5,8 +5,17 @@
       <title>Account</title>
     </head>
     <body>
+        <a href="/">Home</a>
+        <br>
         <form action="/logout">
             <input type="submit" value="Logout"/>
         </form>
+        <br>
+        Hello {{ username }}! Found {{ saved_routes|length }} saved routes in account:
+        <br>
+        {% for route in saved_routes %}
+            <a href="/?route={{ route[1] }}">{{ route[0] }} - {{ route[2] }}</a>
+            <br>
+        {% endfor %}
     </body>
 </html>

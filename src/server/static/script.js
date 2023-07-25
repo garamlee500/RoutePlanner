@@ -1,3 +1,24 @@
+async function saveRoute(){
+    document.getElementById('route_saver').textContent="Saving!";
+    document.getElementById('route_saver').disabled=true;
+    await fetch("/api/post/route", {
+            method: "POST",
+            body: JSON.stringify({
+                route: routeToString(),
+                route_name: document.getElementById('route_name').value
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        }
+    );
+    document.getElementById('route_saver').textContent="Saved!";
+    setTimeout(function(){
+            document.getElementById("route_saver").textContent = "Save route";
+            document.getElementById("route_saver").disabled = false;
+    }, 500);
+}
+
 function resetRoute(){
     for (let i = 1; i < routeMarkers.length - 1; i++){
         routeMarkers[i].remove(map);
@@ -38,14 +59,19 @@ async function copyUrlToClipboard(){
     }, 500);
 }
 
-function setUrl(pushState=true){
-    let urlObject = new URL(window.location.origin);
+function routeToString(){
     let routeString = "[";
     for (const routeMarker of routeMarkers){
         routeString += '[' + routeMarker.getLatLng().lat + ',' + routeMarker.getLatLng().lng + "],";
     }
     routeString = routeString.substring(0, routeString.length-1);
     routeString += ']';
+    return routeString;
+}
+
+function setUrl(pushState=true){
+    let urlObject = new URL(window.location.origin);
+    const routeString = routeToString();
     urlObject.searchParams.append(
         "route",
         routeString

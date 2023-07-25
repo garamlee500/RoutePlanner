@@ -168,8 +168,9 @@ async function initialise() {
    routeMarkers[0].on('dragend', fixStart);
    routeMarkers[routeMarkers.length-1].on('dragend', fixEnd);
    addEventListener("popstate", (event) => {
-      loadRouteUrl(event.state)
+      loadRouteUrl(event.state);
    });
+   setUrl();
 }
 
 initialise();

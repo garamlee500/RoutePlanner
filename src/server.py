@@ -1,7 +1,8 @@
 import flask
 import flask_login
 from graph_algorithms import MapGraphInstance
-import authentication
+import database
+import json
 
 app = flask.Flask(__name__,
                   static_folder='server/static',
@@ -16,21 +17,23 @@ login_manager.init_app(app)
 class User(flask_login.UserMixin):
     pass
 
+
 # https://github.com/maxcountryman/flask-login
 @login_manager.user_loader
 def user_loader(username):
-    if not authentication.user_exists(username):
+    if not database.user_exists(username):
         return
 
     user = User()
     user.id = username
     return user
+
 
 # https://github.com/maxcountryman/flask-login
 @login_manager.request_loader
 def request_loader(request):
     username = request.form.get('username')
-    if not authentication.user_exists(username):
+    if not database.user_exists(username):
         return
 
     user = User()
@@ -38,12 +41,33 @@ def request_loader(request):
     return user
 
 
-@app.route('/account')
+@app.get('/account')
 def account():
     if flask_login.current_user.is_authenticated:
-        return flask.render_template('account.html')
+        return flask.render_template('account.html',
+                                     saved_routes=database.get_all_routes(flask_login.current_user.id),
+                                     username=flask_login.current_user.id)
 
     return flask.redirect('/login')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if flask.request.method == 'GET':
+        if flask_login.current_user.is_authenticated:
+            return flask.redirect('/')
+
+        return flask.send_file('server/static/register.html')
+
+    username = flask.request.form['username']
+    if not database.user_exists(username):
+        database.create_user(username, flask.request.form['password'])
+        return 'User created! - <a href="/login">Login</a>'
+
+    # Good practice to prevent weird xss/added html stuff
+    return flask.render_template_string(
+        'User with username {{ username }} already exists! - <a href="/login">Go back</a>',
+        username=username)
 
 
 # https://github.com/maxcountryman/flask-login
@@ -53,22 +77,17 @@ def login():
         if flask_login.current_user.is_authenticated:
             return flask.redirect('/')
 
-        return '''
-               <form action='login' method='POST'>
-                <input type='text' name='username' id='username' placeholder='username'/>
-                <input type='password' name='password' id='password' placeholder='password'/>
-                <input type='submit' name='submit'></input>
-               </form>
-               '''
+        return flask.send_file('server/static/login.html')
 
     username = flask.request.form['username']
-    if authentication.check_password(username, flask.request.form["password"]):
+    if database.check_password(username, flask.request.form["password"]):
         user = User()
         user.id = username
         flask_login.login_user(user)
         return flask.redirect('/')
 
-    return 'Bad login'
+    return 'Bad login - <a href="/login">Go back</a>'
+
 
 # https://github.com/maxcountryman/flask-login
 @login_manager.unauthorized_handler
@@ -76,7 +95,7 @@ def unauthorized_handler():
     return 'Unauthorized', 401
 
 
-@app.route("/logout")
+@app.get("/logout")
 def logout():
     flask_login.logout_user()
     return flask.redirect('/')
@@ -88,6 +107,17 @@ def get_main_page():
                                  authenticated_user=flask_login.current_user.is_authenticated)
 
 
+@app.post('/api/post/route')
+@flask_login.login_required
+def save_route():
+    # Remember - don't trust user's for their username - remember authentication!
+    username = flask_login.current_user.id
+    route = flask.request.json["route"]
+    route_name = flask.request.json["route_name"]
+    database.store_route(route, username, route_name)
+    # https://stackoverflow.com/a/26080784/13573736
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
 @app.get('/api/get/dijkstra/<node_index>')
 def get_dijkstra(node_index):
     return serverMapGraphInstance.map_dijkstra(int(node_index))
@@ -96,6 +126,7 @@ def get_dijkstra(node_index):
 @app.get('/api/get/nodes')
 def get_nodes():
     return serverMapGraphInstance.get_node_lat_lons()
+
 
 @app.get('/api/get/elevations')
 def get_elevations():
