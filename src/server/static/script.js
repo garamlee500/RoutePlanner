@@ -46,6 +46,8 @@ async function loadRouteUrl(routeString){
     routeMarkers[routeMarkers.length-1].setLatLng(route[route.length-1]);
     connectToEndNode();
     connectToStartNode();
+    setDestinationSearchAddress();
+    setStartSearchAddress();
     for (let i = 0; i < route.length-1; i++){
         await applyRoute(i);
     }

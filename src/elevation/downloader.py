@@ -43,6 +43,8 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
 
     # Moved import into only submodule that requires it due to large loading times
     # on start up of main.py despite not needing it most of the time
+
+    # Consider switching to lighter package
     import rasterio
 
     # Use a simple list to store all tiles - unlikely to reach beyond length 4
