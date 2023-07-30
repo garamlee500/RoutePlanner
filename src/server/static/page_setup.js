@@ -147,7 +147,9 @@ async function initialise() {
    routeNodes[1] = 0;
 
    let currentURL = new URL(window.location.href);
-   await loadRouteUrl(currentURL.searchParams.get("route"));
+   if (currentURL.searchParams.has("route")){
+      await loadRouteUrl(currentURL.searchParams.get("route"));
+   }
    applyRoute(0);
    dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
    await generateIsochrone();

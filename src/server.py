@@ -46,7 +46,9 @@ def account():
     if flask_login.current_user.is_authenticated:
         return flask.render_template('account.html',
                                      saved_routes=database.get_all_routes(flask_login.current_user.id),
-                                     username=flask_login.current_user.id)
+                                     username=flask_login.current_user.id,
+                                     random_routes=database.get_random_routes(),
+                                     popular_routes=database.get_popular_routes())
 
     return flask.redirect('/login')
 
@@ -105,6 +107,15 @@ def logout():
 def get_main_page():
     return flask.render_template('index.html',
                                  authenticated_user=flask_login.current_user.is_authenticated)
+
+
+@app.post('/api/post/public_route')
+@flask_login.login_required
+def make_route_public():
+    database.set_route_public(flask_login.current_user.id,
+                              flask.request.json["route_id"],
+                              flask.request.json["is_public"])
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 @app.post('/api/post/route')
