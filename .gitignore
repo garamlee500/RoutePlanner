@@ -3,4 +3,3 @@ __pycache__/
 .vscode/
 src/map_data/
 *.swp
-/src/server/data.db

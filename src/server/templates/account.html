@@ -3,6 +3,12 @@
     <head>
         <meta charset="UTF-8"/>
         <title>Account</title>
+{#        https://www.w3schools.com/html/html_tables.asp #}
+        <style>
+            table, th, td {
+              border:1px solid black;
+            }
+        </style>
         <script>
             async function make_public(route_id, is_public){
                 await fetch("/api/post/public_route", {
@@ -47,39 +53,80 @@
         <br>
         Hello {{ username }}! Found {{ saved_routes|length }} saved routes in account:
         <br>
-        {% for route in saved_routes %}
-            <a href="/view/{{ route[0] }}">{{ route[1] }} - {{ route[4] }}</a>: Public? -
-            <input id={{ "public_checkbox" ~ route[0]}} type="checkbox"/>
-            <button class="redOnlyButton" onclick="open_dialog({{ route[0] }});">Delete?</button>
-            <dialog id="dialog{{ route[0] }}" style="z-index: 100">
-                Are you sure you want to delete {{ route[4] }}?
-                <button class="redOnlyButton" onclick="delete_route({{ route[0] }});">DELETE</button>
-                <form method="dialog">
-                    <button onclick="close_dialog();">CANCEL</button>
-                </form>
-            </dialog>
-            <br>
-            <script>
-                document.getElementById('{{"public_checkbox" ~ route[0]}}').checked = {{ "true" if route[5]==1 else "false"}};
-                document.getElementById('{{"public_checkbox" ~ route[0]}}').addEventListener(
-                    "change",
-                    (event)=>{make_public({{ route[0] }}, event.target.checked)});
+        <table>
+            <th>Route</th>
+            <th>Creation Date</th>
+            <th>Public?</th>
+            <th>Delete?</th>
+            {% for route in saved_routes %}
+                <tr>
+                    <td>
+                        <a href="/view/{{ route[0] }}">Link to - {{ route[4] }}</a>
+                    </td>
+                    <td>
+                        {{ route[1] }}
+                    </td>
+                    <td>
+                        <input id={{ "public_checkbox" ~ route[0]}} type="checkbox"/>
+                    </td>
+                    <td>
+                        <button class="redOnlyButton" onclick="open_dialog({{ route[0] }});">Delete</button>
+                    </td>
+                    <dialog id="dialog{{ route[0] }}" style="z-index: 100">
+                        Are you sure you want to delete {{ route[4] }}?
+                        <button class="redOnlyButton" onclick="delete_route({{ route[0] }});">DELETE</button>
+                        <form method="dialog">
+                            <button onclick="close_dialog();">CANCEL</button>
+                        </form>
+                    </dialog>
+                    <script>
+                        document.getElementById('{{"public_checkbox" ~ route[0]}}').checked = {{ "true" if route[5]==1 else "false"}};
+                        document.getElementById('{{"public_checkbox" ~ route[0]}}').addEventListener(
+                            "change",
+                            (event)=>{make_public({{ route[0] }}, event.target.checked)});
 
-            </script>
-        {% endfor %}
-
+                    </script>
+                </tr>
+            {% endfor %}
+        </table>
+        <br>
         Try some popular routes in your region:
+        <table>
+            <th>Route</th>
+            <th>Route creator</th>
+            <th>Average route rating</th>
+            {% for route in popular_routes %}
+                <tr>
+                <td>
+                    <a href="/view/{{ route[0] }}">Link to - {{ route[2] }}</a>
+                </td>
+                <td>
+                    {{ route[3] }}
+                </td>
+                <td>
+                    {{ route[4] }}/5 - {{ route[5] }} reviews
+                </td>
+                </tr>
+            {% endfor %}
+        </table>
         <br>
-        {% for route in popular_routes %}
-            <a href="/view/{{ route[0] }}">{{ route[2] }} by {{ route[3] }}</a> - Average rating {{ route[4] }}/5 - {{ route[5] }} reviews
-            <br>
-        {% endfor %}
-
         Try some random routes in your region:
-        <br>
-        {% for route in random_routes %}
-            <a href="/view/{{ route[0] }}">{{ route[2] }} by {{ route[3] }}</a> - Average rating {{ route[4] }}/5 - {{ route[5] }} reviews
-            <br>
-        {% endfor %}
-    </body>
+        <table>
+            <th>Route</th>
+            <th>Route creator</th>
+            <th>Average route rating</th>
+            {% for route in random_routes %}
+                <tr>
+                <td>
+                    <a href="/view/{{ route[0] }}">Link to - {{ route[2] }}</a>
+                </td>
+                <td>
+                    {{ route[3] }}
+                </td>
+                <td>
+                    {{ route[4] }}/5 - {{ route[5] }} reviews
+                </td>
+                </tr>
+            {% endfor %}
+        </table>    </body>
 </html>

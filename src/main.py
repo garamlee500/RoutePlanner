@@ -6,6 +6,7 @@ from menu import Menu
 from speed_test import benchmark_device
 import server
 import exceptions
+import database
 
 current_settings = Settings()
 
@@ -184,6 +185,14 @@ def set_custom_gdem_aster_endpoint():
     else:
         print("No URL chosen. Going back.")
 
+def reset_database_prompt():
+    print("Are you sure you want to delete all user data?")
+    print("Type - 'Hello World!' exactly without the quotes and press enter to delete data, otherwise just press enter.")
+    if input() == "Hello World!":
+        database.reset_database()
+        print("Database reset!")
+    else:
+        print("Going back.")
 
 
 overpass_api_endpoint_menu.add_option(
@@ -226,6 +235,11 @@ main_menu.add_option(("Set ASTER GDEM api url",
 main_menu.add_option((
     "Benchmark device",
     benchmark_device
+))
+
+main_menu.add_option((
+    "Reset database (use to delete test database)",
+    reset_database_prompt
 ))
 
 main_menu.run()

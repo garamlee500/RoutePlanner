@@ -9,25 +9,35 @@ cur = con.cursor()
 
 # https://www.sqlite.org/pragma.html - not enabled by default...
 cur.execute("PRAGMA foreign_keys = ON")
-cur.execute("CREATE TABLE IF NOT EXISTS accounts"
-            "(username TEXT PRIMARY KEY,"
-            "password_hash TEXT)")
-cur.execute("CREATE TABLE IF NOT EXISTS routes"
-            "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "timestamp TEXT,"
-            "route TEXT,"
-            "username TEXT,"
-            "route_name TEXT,"
-            "public INTEGER,"
-            "FOREIGN KEY(username) REFERENCES accounts(username))")
-# https://www.sqlite.org/foreignkeys.html - for info about ON CASCADE DELETE
-cur.execute("CREATE TABLE IF NOT EXISTS route_ratings"
-            "(rating_user TEXT,"
-            "route_id INTEGER,"
-            "rating INTEGER,"
-            "PRIMARY KEY (rating_user, route_id),"
-            "FOREIGN KEY(rating_user) REFERENCES accounts(username),"
-            "FOREIGN KEY(route_id) REFERENCES routes(id) ON DELETE CASCADE)")
+
+
+def reset_database():
+    cur.execute("DROP TABLE route_ratings")
+    cur.execute("DROP TABLE routes")
+    cur.execute("DROP TABLE accounts")
+    create_tables()
+
+
+def create_tables():
+    cur.execute("CREATE TABLE IF NOT EXISTS accounts"
+                "(username TEXT PRIMARY KEY,"
+                "password_hash TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS routes"
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "timestamp TEXT,"
+                "route TEXT,"
+                "username TEXT,"
+                "route_name TEXT,"
+                "public INTEGER,"
+                "FOREIGN KEY(username) REFERENCES accounts(username))")
+    # https://www.sqlite.org/foreignkeys.html - for info about ON CASCADE DELETE
+    cur.execute("CREATE TABLE IF NOT EXISTS route_ratings"
+                "(rating_user TEXT,"
+                "route_id INTEGER,"
+                "rating INTEGER,"
+                "PRIMARY KEY (rating_user, route_id),"
+                "FOREIGN KEY(rating_user) REFERENCES accounts(username),"
+                "FOREIGN KEY(route_id) REFERENCES routes(id) ON DELETE CASCADE)")
 
 
 def user_exists(username):
@@ -166,3 +176,5 @@ def delete_route(route_id, username):
 
     con.commit()
     return True
+
+create_tables()
