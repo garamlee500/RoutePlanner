@@ -94,7 +94,7 @@ def login():
 # https://github.com/maxcountryman/flask-login
 @login_manager.unauthorized_handler
 def unauthorized_handler():
-    return 'Unauthorized', 401
+    return 'Unauthorized - try <a href="/login">logging in</a> or <a href="/account">managing your account</a>', 401
 
 
 @app.get("/logout")
@@ -109,12 +109,70 @@ def get_main_page():
                                  authenticated_user=flask_login.current_user.is_authenticated)
 
 
+
+@app.get('/view/<route_id>')
+def view_route(route_id):
+    route = database.get_route(route_id)
+    if route is None:
+        return "Route not found", 404
+    if route[4] == 1:
+        if flask_login.current_user.is_authenticated:
+            return flask.render_template('viewer.html',
+                                         route=route,
+                                         route_id=route_id,
+                                         authenticated_user=flask_login.current_user.is_authenticated,
+                                         current_user_rating=
+                                         database.get_single_route_rating(route_id, flask_login.current_user.id),
+                                         current_rating=database.get_route_rating(route_id)
+                                         )
+        else:
+            return flask.render_template('viewer.html',
+                                         route=route,
+                                         route_id=route_id,
+                                         authenticated_user=flask_login.current_user.is_authenticated,
+                                         current_user_rating=-1,
+                                         current_rating=database.get_route_rating(route_id)
+                                         )
+
+    if flask_login.current_user.is_authenticated:
+        if flask_login.current_user.id == route[2]:
+            return flask.render_template('viewer.html',
+                                         route=route,
+                                         route_id=route_id,
+                                         authenticated_user=flask_login.current_user.is_authenticated,
+                                         current_user_rating=-1,
+                                         current_rating=database.get_route_rating(route_id)
+                                         )
+
+    return unauthorized_handler()
+
+
 @app.post('/api/post/public_route')
 @flask_login.login_required
 def make_route_public():
     database.set_route_public(flask_login.current_user.id,
                               flask.request.json["route_id"],
                               flask.request.json["is_public"])
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
+
+
+@app.post('/api/post/delete/')
+@flask_login.login_required
+def delete_route():
+    if database.delete_route(flask.request.json["route_id"], flask_login.current_user.id):
+        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    else:
+        return unauthorized_handler()
+
+
+@app.post('/api/post/rate_route')
+@flask_login.login_required
+def rate_route():
+    username = flask_login.current_user.id
+    route_id = flask.request.json["route_id"]
+    rating = flask.request.json["rating"]
+    database.rate_route(username, route_id, rating)
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
@@ -125,9 +183,10 @@ def save_route():
     username = flask_login.current_user.id
     route = flask.request.json["route"]
     route_name = flask.request.json["route_name"]
-    database.store_route(route, username, route_name)
+    route_id = database.store_route(route, username, route_name)
     # https://stackoverflow.com/a/26080784/13573736
-    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    return json.dumps({'success': True, 'route_id': route_id}), 200, {'ContentType': 'application/json'}
+
 
 @app.get('/api/get/dijkstra/<node_index>')
 def get_dijkstra(node_index):

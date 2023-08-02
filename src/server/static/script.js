@@ -19,18 +19,6 @@ async function saveRoute(){
     }, 500);
 }
 
-function resetRoute(){
-    for (let i = 1; i < routeMarkers.length - 1; i++){
-        routeMarkers[i].remove(map);
-    }
-    routeNodes.splice(1, routeNodes.length-2);
-    routeMarkers.splice(1, routeMarkers.length-2);
-    routeNodeLatLons.splice(0, routeNodeLatLons.length-1);
-    routeChartData.splice(0, routeChartData.length-1);
-    routeTimes.splice(0, routeTimes.length-1);
-    routeDistances.splice(0, routeDistances.length-1);
-}
-
 
 async function loadRouteUrl(routeString){
     if (routeString === null || routeString === ''){
@@ -54,35 +42,40 @@ async function loadRouteUrl(routeString){
 }
 
 async function copyUrlToClipboard(){
-    await navigator.clipboard.writeText(setUrl(false));
-    document.getElementById("routeLinkCopier").textContent = "Copied to clipboard!";
+    document.getElementById('routeLinkCopier').textContent="Saving!";
+    document.getElementById('routeLinkCopier').disabled=true;
+    const response = await fetch("/api/post/route", {
+            method: "POST",
+            body: JSON.stringify({
+                route: routeToString(),
+                route_name: document.getElementById('route_name').value
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        }
+    );
+    const route_id = (await response.json())["route_id"];
+    await fetch("/api/post/public_route", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            route_id: route_id,
+                            is_public: true
+                        }),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    }
+                );
+    await navigator.clipboard.writeText(window.location.origin + '/view/' + route_id.toString());
+    document.getElementById('routeLinkCopier').textContent="Link copied to clipboard!";
     setTimeout(function(){
-            document.getElementById("routeLinkCopier").textContent = "Share route";
+            document.getElementById("routeLinkCopier").textContent = "Save + share route";
+            document.getElementById("routeLinkCopier").disabled = false;
     }, 500);
 }
 
-function routeToString(){
-    let routeString = "[";
-    for (const routeMarker of routeMarkers){
-        routeString += '[' + routeMarker.getLatLng().lat + ',' + routeMarker.getLatLng().lng + "],";
-    }
-    routeString = routeString.substring(0, routeString.length-1);
-    routeString += ']';
-    return routeString;
-}
 
-function setUrl(pushState=true){
-    let urlObject = new URL(window.location.origin);
-    const routeString = routeToString();
-    urlObject.searchParams.append(
-        "route",
-        routeString
-    );
-    if (pushState){
-        window.history.pushState(routeString, document.title, urlObject.toString());
-    }
-    return urlObject.toString();
-}
 
 function rebindStopEventListeners(stopIndex){
     routeMarkers[stopIndex].off();
@@ -252,87 +245,12 @@ async function searchGeocode(query) {
     return null;
 }
 
-function closestNode(latLng) {
-    let closest = 0
-    let closestDistance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[0][0], nodeLatLons[0][1]);
-    for (let i = 1; i < nodeLatLons.length; i++) {
-        const distance = nodeDistanceMetric(latLng.lat, latLng.lng, nodeLatLons[i][0], nodeLatLons[i][1]);
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closest = i;
-        }
-    }
-    return closest;
-}
 
 async function dijkstraDetails(node) {
     return await (await fetch(`/api/get/dijkstra/${node}`)).json();
 }
 
-function connectToStartNode() {
-    if (startNodeConnector != null) {
-        startNodeConnector.remove(map);
-    }
-    if (startNodeMarker != null) {
-        startNodeMarker.remove(map);
-    }
-    startNodeConnector = L.polyline(
-        [routeMarkers[0].getLatLng(), nodeLatLons[routeNodes[0]]],
-        {
-            weight: 5,
-            color: 'black',
-            fill: true,
-            fillColor: 'black',
-            fillOpacity: 1,
-            dashArray: [6],
-            interactive: false
-        }
-    ).addTo(map);
-    startNodeMarker = L.circleMarker(
-        nodeLatLons[routeNodes[0]],
-        {
-            radius: 5,
-            color: 'black',
-            fill: true,
-            fillColor: 'white',
-            fillOpacity: 1,
-            pane: "node_markers",
-            interactive: false
-        }
-    ).addTo(map);
-}
 
-function connectToEndNode() {
-    if (endNodeConnector != null) {
-        endNodeConnector.remove(map);
-    }
-    if (endNodeMarker != null) {
-        endNodeMarker.remove(map);
-    }
-    endNodeConnector = L.polyline(
-        [routeMarkers[routeMarkers.length-1].getLatLng(), nodeLatLons[routeNodes[routeNodes.length-1]]],
-        {
-            weight: 5,
-            color: 'black',
-            fill: true,
-            fillColor: 'black',
-            fillOpacity: 1,
-            dashArray: [6],
-            interactive: false
-        }
-    ).addTo(map);
-    endNodeMarker = L.circleMarker(nodeLatLons[routeNodes[routeNodes.length-1]],
-        {
-            radius: 5,
-            color: 'black',
-            fill: true,
-            fillColor: 'white',
-            fillOpacity: 1,
-            pane: "node_markers",
-            interactive: false
-        }
-    ).addTo(map);
-}
 
 async function applyRoute(routeLineIndex) {
     // Connects node at routeLineIndex to node at routeLineIndex + 1
@@ -345,10 +263,10 @@ async function applyRoute(routeLineIndex) {
     let a_star_data;
 
     if (settings.findShortestPathsByTime){
-        a_star_data = await(await fetch(`api/get/a_star_time/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
+        a_star_data = await(await fetch(`/api/get/a_star_time/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
     else{
-        a_star_data = await(await fetch(`api/get/a_star_distance/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
+        a_star_data = await(await fetch(`/api/get/a_star_distance/${routeNodes[routeLineIndex]}/${routeNodes[routeLineIndex+1]}`)).json();
     }
 
     for (let i = 0; i < a_star_data[2].length; i++){
@@ -394,55 +312,3 @@ async function applyRoute(routeLineIndex) {
     connectToEndNode();
 }
 
-function showChart(){
-    if (currentChart!=null){
-        currentChart.destroy();
-    }
-    // Assemble elevations by patching together elevation data for each segment
-    // Offset x value by tracking how far along path each segment goes
-    let chartData = [];
-    let offset = 0;
-    for (const chartDataSegment of routeChartData){
-        let maxEntry = 0;
-        for (const entry of chartDataSegment){
-            chartData.push({x: entry.x+offset, y: entry.y});
-            maxEntry = Math.max(entry.x, maxEntry);
-        }
-        offset += maxEntry;
-    }
-    currentChart = new Chart(
-        document.getElementById('elevationGraph'),
-        {
-            type: "line",
-            data: {
-                datasets: [{
-                    data: chartData,
-                    label: 'Elevation of journey',
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                legend: {display: true},
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {
-                            display: true,
-                            text: 'Distance from start (m)',
-                            padding: 0,
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Height (m)',
-                            padding: 0,
-                        }
-                    }
-                },
-                animation: {duration: 0}
-            }
-        }
-    );
-}

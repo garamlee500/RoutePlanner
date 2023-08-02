@@ -1,29 +1,4 @@
-#account_button{
-    background-color: blue;
-    color: white;
-}
-#account_button:hover{
-    background-color: lightblue;
-}
 
-#login_button{
-    background-color: green;
-    color: white;
-}
-#login_button:hover{
-    background-color: lightgreen;
-}
-
-.account_management_button{
-    position: absolute;
-    left: 90%;
-    top: 5%;
-    width: 5%;
-    height: 5%;
-    font-size: 1vw;
-    box-shadow: black 1px 1px 0 0;
-    z-index: 1001;
-}
 
 #main_controls{
   position: absolute;
@@ -37,27 +12,10 @@
   grid-template-columns: 100%;
 }
 
-.control_box{
-    background-color: white;
-    border-color: gray;
-    border-width: 2px;
-    border-style: solid;
-    position: absolute;
-    border-radius: 10px;
-    display: grid;
-    font-family: inherit;
-}
 
 #homeButton{
     grid-row: 1 / span 1;
     grid-column: 1 / span 3;
-}
-
-.greyButton{
-    background-color: lightgreen;
-}
-.greyButton:hover{
-    background-color: lightgrey;
 }
 
 #default_settings{
@@ -67,19 +25,7 @@
     background-color: lightgrey;
 }
 
-#route_suggestor{
-    top: 80%;
-    left: 15%;
-    height: 15%;
-    width: 70%;
-    z-index: 999;
-    grid-template-rows: 10% 40% 40% 10%;
-    grid-template-columns: 5% 15% 15% 15% 15% 15% 15% 5%;
-}
 
-#route_suggestor > button{
-    font-size: 1vw;
-}
 
 #settings > h1 {
     font-size: 1.5vw;
@@ -111,44 +57,6 @@
     filter: blur(2px);
 }
 
-.textButton{
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-    font: inherit;
-}
-
-.textButton:hover{
-    background-color: lightgrey;
-}
-
-.button:hover{
-    background-color: lightgray;
-}
-.button{
-    background-color: white;
-    border: none;
-    cursor: pointer;
-}
-.imageIcon {
-    flex-shrink: 0;
-    max-width: 100%;
-    max-height: 100%;
-}
-.imageIconDiv {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 10px;
-}
-.redOnlyButton:hover{
-    background-color: red;
-}
-.redOnlyButton{
-    background-color: red;
-    color: white;
-}
 #convex_hull_slider_units{
     grid-column: 4 / span 1;
     grid-row: 2 / span 1;
@@ -199,13 +107,4 @@
     height: 100%;
     grid-row: 2 / span 1;
     grid-column: 2 / span 1;
-}
-.redMarker{
-  filter: hue-rotate(140deg) contrast(150%);
-}
-.grayMarker{
-  filter: grayscale(100%);
-}
-#map {
-  height: 100%; width:100%
 }

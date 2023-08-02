@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Route Planner</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+        <link href='https://fonts.googleapis.com/css?family=Noto Sans' rel='stylesheet'>
+        <link rel="stylesheet" href="/static/shared.css"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet-src.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.js" integrity="sha512-CMF3tQtjOoOJoOKlsS7/2loJlkyctwzSoDK/S40iAB+MqWSaf50uObGQSk5Ny/gfRhRCjNLvoxuCvdnERU4WGg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
+    <body style="height:100%;margin: 0;padding: 0;font-family:'Noto Sans',sans-serif">
+        <div id="map"></div>
+        <div id="bottom_bar" class="control_box">
+            <div style="grid-row:2/span 2; grid-column: 2/span 2;" class="centredDivText">
+                Viewing {{ route[3] }} by {{ route[2] }} - created at {{ route[0] }} (READ ONLY)
+            </div>
+            <button style="grid-row:2/span 2; grid-column: 4;" class="textButton" onclick="editRoute();">
+                Edit route!
+            </button>
+            {% if authenticated_user %}
+                <button class="textButton" id="rate_route_button" style="grid-column: 5; grid-row: 2;" onclick="rateRoute();">
+                    Rate the route out of 5!
+                </button>
+            {% else %}
+                <button disabled class="textButton" style="grid-column: 5; grid-row: 2;">
+                    Login to rate this route!
+                </button>
+            {% endif %}
+
+            <input style="grid-column: 5; grid-row: 3;" type="number" step="1" min="0" max="5" id="rating_number"/>
+            {% if current_user_rating == -1 %}
+                <div style="grid-row:2/span 2; grid-column: 6;" class="centredDivText">
+                    You have not rated this route before
+                </div>
+            {% else %}
+                <div style="grid-row:2/span 2; grid-column: 6;" class="centredDivText">
+                    You previously rated this route {{ current_user_rating }}/5
+                </div>
+            {% endif %}
+            <div style="grid-row:2/span 2; grid-column: 7;" class="centredDivText">
+                The current average rating is {{ current_rating[0] }}/5 with {{ current_rating[1] }} reviews.
+            </div>
+        </div>
+
+        {% if authenticated_user %}
+             <form action="/account"><input class="textButton account_management_button" id="account_button" type="submit" value="Account"/></form>
+        {% else %}
+             <form action="/login"><input class="textButton account_management_button" id="login_button" type="submit" value="Login"/></form>
+        {% endif %}
+
+        <script>
+            let routeTimestamp = "{{ route[0] }}";
+            let routeString = "{{ route[1] }}";
+            let routeCreator = "{{ route[2] }}";
+            let routeName = "{{ route[3] }}";
+            let routeId = {{ route_id }};
+        </script>
+
+ <!--       Note in production environment would probably be all compiled into one minified .js file-->
+ <!--       And served from a cdn instead of this server to reduce server load-->
+        <script src="/static/functions.js"></script>
+        <script src="/static/viewer.js"></script>
+    </body>
+</html>
