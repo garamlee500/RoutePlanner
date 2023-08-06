@@ -2,6 +2,13 @@ async function hideSettings() {
     document.getElementById('clickBlocker').style.width = '0%';
     document.getElementById('map').classList.remove('settingsHide');
     document.getElementById('main_controls').classList.remove('settingsHide');
+    if (document.getElementById('login_button') !== null){
+        document.getElementById('login_button').classList.remove('settingsHide');
+    }
+    if (document.getElementById('account_button') !== null){
+        document.getElementById('account_button').classList.remove('settingsHide');
+    }
+    document.getElementById('bottom_bar').classList.remove('settingsHide');
     document.getElementById('settings').style.display = 'none';
     settings.isochroneDelay = parseInt(document.getElementById('isochroneDelay').value);
     settings.findShortestPathsByTime = document.getElementById('findShortestPathsByTimeCheckBox').checked;
@@ -29,6 +36,13 @@ function displaySettings() {
     document.getElementById('clickBlocker').style.width = '100%';
     document.getElementById('map').classList.add('settingsHide');
     document.getElementById('main_controls').classList.add('settingsHide');
+    if (document.getElementById('login_button') !== null){
+        document.getElementById('login_button').classList.add('settingsHide');
+    }
+    if (document.getElementById('account_button') !== null){
+        document.getElementById('account_button').classList.add('settingsHide');
+    }
+    document.getElementById('bottom_bar').classList.add('settingsHide');
     document.getElementById('settings').style.display = 'grid';
     document.getElementById('partition' + settings.partitionDistance.toString()).checked = true;
 

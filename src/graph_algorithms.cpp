@@ -32,6 +32,7 @@ constexpr int EARTH_RADIUS = 6371000;
 constexpr double PI = 3.14159265358979323846;
 
 // https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+// "A Mersenne Twister pseudo-random generator of 32-bit numbers with a state size of 19937 bits"
 random_device rd;  // a seed source for the random number engine
 mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
 

@@ -237,7 +237,6 @@ def download_edges_in_relation(area_relation_id: int,
     """
     Runs download_edges but with prebuilt query
     """
-    # 3600000000 is the magic number
     edge_query = "[out:json];" + \
                  f"area({3600000000 + area_relation_id})->.searchArea;" + \
                  "way['highway']['highway'!~'motorway'](area.searchArea);" + \
