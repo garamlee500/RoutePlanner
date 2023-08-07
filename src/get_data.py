@@ -237,15 +237,19 @@ def download_edges_in_relation(area_relation_id: int,
     """
     Runs download_edges but with prebuilt query
     """
+    # out skel returns all but tags
+    # out ids only returns ids
     edge_query = "[out:json];" + \
-                 f"area({3600000000 + area_relation_id})->.searchArea;" + \
+                 f"rel({area_relation_id});" + \
+                 "map_to_area->.searchArea;" + \
                  "way['highway']['highway'!~'motorway'](area.searchArea);" + \
-                 "(._;>;);out;"
+                 "(._;>;);out skel;"
 
     node_query = "[out:json];" + \
-                 f"area({3600000000 + area_relation_id})->.searchArea;" + \
+                 f"rel({area_relation_id});" + \
+                 "map_to_area->.searchArea;" + \
                  "node(area.searchArea);" + \
-                 "(._;>;);out;"
+                 "(._;>;);out ids;"
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
@@ -268,10 +272,10 @@ def download_edges_around_point(node_lat: float,
     """
     edge_query = "[out:json];" + \
                  f"way(around:{node_radius},{node_lat},{node_lon})['highway']['highway'!~'motorway'];" + \
-                 "(._;>;);out;"
+                 "(._;>;);out skel;"
     node_query = "[out:json];" + \
                  f"node(around:{node_radius},{node_lat},{node_lon});" + \
-                 "(._;>;);out;"
+                 "(._;>;);out ids;"
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
