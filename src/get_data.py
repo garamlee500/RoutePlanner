@@ -112,7 +112,6 @@ def _download_edges(edge_query: str,
     # All current nodes with ids, lat, lon
     node_indexes = {}
     node_lat_lng_indexes = {}
-    duplicate_nodes = set()
     nodes = []
 
     for item in data:
@@ -123,7 +122,6 @@ def _download_edges(edge_query: str,
 
                 # Point both node ids to the same node index
                 node_indexes[item["id"]] = original_node_index
-                duplicate_nodes.add(item["id"])
                 if verbose:
                     print("Duplicate nodes found - please consider fixing on OpenStreetMap")
                     print(f"Node 1: https://www.openstreetmap.org/node/{nodes[original_node_index][0]}")
@@ -181,7 +179,7 @@ def _download_edges(edge_query: str,
     for item in data:
         if item["type"] == "node":
             if item["id"] not in dead_nodes and item['id'] in present_nodes and item['id'] not in node_indexes:
-                if item["id"] in duplicate_nodes:
+                if (item["lat"], item["lon"]) in node_lat_lng_indexes:
                     # Duplicated node lat lng
                     original_node_index = node_lat_lng_indexes[(item["lat"], item["lon"])]
                     # Point both node ids to the same node index

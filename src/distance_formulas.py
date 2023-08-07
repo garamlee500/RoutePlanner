@@ -9,6 +9,9 @@ def walking_time(distance: float, elevation_gain: float) -> float:
     (presuming straight road between two)
     https://en.wikipedia.org/wiki/Tobler%27s_hiking_function
     """
+    if distance == 0:
+        return 0
+
     slope = elevation_gain/distance
     # Factor of 3.6 is for km/h -> m/s
     speed = 6*(e**(-3.5*(abs(slope + 0.05)))) / 3.6
