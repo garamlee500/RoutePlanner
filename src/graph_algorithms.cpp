@@ -365,7 +365,6 @@ vector<Node> convexHull(vector<Node> nodes) {
         }
         else {
             // mostBottomLeft, nodeA, nodeB are collinear
-            // extremely unlikely due to fp errors
             // break ties by increasing distance
             // Could use manhattan distance due to co-linearity
             return pow(nodeA.x - mostBottomLeft.x, 2) +
