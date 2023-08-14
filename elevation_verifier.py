@@ -25,23 +25,33 @@ for i in range(100):
 
 location_string = location_string[:-1]
 
-print("Choose data source (see https://www.opentopodata.org/)")
-dataset = input()
+print("How many datasets?:")
+
+all_errors = []
+datasets = []
+
+for i in range(int(input())):
+    print("Choose dataset (see https://www.opentopodata.org/)")
+    dataset = input()
+    datasets.append(dataset)
+
+    # Get OpenTopoData data
+    response = requests.get(f"https://api.opentopodata.org/v1/{dataset}", params={"locations": location_string})
+    results = json.loads(response.content)["results"]
 
 
-# Get OpenTopoData data
-response = requests.get(f"https://api.opentopodata.org/v1/{dataset}", params={"locations": location_string})
-results = json.loads(response.content)["results"]
+    errors = []
 
+    for i, result in enumerate(results):
+        print(f"Predicted elevation {sampled_elevations[i]}, "
+              f"Open Topo Data says {result['elevation']}, "
+              f"{sampled_nodes[i]}")
+        errors.append((float(sampled_elevations[i]) - result['elevation']))
 
-errors = []
+    all_errors.append(errors)
 
-for i, result in enumerate(results):
-    print (f"Predicted elevation {sampled_elevations[i]}, Open Topo Data says {result['elevation']}, {sampled_nodes[i]}")
-    errors.append((float(sampled_elevations[i]) - result['elevation']))
-
-plt.boxplot(errors)
-plt.title(f"Elevation for 100 random points compared to Open Topo Data ({dataset})")
+plt.boxplot(all_errors, labels=datasets)
+plt.title(f"(Interpolated height - dataset height) for 100 random points")
 plt.ylabel("Elevation difference (m)")
 plt.savefig("elevation_errors.png")
 plt.show()

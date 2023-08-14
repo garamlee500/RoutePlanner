@@ -43,8 +43,6 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
 
     # Moved import into only submodule that requires it due to large loading times
     # on start up of main.py despite not needing it most of the time
-
-    # Consider switching to lighter package
     import rasterio
 
     # Use a simple list to store all tiles - unlikely to reach beyond length 4
@@ -123,14 +121,6 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
             inverse_distance_sum += 1/surrounding_distances[i]
 
         # Finds the inverse distance weighted average of elevation of 4 surrounding grid points
-        # Not extremely accurate, but generally ok - grid squares are only about 30mx30m
-        # Additionally interpolation is mainly to smooth out points rather than to make accurate predictions
-        # This prevents 'vertical wall' edges which are really short but have huge elevation gain
-        # with a slope of approximately 5-6: this really messes with Tobler's hiking function and creates an
-        # untraversable edge leading to traversal time measured in hours/days
-        # The other alternative would be to just set some min speed to Tobler's hiking function, but this would
-        # break the convexity of the inverse of Tobler's hiking function, which would mean a star would no longer be
-        # provably optimal (although I doubt the effect would be serious)
         elevations.append(weighted_elevation_sum/inverse_distance_sum)
 
     return elevations
