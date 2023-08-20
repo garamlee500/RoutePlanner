@@ -188,11 +188,6 @@ def save_route():
     return json.dumps({'success': True, 'route_id': route_id}), 200, {'ContentType': 'application/json'}
 
 
-@app.get('/api/get/dijkstra/<node_index>')
-def get_dijkstra(node_index):
-    return serverMapGraphInstance.map_dijkstra(int(node_index))
-
-
 @app.get('/api/get/nodes')
 def get_nodes():
     return serverMapGraphInstance.get_node_lat_lons()

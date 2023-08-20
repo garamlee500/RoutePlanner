@@ -1,5 +1,4 @@
 let map;
-let dijkstraFromStart;
 let nodeLatLons;
 let nodeElevations;
 let startNodeMarker;
@@ -151,7 +150,6 @@ async function initialise() {
       await loadRouteUrl(currentURL.searchParams.get("route"));
    }
    applyRoute(0);
-   dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
    await generateIsochrone();
    setupConvexHullInputs();
    displayConvexHull();

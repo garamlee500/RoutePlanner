@@ -220,7 +220,6 @@ async function fixStart(updateSearchAddress=true) {
     if(updateSearchAddress) setStartSearchAddress();
     setUrl();
     await applyRoute(0);
-    dijkstraFromStart = await dijkstraDetails(routeNodes[0]);
     await generateIsochrone();
     setupConvexHullInputs();
     displayConvexHull();

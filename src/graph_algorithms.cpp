@@ -702,21 +702,6 @@ public:
         return result;
     }
 
-    string map_dijkstra(int startNode){
-        pair<vector<double>, vector<int>> completedDijkstra = dijkstraResultCache.getData(startNode);
-        vector<double> distances = completedDijkstra.first;
-        vector<int> previousNodes = completedDijkstra.second;
-        string result = "[[" + to_string(distances[0]);
-        for (unsigned int i = 1; i < distances.size(); i++){
-            result+= ','+to_string(distances[i]);
-        }
-        result+="],[" + to_string(previousNodes[0]);
-        for (unsigned int i = 1; i < previousNodes.size(); i++){
-            result+= ','+to_string(previousNodes[i]);
-        }
-        result += "]]";
-        return result;
-    }
 
     string convex_hull_partition(int startNode, double partitionDistance=2000){
         vector<double> dijkstraDistance = dijkstraResultCache.getData(startNode).first;
@@ -773,8 +758,6 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("node_filename") = "map_data/nodes.csv",
             py::arg("adjacency_list_filename") = "map_data/edges.csv"
         )
-        .def("map_dijkstra", &MapGraphInstance::map_dijkstra,
-            py::arg("start_node"))
         .def("convex_hull_partition", &MapGraphInstance::convex_hull_partition,
             py::arg("start_node"),
             py::arg("partition_distance")=2000)
