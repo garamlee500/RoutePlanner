@@ -81,7 +81,7 @@ function showChart(){
         offset += maxEntry;
     }
     currentChart = new Chart(
-        document.getElementById('elevationGraph'),
+        document.getElementById('elevation-graph'),
         {
             type: "line",
             data: {
@@ -144,7 +144,7 @@ function connectToStartNode() {
             fill: true,
             fillColor: 'white',
             fillOpacity: 1,
-            pane: "node_markers",
+            pane: "node-markers",
             interactive: false
         }
     ).addTo(map);
@@ -176,7 +176,7 @@ function connectToEndNode() {
             fill: true,
             fillColor: 'white',
             fillOpacity: 1,
-            pane: "node_markers",
+            pane: "node-markers",
             interactive: false
         }
     ).addTo(map);

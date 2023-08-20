@@ -15,12 +15,12 @@ let routeTimes = [];
 let routeLine;
 
 async function rateRoute(){
-    let rating = document.getElementById("rating_number").value;
+    let rating = document.getElementById("rating-number").value;
     if (!["0", "1", "2", "3", "4", "5"].includes(rating)){
         return;
     }
-    document.getElementById('rate_route_button').textContent="Rating...";
-    document.getElementById('rate_route_button').disabled=true;
+    document.getElementById('rate-route-button').textContent="Rating...";
+    document.getElementById('rate-route-button').disabled=true;
     await fetch("/api/post/rate_route", {
             method: "POST",
             body: JSON.stringify({
@@ -32,10 +32,10 @@ async function rateRoute(){
             }
         }
     );
-    document.getElementById('rate_route_button').textContent="Rated!";
+    document.getElementById('rate-route-button').textContent="Rated!";
     setTimeout(function(){
-            document.getElementById("rate_route_button").textContent = "Rate the route out of 5!";
-            document.getElementById("rate_route_button").disabled = false;
+            document.getElementById("rate-route-button").textContent = "Rate the route out of 5!";
+            document.getElementById("rate-route-button").disabled = false;
     }, 500);
 }
 
@@ -69,7 +69,7 @@ async function applyRoute(routeLineIndex) {
         routeLine.setLatLngs(assembledPath)
         .setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id='elevationGraph'></canvas>");
+            "<canvas id='elevation-graph'></canvas>");
     }
     else{
         routeLine = L.polyline(assembledPath, {
@@ -77,7 +77,7 @@ async function applyRoute(routeLineIndex) {
         })
         .bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id='elevationGraph'></canvas>", {
+            "<canvas id='elevation-graph'></canvas>", {
             autoPan: false
         })
         .on('click', showChart)
@@ -106,17 +106,17 @@ async function initialise() {
 
    let outerRegionLatLngs = outerRegionIds.map((index) => nodeLatLons[index]);
 
-   map.createPane('node_markers');
-   map.getPane('node_markers').style.zIndex = 401;
-   map.createPane('isochrone_colouring');
-   map.getPane('isochrone_colouring').style.zIndex = 399;
+   map.createPane('node-markers');
+   map.getPane('node-markers').style.zIndex = 401;
+   map.createPane('isochrone-colouring');
+   map.getPane('isochrone-colouring').style.zIndex = 399;
 
    // Creates rectangle covering entire map, except for a hole around region
    L.polygon([
       [[90, -180], [90, 180], [-90, 180], [-90, -180]], outerRegionLatLngs], {
         color: 'grey',
         fillOpacity: 0.3,
-        pane: 'isochrone_colouring',
+        pane: 'isochrone-colouring',
         interactive: false
    }).addTo(map);
 
@@ -132,7 +132,7 @@ async function initialise() {
       autoPan: true,
       title: "Destination"
    }).addTo(map));
-   routeMarkers[1]._icon.classList.add("redMarker");
+   routeMarkers[1]._icon.classList.add("red-marker");
    routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
    routeNodes[1] = 0;
    await loadRouteUrl(routeString);
@@ -180,9 +180,9 @@ async function addStop(routeLineIndex, stopPostion=null){
     let newNodeMarker =  L.marker(
         nodeLatLons[chosenNode], {
             interactive: false,
-            pane: "node_markers" // display marker above paths
+            pane: "node-markers" // display marker above paths
         }).addTo(map);
-    newNodeMarker._icon.classList.add("grayMarker");
+    newNodeMarker._icon.classList.add("grey-marker");
     routeNodes.splice(routeLineIndex+1, 0, chosenNode);
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);

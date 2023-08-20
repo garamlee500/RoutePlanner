@@ -35,16 +35,16 @@
             }
             function open_dialog(route_id){
                 document.getElementById(`dialog${route_id}`).show();
-                document.getElementById('click_blocker').style.height = "100%";
+                document.getElementById('click-blocker').style.height = "100%";
             }
             function close_dialog(){
-                document.getElementById('click_blocker').style.height = "0";
+                document.getElementById('click-blocker').style.height = "0";
             }
         </script>
         <link rel="stylesheet" href="/static/shared.css">
     </head>
     <body>
-        <div style="height: 0;width: 100%;z-index: 100;position:fixed;top:0;left:0;background-color: rgb(0,0,0,0.6);" id="click_blocker"></div>
+        <div style="height: 0;width: 100%;z-index: 100;position:fixed;top:0;left:0;background-color: rgb(0,0,0,0.6);" id="click-blocker"></div>
         <a href="/">Home</a>
         <br>
         <form action="/logout">
@@ -67,21 +67,21 @@
                         {{ route[1] }}
                     </td>
                     <td>
-                        <input id={{ "public_checkbox" ~ route[0]}} type="checkbox"/>
+                        <input id={{ "public-checkbox" ~ route[0]}} type="checkbox"/>
                     </td>
                     <td>
-                        <button class="redOnlyButton" onclick="open_dialog({{ route[0] }});">Delete</button>
+                        <button class="red-only-button" onclick="open_dialog({{ route[0] }});">Delete</button>
                     </td>
                     <dialog id="dialog{{ route[0] }}" style="z-index: 100">
                         Are you sure you want to delete {{ route[4] }}?
-                        <button class="redOnlyButton" onclick="delete_route({{ route[0] }});">DELETE</button>
+                        <button class="red-only-button" onclick="delete_route({{ route[0] }});">DELETE</button>
                         <form method="dialog">
                             <button onclick="close_dialog();">CANCEL</button>
                         </form>
                     </dialog>
                     <script>
-                        document.getElementById('{{"public_checkbox" ~ route[0]}}').checked = {{ "true" if route[5]==1 else "false"}};
-                        document.getElementById('{{"public_checkbox" ~ route[0]}}').addEventListener(
+                        document.getElementById('{{"public-checkbox" ~ route[0]}}').checked = {{ "true" if route[5]==1 else "false"}};
+                        document.getElementById('{{"public-checkbox" ~ route[0]}}').addEventListener(
                             "change",
                             (event)=>{make_public({{ route[0] }}, event.target.checked)});
 

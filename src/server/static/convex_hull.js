@@ -1,7 +1,7 @@
 function setupConvexHullInputs(){
-    document.getElementById("convex_hull_slider").max = convexHullRegions.length - 1;
-    document.getElementById("convex_hull_slider_text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
-    document.getElementById("convex_hull_slider_text").step = (settings.partitionDistance) / 1000;
+    document.getElementById("convex-hull-slider").max = convexHullRegions.length - 1;
+    document.getElementById("convex-hull-slider-text").max = (settings.partitionDistance * (convexHullRegions.length - 1)) / 1000;
+    document.getElementById("convex-hull-slider-text").step = (settings.partitionDistance) / 1000;
     convexHullIndex = Math.min(convexHullRegions.length - 1, convexHullIndex);
 }
 
@@ -30,7 +30,7 @@ async function generateIsochrone() {
             fillColor: colors[0],
             opacity: 0,
             fillOpacity: settings.isochroneOpacity,
-            pane: 'isochrone_colouring',
+            pane: 'isochrone-colouring',
             interactive: false
         }).addTo(map)
     );
@@ -50,7 +50,7 @@ async function generateIsochrone() {
             fillColor: colors[j],
             opacity: 0,
             fillOpacity: settings.isochroneOpacity,
-            pane: 'isochrone_colouring',
+            pane: 'isochrone-colouring',
             interactive: false
         }).addTo(map));
         prevConvexHullLatLons = currentConvexHullLatLons;
@@ -58,14 +58,14 @@ async function generateIsochrone() {
 }
 
 function displayConvexHull() {
-    document.getElementById("convex_hull_slider_text").value = (convexHullIndex * settings.partitionDistance / 1000);
-    document.getElementById("convex_hull_slider").value = convexHullIndex;
+    document.getElementById("convex-hull-slider-text").value = (convexHullIndex * settings.partitionDistance / 1000);
+    document.getElementById("convex-hull-slider").value = convexHullIndex;
 
     if (currentIndicatedConvexHull != null) {
         currentIndicatedConvexHull.remove(map)
     }
 
-    if (document.getElementById("convex_hull_slider_checkbox").checked === true) {
+    if (document.getElementById("convex-hull-slider-checkbox").checked === true) {
         currentIndicatedConvexHull = L.polygon(convexHullRegionsLatLons[convexHullIndex], {
             fillOpacity: 0,
             color: 'grey',

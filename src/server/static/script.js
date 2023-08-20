@@ -1,21 +1,21 @@
 async function saveRoute(){
-    document.getElementById('route_saver').textContent="Saving!";
-    document.getElementById('route_saver').disabled=true;
+    document.getElementById('route-saver').textContent="Saving!";
+    document.getElementById('route-saver').disabled=true;
     await fetch("/api/post/route", {
             method: "POST",
             body: JSON.stringify({
                 route: routeToString(),
-                route_name: document.getElementById('route_name').value
+                route_name: document.getElementById('route-name').value
             }),
             headers: {
                 "Content-type": "application/json; charset=UTF-8"
             }
         }
     );
-    document.getElementById('route_saver').textContent="Saved!";
+    document.getElementById('route-saver').textContent="Saved!";
     setTimeout(function(){
-            document.getElementById("route_saver").textContent = "Save route";
-            document.getElementById("route_saver").disabled = false;
+            document.getElementById("route-saver").textContent = "Save route";
+            document.getElementById("route-saver").disabled = false;
     }, 500);
 }
 
@@ -41,14 +41,14 @@ async function loadRouteUrl(routeString){
     }
 }
 
-async function copyUrlToClipboard(){
-    document.getElementById('routeLinkCopier').textContent="Saving!";
-    document.getElementById('routeLinkCopier').disabled=true;
+async function saveShareRoute(){
+    document.getElementById('route-link-copier').textContent="Saving!";
+    document.getElementById('route-link-copier').disabled=true;
     const response = await fetch("/api/post/route", {
             method: "POST",
             body: JSON.stringify({
                 route: routeToString(),
-                route_name: document.getElementById('route_name').value
+                route_name: document.getElementById('route-name').value
             }),
             headers: {
                 "Content-type": "application/json; charset=UTF-8"
@@ -68,10 +68,10 @@ async function copyUrlToClipboard(){
                     }
                 );
     await navigator.clipboard.writeText(window.location.origin + '/view/' + route_id.toString());
-    document.getElementById('routeLinkCopier').textContent="Link copied to clipboard!";
+    document.getElementById('route-link-copier').textContent="Link copied to clipboard!";
     setTimeout(function(){
-            document.getElementById("routeLinkCopier").textContent = "Save + share route";
-            document.getElementById("routeLinkCopier").disabled = false;
+            document.getElementById("route-link-copier").textContent = "Save + share route";
+            document.getElementById("route-link-copier").disabled = false;
     }, 500);
 }
 
@@ -85,9 +85,9 @@ function rebindStopEventListeners(stopIndex){
         await applyRoute(stopIndex)
     });
     routeMarkers[stopIndex].bindPopup(
-        `<button class='textButton' onClick='addStop(${stopIndex-1});'>Add stop before</button>
-        <button class='textButton' onClick='addStop(${stopIndex});'>Add stop after</button>
-        <button class='textButton redOnlyButton' onClick='deleteStop(${stopIndex});'>Delete stop</button>`);
+        `<button class='text-button' onClick='addStop(${stopIndex - 1});'>Add stop before</button>
+        <button class='text-button' onClick='addStop(${stopIndex});'>Add stop after</button>
+        <button class='text-button red-only-button' onClick='deleteStop(${stopIndex});'>Delete stop</button>`);
     // Rebind popup/drag event listeners - erased by routeMarkers[stopIndex].off();
     routeMarkers[stopIndex].on("click", function(){routeMarkers[stopIndex].openPopup();});
     routeMarkers[stopIndex].on("dragend", function(){setUrl();});
@@ -124,9 +124,9 @@ async function addStop(routeLineIndex, adjustRoute=true, stopPostion=null){
     let newNodeMarker =  L.marker(
         nodeLatLons[chosenNode], {
             draggable: true,
-            pane: "node_markers" // display marker above paths
+            pane: "node-markers" // display marker above paths
         }).addTo(map);
-    newNodeMarker._icon.classList.add("grayMarker");
+    newNodeMarker._icon.classList.add("grey-marker");
     routeNodes.splice(routeLineIndex+1, 0, chosenNode);
     routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
     routeNodeLatLons.splice(routeLineIndex+1, 0, []);
@@ -170,10 +170,10 @@ function setStartGPSLocation(position) {
 
 async function suggestRoute() {
     // Set generate button to red and prevent clicks
-    let buttonElement = document.getElementById("route_suggestor_button");
+    let buttonElement = document.getElementById("route-suggestor-button");
     buttonElement.disabled = true;
     buttonElement.textContent = "Generating...";
-    buttonElement.classList.add("redOnlyButton");
+    buttonElement.classList.add("red-only-button");
 
     let suggestedCycleObject = await (
         await fetch(`api/get/cycle/${routeNodes[0]}/${walkSuggestionDistance * 1000}`)
@@ -199,15 +199,15 @@ async function suggestRoute() {
     // Reactivate generate route button
     buttonElement.textContent = "Generate Route";
     buttonElement.disabled = false;
-    buttonElement.classList.remove("redOnlyButton");
+    buttonElement.classList.remove("red-only-button");
 }
 
 async function setDestinationSearchAddress() {
-    document.getElementById('destination_search').value =
+    document.getElementById('destination-search').value =
         await searchReverseGeocode(routeMarkers[routeMarkers.length - 1].getLatLng());
 }
 async function setStartSearchAddress() {
-    document.getElementById('start_search').value =
+    document.getElementById('start-search').value =
         await searchReverseGeocode(routeMarkers[0].getLatLng());
 }
 
@@ -288,7 +288,7 @@ async function applyRoute(routeLineIndex) {
         routeLine.setLatLngs(assembledPath)
         .setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id='elevationGraph'></canvas>");
+            "<canvas id='elevation-graph'></canvas>");
     }
     else{
         routeLine = L.polyline(assembledPath, {
@@ -296,14 +296,14 @@ async function applyRoute(routeLineIndex) {
         })
         .bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, `+
             `Time: ${secondsToString(totalTime)}` +
-            "<canvas id='elevationGraph'></canvas>", {
+            "<canvas id='elevation-graph'></canvas>", {
             autoPan: false
         })
         .on('click', showChart)
         .addTo(map);
     }
 
-    if (document.getElementById('destination_show_checkbox').checked === true) {
+    if (document.getElementById('destination-show-checkbox').checked === true) {
         routeLine.openPopup();
         showChart();
     }

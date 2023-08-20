@@ -1,19 +1,19 @@
-#account_button{
+#account-button{
     background-color: blue;
     color: white;
 }
-#account_button:hover{
+#account-button:hover{
     background-color: lightblue;
 }
 
-#login_button{
+#login-button{
     background-color: green;
     color: white;
 }
-#login_button:hover{
+#login-button:hover{
     background-color: lightgreen;
 }
-.account_management_button{
+.account-management-button{
     position: absolute;
     left: 90%;
     top: 5%;
@@ -23,7 +23,7 @@
     box-shadow: black 1px 1px 0 0;
     z-index: 1001;
 }
-.control_box{
+.control-box{
     background-color: white;
     border-color: gray;
     border-width: 2px;
@@ -33,13 +33,13 @@
     display: grid;
     font-family: inherit;
 }
-.greyButton{
+.grey-button{
     background-color: lightgreen;
 }
-.greyButton:hover{
+.grey-button:hover{
     background-color: lightgrey;
 }
-#bottom_bar{
+#bottom-bar{
     top: 80%;
     left: 15%;
     height: 15%;
@@ -49,17 +49,17 @@
     grid-template-columns: 5% 15% 15% 15% 15% 15% 15% 5%;
 }
 
-#bottom_bar > button{
+#bottom-bar > button{
     font-size: 1vw;
 }
-.textButton{
+.text-button{
     cursor: pointer;
     border: none;
     border-radius: 4px;
     font: inherit;
 }
 
-.textButton:hover{
+.text-button:hover{
     background-color: lightgrey;
 }
 
@@ -71,35 +71,35 @@
     border: none;
     cursor: pointer;
 }
-.imageIcon {
+.image-icon {
     flex-shrink: 0;
     max-width: 100%;
     max-height: 100%;
 }
-.imageIconDiv {
+.image-icon-div {
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
     border-radius: 10px;
 }
-.redOnlyButton:hover{
+.red-only-button:hover{
     background-color: red;
 }
-.redOnlyButton{
+.red-only-button{
     background-color: red;
     color: white;
 }
-.redMarker{
+.red-marker{
   filter: hue-rotate(140deg) contrast(150%);
 }
-.grayMarker{
+.grey-marker{
   filter: grayscale(100%);
 }
 #map {
   height: 100%; width: 100%
 }
-.centredDivText{
+.centred-div-text{
     font-size: 1vw;
     display:flex;
     align-items:center;
