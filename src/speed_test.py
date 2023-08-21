@@ -26,7 +26,7 @@ def mercator(lat, lon) -> Tuple[float, float]:
 
     """
 
-    return (pi * lat * EARTH_RADIUS) / 180, EARTH_RADIUS * log(tan(pi*(45 + lon / 2)/180))
+    return (pi * lon * EARTH_RADIUS) / 180, EARTH_RADIUS * log(tan(pi*(45 + lat / 2)/180))
 
 def generate_mercator_node_list(node_list: List[Tuple[float, float]]) -> List[Tuple[int, float, float]]:
     """

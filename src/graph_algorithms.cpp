@@ -304,8 +304,8 @@ vector<string> split(string &s, char delim){
 }
 
 pair<double, double> mercator(double lat, double lon) {
-    return make_pair((PI * lat * EARTH_RADIUS) / 180,
-        EARTH_RADIUS * log(tan(PI * (45 + lon / 2) / 180))
+    return make_pair((PI * lon * EARTH_RADIUS) / 180,
+        EARTH_RADIUS * log(tan(PI * (45 + lat / 2) / 180))
     );
 }
 double cross(double x1, double y1, double x2, double y2){
