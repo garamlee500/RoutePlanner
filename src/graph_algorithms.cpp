@@ -75,38 +75,39 @@ struct aStarResultObject{
 };
 
 // A Generic LRU cache that takes integers as inputs, with automatic data generation when cache miss occurs
-template <class T>
+template <class T1, class T2>
 class LRUcache{
 private:
-    unordered_map<int, T> cachedData;
-    unordered_map<int, list<int>::iterator> locationOfInputsInLRUInputs;
-    list<int> LRUInputs;
-    function<T(int)> targetFunction;
+    unordered_map<T1, T2> cachedData;
+    // https://stackoverflow.com/questions/11275444/c-template-typename-iterator - why typename is necessary
+    unordered_map<T1, typename list<T1>::iterator> locationOfInputsInLRUInputs;
+    list<T1> LRUInputs;
+    function<T2(T1)> targetFunction;
     unsigned int maxSize;
-    void storeDataWithoutCacheHitChecks(int x, T& data){
+    void storeDataWithoutCacheHitChecks(T1 x, T2& data){
         cachedData[x] = data;
         LRUInputs.push_back(x);
         locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
         if (LRUInputs.size() > maxSize){
-            int erasingInput = LRUInputs.front();
+            T1 erasingInput = LRUInputs.front();
             cachedData.erase(erasingInput);
             locationOfInputsInLRUInputs.erase(erasingInput);
             LRUInputs.pop_front();
         }
     }
-    void cacheHit(int x){
+    void cacheHit(T1 x){
         LRUInputs.erase(locationOfInputsInLRUInputs[x]);
         LRUInputs.push_back(x);
         locationOfInputsInLRUInputs[x] = prev(LRUInputs.end());
     }
 public:
     // Cache initialises with function to run if cache miss occurs
-    LRUcache(function<T(int)> targetFunction, unsigned int maxSize = 100):
+    LRUcache(function<T2(T1)> targetFunction, unsigned int maxSize = 100):
         targetFunction(targetFunction),
         maxSize(maxSize)
         {}
 
-    void storeData(int x, T& data){
+    void storeData(T1 x, T2 data){
         if (cachedData.count(x)){
             cacheHit(x);
         }
@@ -114,13 +115,13 @@ public:
             storeDataWithoutCacheHitChecks(x, data);
         }
     }
-    T getData(int x){
+    T2 getData(T1 x){
         if (cachedData.count(x)){
             cacheHit(x);
             return cachedData[x];
         }
         else{
-            T result = targetFunction(x);
+            T2 result = targetFunction(x);
             storeDataWithoutCacheHitChecks(x, result);
             return result;
         }
@@ -527,7 +528,8 @@ private:
         }
         return result;
     }
-    LRUcache<pair<vector<double>, vector<int>>> dijkstraResultCache{[this](int x){return dijkstraResult(x, distanceAdjacencyList);}};
+    LRUcache<int, pair<vector<double>, vector<int>>> dijkstraResultCache =
+    LRUcache<int, pair<vector<double>, vector<int>>>([this](int x){return dijkstraResult(x, distanceAdjacencyList);});
 public:
     MapGraphInstance(string nodeFilename="map_data/nodes.csv",
                      string adjacencyListFilename="map_data/edges.csv",
