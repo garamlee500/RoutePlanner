@@ -16,7 +16,7 @@ namespace py = pybind11;
 using namespace std;
 // magic command
 // c++ -Ofast -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) graph_algorithms.cpp -o graph_algorithms$(python3-config --extension-suffix)
-
+// c++ -Ofast -Wall -shared -std=c++11 -fPIC $(/home/garam/OneDrive/Documents/Garam/Coding/Python/RoutePlanner/venv/bin/python3 -m pybind11 --includes) graph_algorithms.cpp -o graph_algorithms$(/home/garam/OneDrive/Documents/Garam/Coding/Python/RoutePlanner/venv/bin/python3 -c "import distutils.sysconfig;print(distutils.sysconfig.get_config_var('EXT_SUFFIX'));")
 // "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64\cl.exe" /O2 /fp:fast /LD /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared" /I "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\include" /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" /I "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\include" /I "C:\Users\garam\AppData\Roaming\Python\Python39\site-packages\pybind11\include" C:\Users\garam\Downloads\SouthamptonMap\cpp_files\graph_algorithms.cpp "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\libs\python39.lib" /link  /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\lib\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64" /OUT:"graph_algorithms.pyd"
 
 // Powershell script given to me by God - correctly identifies suffix to!
