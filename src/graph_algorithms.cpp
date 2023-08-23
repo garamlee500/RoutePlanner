@@ -28,7 +28,7 @@ using namespace std;
 
 
 // use constexpr to define constants
-constexpr int EARTH_RADIUS = 6371000;
+constexpr int EARTH_RADIUS = 6378137;
 constexpr double PI = 3.14159265358979323846;
 
 // https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
@@ -305,9 +305,10 @@ vector<string> split(string &s, char delim){
 }
 
 pair<double, double> mercator(double lat, double lon) {
-    return make_pair((PI * lon * EARTH_RADIUS) / 180,
-        EARTH_RADIUS * log(tan(PI * (45 + lat / 2) / 180))
-    );
+    // Adapted from https://wiki.openstreetmap.org/wiki/Mercator#C
+    return make_pair(EARTH_RADIUS*PI*lon/180,
+        log(tan( (PI*lat/180) / 2 + PI/4 )) * EARTH_RADIUS
+        );
 }
 double cross(double x1, double y1, double x2, double y2){
     return x1 * y2 - y1 * x2;
