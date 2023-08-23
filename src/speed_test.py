@@ -435,16 +435,16 @@ def benchmark_device():
     print("Benchmarking device for server usage")
     print("Downloading test data (Southampton)")
     try:
-        print(f"Took: {timeit(lambda: download_edges_in_relation(SOUTHAMPTON_RELATION_ID, node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv', verbose=False), number=1)}s with 1 repetition")
+        print(f"Took: {timeit(lambda: download_edges_in_relation(SOUTHAMPTON_RELATION_ID, node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv', elevation_list_filename='map_data/temp3.csv', overpass_interpreter_url='https://overpass-api.de/api/interpreter', aster_gdem_api_endpoint='https://gdemdl.aster.jspacesystems.or.jp/download/', verbose=False), number=1)}s with 1 repetition")
     except ConnectionError:
         print("Unable to connect to overpass api server. Please check your connection and/or configure the overpass api url.")
         print("Quitting benchmark")
         return
     print("Initialising C++ extension")
-    benchmark_map_graph_instance = MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv')
-    print(f"Took {timeit(lambda: MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv'), number=1)}s per call with 1 repetition")
-    print("Testing C++ dijkstra")
-    print(f"Took {timeit(lambda: [benchmark_map_graph_instance.map_dijkstra(i) for i in range(10)], number=1)/10}s per call with 10 repetitions")
+    benchmark_map_graph_instance = MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv', elevation_list_filename='map_data/temp3.csv')
+    print(f"Took {timeit(lambda: MapGraphInstance(node_filename='map_data/temp1.csv', adjacency_list_filename='map_data/temp2.csv', elevation_list_filename='map_data/temp3.csv'), number=1)}s per call with 1 repetition")
+    #print("Testing C++ dijkstra")
+    #print(f"Took {timeit(lambda: [benchmark_map_graph_instance.map_dijkstra(i) for i in range(10)], number=1)/10}s per call with 10 repetitions")
     print("Testing C++ convex hull partition (at partition distance of 100m)")
     print(f"Took {timeit(lambda: benchmark_map_graph_instance.convex_hull_partition(0, partition_distance=100), number=10)/10}s per call with 10 repetitions")
     print("Testing C++ cycle generation (from node 0 with a suggested distance of 5km)")
@@ -456,6 +456,9 @@ def benchmark_device():
     
     if os.path.exists("map_data/temp2.csv"):
         os.remove("map_data/temp2.csv")
+
+    if os.path.exists("map_data/temp3.csv"):
+        os.remove("map_data/temp3.csv")
 
     print("Benchmark finished!")
     
