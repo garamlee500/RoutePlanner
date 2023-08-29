@@ -3,7 +3,6 @@ import math
 from get_data import download_edges_in_relation, download_edges_around_point, search_relation
 from settings import Settings
 from menu import Menu
-from speed_test import benchmark_device
 import server
 import exceptions
 import database
@@ -231,11 +230,6 @@ main_menu.add_option(("Set overpass api instance",
 
 main_menu.add_option(("Set ASTER GDEM api url",
                      aster_gdem_api_menu))
-
-main_menu.add_option((
-    "Benchmark device",
-    benchmark_device
-))
 
 main_menu.add_option((
     "Reset database (use to delete test database)",
