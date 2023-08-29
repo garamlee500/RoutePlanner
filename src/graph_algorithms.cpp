@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include <random>
 #include <functional>
+#include <thread>
+#include <future>
 
 namespace py = pybind11;
 using namespace std;
@@ -828,7 +830,7 @@ private:
         }
         return left;
     }
-    pair<int, double> nearestNeighbourRecursive(Node node, BinaryTreeNode<Node> currentBTNode, bool isX=true){
+    pair<int, double> nearestNeighbourRecursive(Node node, BinaryTreeNode<Node> currentBTNode, bool isX=true) const{
         pair<int, double> best = make_pair(currentBTNode.value.index,
                                                  (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
                                                  (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
@@ -887,14 +889,34 @@ public:
         root = createSubTree(nodes, 0, nodes.size()-1);
     }
 
-    int nearestNeighbour(Node node){
+    int nearestNeighbour(Node node) const{
         return nearestNeighbourRecursive(node, root).first;
     }
 
 };
 
+string nearestNeighboursSubresult(double minX,
+                                  double maxX,
+                                  double minY,
+                                  double maxY,
+                                  double gridDistance,
+                                  const TwoDtree& tree) {
+    string result;
+    for (int y = minY; y <= maxY; y+= gridDistance){
+        for (int x = minX; x <= maxX; x+=gridDistance){
+            result += to_string(tree.nearestNeighbour(Node(-1, x, y))) + ',';
+        }
+        result.pop_back();
+        result += '\n';
+    }
+    return result;
+}
+
 // Ids are 64 bits not 32 - learned the hard way!
-void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>> nodes, string gridFile = "map_data/grid2d.csv", double gridDistance=10){
+void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>> nodes,
+                                string gridFile = "map_data/grid2d.csv",
+                                double gridDistance=10,
+                                int threads=8){
     vector<Node> mercatorNodes;
     double minX = numeric_limits<double>::max();
     double maxX = numeric_limits<double>::lowest();
@@ -918,18 +940,24 @@ void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>
 
 
     TwoDtree tree = TwoDtree(mercatorNodes);
-
-    string result = to_string(minX) + ',' + to_string(maxX) + ',' + to_string(minY) + ',' + to_string(maxY) + '\n';
-    for (int y = minY; y <= maxY; y+= gridDistance){
-        for (int x = minX; x <= maxX; x+=gridDistance){
-            result += to_string(tree.nearestNeighbour(Node(-1, x, y))) + ',';
-        }
-        result.pop_back();
-        result += '\n';
-    }
     ofstream fout(gridFile);
-    fout << result;
+    fout <<  to_string(minX) << ',' << to_string(maxX) << ',' << to_string(minY) << ',' << to_string(maxY) << '\n';
 
+    vector<future<string>> calculatedFutures;
+
+    for (int i = 0; i < threads; i++){
+        calculatedFutures.push_back(async(&nearestNeighboursSubresult,
+                                          minX,
+                                          maxX,
+                                          minY+i*((maxY-minY)/threads),
+                                          min(maxY, minY+(i+1)*((maxY-minY)/threads)),
+                                          gridDistance,
+                                          tree));
+    }
+
+    for (int i = 0; i < threads; i++){
+        fout << calculatedFutures[i].get();
+    }
 }
 
 
@@ -959,5 +987,6 @@ PYBIND11_MODULE(graph_algorithms, m) {
      m.def("compute_2D_nearest_neighbours", &compute2DNearestNeighbours,
            py::arg("nodes"),
            py::arg("grid_file")="map_data/grid2d.csv",
-           py::arg("grid_distance")=10);
+           py::arg("grid_distance")=10,
+           py::arg("threads")=8);
 }
