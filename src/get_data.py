@@ -4,7 +4,7 @@ import requests
 from distance_formulas import haversine_node_distance, walking_time
 import exceptions
 import elevation.downloader
-
+import graph_algorithms
 
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
@@ -88,6 +88,7 @@ def _download_edges(edge_query: str,
                     node_filename="map_data/nodes.csv",
                     adjacency_list_filename="map_data/edges.csv",
                     elevation_list_filename="map_data/elevation.csv",
+                    grid_filename="map_data/grid2d.csv",
                     verbose=True):
 
     response = requests.get(overpass_interpreter_url, params={'data': edge_query})
@@ -221,6 +222,11 @@ def _download_edges(edge_query: str,
 
     if verbose:
         print("Saved graph to files")
+        print("Generating 2d grid of closest nodes precomputation (this can take a while!)")
+
+    graph_algorithms.compute_2D_nearest_neighbours(nodes, grid_file=grid_filename, grid_distance=10)
+    if verbose:
+        print("Done!")
 
 
 def download_edges_in_relation(area_relation_id: int,
@@ -231,6 +237,7 @@ def download_edges_in_relation(area_relation_id: int,
                                node_filename="map_data/nodes.csv",
                                adjacency_list_filename="map_data/edges.csv",
                                elevation_list_filename="map_data/elevation.csv",
+                               grid_filename="map_data/grid2d.csv",
                                verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -251,7 +258,7 @@ def download_edges_in_relation(area_relation_id: int,
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    verbose)
+                    grid_filename, verbose)
 
 
 def download_edges_around_point(node_lat: float,
@@ -264,6 +271,7 @@ def download_edges_around_point(node_lat: float,
                                 node_filename="map_data/nodes.csv",
                                 adjacency_list_filename="map_data/edges.csv",
                                 elevation_list_filename="map_data/elevation.csv",
+                                grid_filename="map_data/grid2d.csv",
                                 verbose=True):
     """
     Runs download_edges but with prebuilt query
@@ -277,4 +285,4 @@ def download_edges_around_point(node_lat: float,
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
-                    verbose)
+                    grid_filename, verbose)

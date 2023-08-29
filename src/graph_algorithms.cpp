@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
+#include <memory>
 #include <unordered_set>
 #include <vector>
 #include <fstream>
@@ -344,7 +346,7 @@ vector<Node> convexHull(vector<Node> nodes) {
         }
     }
     // Swap most bottom left element to front of list
-    iter_swap(nodes.begin() + mostBottomLeftIndex, nodes.begin());
+    swap(nodes[mostBottomLeftIndex], nodes[0]);
 
     // Create lambda to sort nodes
     // Must be a lambda - c++ does not support functions inside
@@ -755,6 +757,182 @@ public:
     }
 };
 
+template<class T>
+struct BinaryTreeNode{
+    T value;
+    shared_ptr<BinaryTreeNode<T>> left;
+    shared_ptr<BinaryTreeNode<T>> right;
+    BinaryTreeNode(T value):
+            value(value)
+    {
+
+    }
+};
+
+
+class TwoDtree{
+    // A k-d tree but solely for 2 dimensions
+private:
+    BinaryTreeNode<Node> root = BinaryTreeNode(Node(-1, -1, -1));
+
+    BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
+        int medianIndex = quickSelect(nodes, left, right, isX);
+        BinaryTreeNode subRoot(nodes[medianIndex]);
+
+        if (medianIndex>left){
+            subRoot.left = make_shared<BinaryTreeNode<Node>>(createSubTree(nodes, left, medianIndex-1, !isX));
+        }
+        if (medianIndex < right){
+            subRoot.right = make_shared<BinaryTreeNode<Node>>(createSubTree(nodes, medianIndex+1, right, !isX));
+        }
+
+        return subRoot;
+    }
+    int lomutoPartition(vector<Node>& nodes, int left, int right, int pivotIndex, bool isX=true){
+        // Implementation of Lomuto partition scheme
+        // https://en.wikipedia.org/wiki/Quickselect
+        double pivotValue = (isX ? nodes[pivotIndex].x : nodes[pivotIndex].y);
+        swap(nodes[right], nodes[pivotIndex]);
+        int storeIndex = left;
+
+        for (int i = left; i < right; i++){
+            if ((isX ? nodes[i].x : nodes[i].y) < pivotValue){
+                swap(nodes[i], nodes[storeIndex]);
+                storeIndex++;
+            }
+        }
+        swap(nodes[right], nodes[storeIndex]);
+        return storeIndex;
+    }
+    int quickSelect(vector<Node>& nodes, int left, int right, bool isX=true){
+        // https://en.wikipedia.org/wiki/Quickselect
+
+        // Don't bother averaging two items to get median in even case
+        // Doesn't make any sense for a k-d tree
+        int requiredIndex = (left+right)/2 - left;
+
+        while (left<right){
+            uniform_int_distribution<> distrib(left, right);
+            int pivotIndex = lomutoPartition(nodes, left, right, distrib(gen), isX);
+            if (pivotIndex-left > requiredIndex){
+                right = pivotIndex-1;
+            }
+            else if (pivotIndex-left < requiredIndex){
+                requiredIndex = requiredIndex - (pivotIndex-left+1);
+                left = pivotIndex+1;
+            }
+            if (pivotIndex-left==requiredIndex){
+                return pivotIndex;
+            }
+
+        }
+        return left;
+    }
+    pair<int, double> nearestNeighbourRecursive(Node node, BinaryTreeNode<Node> currentBTNode, bool isX=true){
+        pair<int, double> best = make_pair(currentBTNode.value.index,
+                                                 (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
+                                                 (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
+        pair<int, double> newPossibility;
+        if ((isX?node.x:node.y) < (isX?currentBTNode.value.x:currentBTNode.value.y)){
+            // smaller value - go to the left!
+            if (currentBTNode.left){
+                // left node exists
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left.get(), !isX);
+                if (newPossibility.second < best.second){
+                    best = newPossibility;
+                }
+            }
+            // Can we do better if we go right instead?
+            double smallestPossibleDistance;
+            if (isX){
+                smallestPossibleDistance = (currentBTNode.value.x-node.x)*(currentBTNode.value.x-node.x);
+            }
+            else{
+                smallestPossibleDistance = (currentBTNode.value.y-node.y)*(currentBTNode.value.y-node.y);
+            }
+            if (smallestPossibleDistance<best.second&&currentBTNode.right){
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right.get(), !isX);
+                if (newPossibility.second < best.second){
+                    best = newPossibility;
+                }
+            }
+        }
+        else {
+            //to the right!
+            if (currentBTNode.right) {
+                // left node exists
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right.get(), !isX);
+                if (newPossibility.second < best.second) {
+                    best = newPossibility;
+                }
+            }
+            // Can we do better if we go right instead?
+            double smallestPossibleDistance;
+            if (isX) {
+                smallestPossibleDistance = (currentBTNode.value.x - node.x) * (currentBTNode.value.x - node.x);
+            } else {
+                smallestPossibleDistance = (currentBTNode.value.y - node.y) * (currentBTNode.value.y - node.y);
+            }
+            if (smallestPossibleDistance < best.second && currentBTNode.left) {
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left.get(), !isX);
+                if (newPossibility.second < best.second) {
+                    best = newPossibility;
+                }
+            }
+        }
+        return best;
+    }
+public:
+    TwoDtree(vector<Node>& nodes){
+        root = createSubTree(nodes, 0, nodes.size()-1);
+    }
+
+    int nearestNeighbour(Node node){
+        return nearestNeighbourRecursive(node, root).first;
+    }
+
+};
+
+// Ids are 64 bits not 32 - learned the hard way!
+void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>> nodes, string gridFile = "map_data/grid2d.csv", double gridDistance=10){
+    vector<Node> mercatorNodes;
+    double minX = numeric_limits<double>::max();
+    double maxX = numeric_limits<double>::lowest();
+    double minY = numeric_limits<double>::max();
+    double maxY = numeric_limits<double>::lowest();
+    for (unsigned int i = 0; i < nodes.size(); i++){
+        pair<double, double> mercatorXY = mercator(get<1>(nodes[i]), get<2>(nodes[i]));
+        minX = min(minX, mercatorXY.first);
+        minY = min(minY, mercatorXY.second);
+        maxX = max(maxX, mercatorXY.first);
+        maxY = max(maxY, mercatorXY.second);
+        mercatorNodes.push_back(Node(i, mercatorXY.first, mercatorXY.second));
+    }
+
+
+    // Make sure grid covers ever so slightly more than points on grid.
+    minX = floor(minX/gridDistance)*gridDistance;
+    minY = floor(minY/gridDistance)*gridDistance;
+    maxX = ceil(maxX/gridDistance)*gridDistance;
+    maxY = ceil(maxY/gridDistance)*gridDistance;
+
+
+    TwoDtree tree = TwoDtree(mercatorNodes);
+
+    string result = to_string(minX) + ',' + to_string(maxX) + ',' + to_string(minY) + ',' + to_string(maxY) + '\n';
+    for (int y = minY; y <= maxY; y+= gridDistance){
+        for (int x = minX; x <= maxX; x+=gridDistance){
+            result += to_string(tree.nearestNeighbour(Node(-1, x, y))) + ',';
+        }
+        result.pop_back();
+        result += '\n';
+    }
+    ofstream fout(gridFile);
+    fout << result;
+
+}
+
+
 PYBIND11_MODULE(graph_algorithms, m) {
      py::class_<MapGraphInstance>(m, "MapGraphInstance")
          .def(py::init<string, string, string>(),
@@ -778,4 +956,8 @@ PYBIND11_MODULE(graph_algorithms, m) {
              py::arg("start_node"),
              py::arg("end_node"),
              py::arg("use_time"));
+     m.def("compute_2D_nearest_neighbours", &compute2DNearestNeighbours,
+           py::arg("nodes"),
+           py::arg("grid_file")="map_data/grid2d.csv",
+           py::arg("grid_distance")=10);
 }
