@@ -26,7 +26,7 @@ def redownload_all_data():
         print("ERROR: Unable to connect to the Overpass API")
         print("Try checking your internet connection, or changing the Overpass API instance used")
     except exceptions.InvalidRegionError:
-        print("ERROR: Unable to succesfully process region.")
+        print("ERROR: Unable to successfully process region.")
         print("Please ensure valid and sensible region has been selected")
 
 

@@ -224,7 +224,7 @@ def _download_edges(edge_query: str,
         print("Saved graph to files")
         print("Generating 2d grid of closest nodes precomputation (this can take a while!)")
 
-    graph_algorithms.compute_2D_nearest_neighbours(nodes, grid_file=grid_filename, grid_distance=10)
+    graph_algorithms.compute_2D_nearest_neighbours(nodes, grid_filename=grid_filename, grid_distance=10)
     if verbose:
         print("Done!")
 

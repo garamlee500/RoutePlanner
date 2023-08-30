@@ -314,6 +314,13 @@ pair<double, double> mercator(double lat, double lon) {
         log(tan( (PI*lat/180) / 2 + PI/4 )) * EARTH_RADIUS
         );
 }
+
+pair<double, double> inverseMercator(double x, double y){
+    // Adapted from https://wiki.openstreetmap.org/wiki/Mercator#C
+    return make_pair(PI*(2 * atan(exp( y/EARTH_RADIUS))/180 - PI/2),
+                     (PI * x / 180)/EARTH_RADIUS);
+}
+
 double cross(double x1, double y1, double x2, double y2){
     return x1 * y2 - y1 * x2;
 }
@@ -495,11 +502,17 @@ class MapGraphInstance{
 private:
     vector<vector<Edge>> distanceAdjacencyList;
     vector<vector<Edge>> timeAdjacencyList;
+    vector<vector<int>> closestNodes;
     vector<Node> mercatorNodeList;
     vector<double> nodeLats;
     vector<double> nodeLons;
     vector<double> nodeElevations;
     int nodeCount;
+    double minX;
+    double maxX;
+    double minY;
+    double maxY;
+    double gridDistance;
     string region_nodes;
     string nodeLatLons;
     string nodeElevationString;
@@ -533,12 +546,29 @@ private:
         }
         return result;
     }
+    void getClosestNodes(string graphFilename){
+        ifstream gridIn(graphFilename);
+        string line;
+        getline(gridIn, line);
+        vector<string> params = split(line, ',');
+        minX = stod(params[0]);
+        maxX = stod(params[1]);
+        minY = stod(params[2]);
+        maxY = stod(params[3]);
+        gridDistance = stod(params[4]);
+    }
+
+    string findSubisoline(double minX, double maxX, double minY, double maxY, const vector<double> &distances){
+
+    }
+
     LRUcache<int, pair<vector<double>, vector<int>>> dijkstraResultCache =
     LRUcache<int, pair<vector<double>, vector<int>>>([this](int x){return dijkstraResult(x, distanceAdjacencyList);});
 public:
     MapGraphInstance(string nodeFilename="map_data/nodes.csv",
                      string adjacencyListFilename="map_data/edges.csv",
-                     string elevationListFilename="map_data/elevation.csv"){
+                     string elevationListFilename="map_data/elevation.csv",
+                     string graphFilename="map_data/grid2d.csv"){
         ifstream nodeIn(nodeFilename);
         ifstream edgeIn(adjacencyListFilename);
         ifstream elevationIn(elevationListFilename);
@@ -583,6 +613,7 @@ public:
             nodeElevations.push_back(stod(s));
         }
         computeRegionNodes();
+        getClosestNodes(graphFilename);
     }
 
     string generate_cycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
@@ -757,6 +788,10 @@ public:
     string get_node_elevations(){
         return nodeElevationString;
     }
+
+    string isoline(int startNode, double isovalue){
+        vector<double> distances = dijkstraResultCache.getData(startNode).first;
+    }
 };
 
 template<class T>
@@ -901,6 +936,11 @@ string nearestNeighboursSubresult(double minX,
                                   double maxY,
                                   double gridDistance,
                                   const TwoDtree& tree) {
+
+    if (minY > maxY){
+        return "";
+    }
+
     string result;
     for (int y = minY; y <= maxY; y+= gridDistance){
         for (int x = minX; x <= maxX; x+=gridDistance){
@@ -913,7 +953,7 @@ string nearestNeighboursSubresult(double minX,
 }
 
 // Ids are 64 bits not 32 - learned the hard way!
-void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>> nodes,
+void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
                                 string gridFile = "map_data/grid2d.csv",
                                 double gridDistance=10,
                                 int threads=300){
@@ -941,16 +981,21 @@ void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>
 
     TwoDtree tree = TwoDtree(mercatorNodes);
     ofstream fout(gridFile);
-    fout <<  to_string(minX) << ',' << to_string(maxX) << ',' << to_string(minY) << ',' << to_string(maxY) << '\n';
+    fout <<  to_string(minX) << ',' << to_string(maxX) << ',' << to_string(minY) << ',' << to_string(maxY) << ',' << gridDistance << '\n';
 
     vector<future<string>> calculatedFutures;
 
     for (int i = 0; i < threads; i++){
-        calculatedFutures.push_back(async(&nearestNeighboursSubresult,
+        // Note nice partitioning is not always possible - consider 11 items needing processing with 5 threads
+        int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
+//        py::print(minY+i*diff);
+//        py::print(min(maxY, minY+(i+1)*(diff)-1));
+        calculatedFutures.push_back(async(launch:: async,
+                                          &nearestNeighboursSubresult,
                                           minX,
                                           maxX,
-                                          minY+i*((maxY-minY)/threads),
-                                          min(maxY, minY+(i+1)*((maxY-minY)/threads)),
+                                          minY+i*diff*gridDistance,
+                                          min(maxY, minY+(i+1)*(diff)*gridDistance-1),
                                           gridDistance,
                                           tree));
     }
@@ -963,10 +1008,11 @@ void compute2DNearestNeighbours(vector<tuple<unsigned long long, double, double>
 
 PYBIND11_MODULE(graph_algorithms, m) {
      py::class_<MapGraphInstance>(m, "MapGraphInstance")
-         .def(py::init<string, string, string>(),
+         .def(py::init<string, string, string, string>(),
             py::arg("node_filename") = "map_data/nodes.csv",
             py::arg("adjacency_list_filename") = "map_data/edges.csv",
-            py::arg("elevation_list_filename") = "map_data/elevation.csv"
+            py::arg("elevation_list_filename") = "map_data/elevation.csv",
+            py::arg("grid_filename") = "map_data/grid2d.csv"
         )
         .def("convex_hull_partition", &MapGraphInstance::convex_hull_partition,
             py::arg("start_node"),
@@ -986,7 +1032,7 @@ PYBIND11_MODULE(graph_algorithms, m) {
              py::arg("use_time"));
      m.def("compute_2D_nearest_neighbours", &compute2DNearestNeighbours,
            py::arg("nodes"),
-           py::arg("grid_file")="map_data/grid2d.csv",
+           py::arg("grid_filename")="map_data/grid2d.csv",
            py::arg("grid_distance")=10,
            py::arg("threads")=300);
 }
