@@ -13,4 +13,4 @@ from timeit import timeit
 
 a = graph_algorithms.MapGraphInstance()
 a.isoline(0, 1000)
-print(timeit(lambda: a.isoline(0, 10000), number=1))
+print(timeit(lambda: a.isoline(0, 10000, 100), number=1))

@@ -1205,7 +1205,7 @@ string nearestNeighboursSubresult(double minX,
 void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
                                 string gridFile = "map_data/grid2d.csv",
                                 double gridDistance=10,
-                                int threads=300){
+                                int threads=100){
     vector<Node> mercatorNodes;
     double minX = numeric_limits<double>::max();
     double maxX = numeric_limits<double>::lowest();
@@ -1284,5 +1284,5 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("nodes"),
             py::arg("grid_filename")="map_data/grid2d.csv",
             py::arg("grid_distance")=10,
-            py::arg("threads")=300);
+            py::arg("threads")=100);
 }
