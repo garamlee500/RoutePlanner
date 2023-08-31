@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <string>
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -44,18 +45,26 @@ struct Edge{
     int endIndex;
     double distance;
     Edge (int endIndex, double distance):
-        endIndex(endIndex),
-        distance(distance){}
+            endIndex(endIndex),
+            distance(distance){}
 };
 
 struct Node {
     int index;
     double x, y;
     Node(int index, double x, double y):
-        index(index),
-        x(x),
-        y(y)
+            index(index),
+            x(x),
+            y(y)
     {}
+};
+
+
+enum Direction{
+    Top,
+    Bottom,
+    Left,
+    Right
 };
 
 struct aStarResultObject{
@@ -107,9 +116,9 @@ private:
 public:
     // Cache initialises with function to run if cache miss occurs
     LRUcache(function<T2(T1)> targetFunction, unsigned int maxSize = 100):
-        targetFunction(targetFunction),
-        maxSize(maxSize)
-        {}
+            targetFunction(targetFunction),
+            maxSize(maxSize)
+    {}
 
     void storeData(T1 x, T2 data){
         if (cachedData.count(x)){
@@ -145,10 +154,10 @@ public:
     }
 
     IndexedPriorityQueue(function<bool(T, T)> itemComparator):
-        itemComparator(itemComparator){}
+            itemComparator(itemComparator){}
     IndexedPriorityQueue(function<bool(T, T)> itemComparator, IndexTracker indexTracker):
-        itemComparator(itemComparator),
-        itemIndices(indexTracker){}
+            itemComparator(itemComparator),
+            itemIndices(indexTracker){}
 
     bool itemPresent(T item, bool itemExistenceCheck=true){
         // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the
@@ -198,7 +207,7 @@ public:
                         return topItem;
                     }
                 }
-                // Second child is less than first child
+                    // Second child is less than first child
                 else{
                     // Second child is less than current item
                     if (itemComparator(heap[itemIndex*2+2], heap[itemIndex])){
@@ -216,7 +225,7 @@ public:
                     }
                 }
             }
-            // Item only has one child
+                // Item only has one child
             else{
                 // First child is less than current item
                 if (itemComparator(heap[itemIndex*2+1], heap[itemIndex])){
@@ -269,7 +278,7 @@ public:
     // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
     //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
     DijkstraHeap(int nodeCount, function<bool(int, int)> nodeComparator)
-    : priorityQueue(IndexedPriorityQueue<int, vector<int>>(nodeComparator, vector<int>(nodeCount)))
+            : priorityQueue(IndexedPriorityQueue<int, vector<int>>(nodeComparator, vector<int>(nodeCount)))
     {
         for (int i = 0; i < nodeCount; i++) {
             // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indices is not indexed out of bounds
@@ -311,14 +320,14 @@ vector<string> split(string &s, char delim){
 pair<double, double> mercator(double lat, double lon) {
     // Adapted from https://wiki.openstreetmap.org/wiki/Mercator#C
     return make_pair(EARTH_RADIUS*PI*lon/180,
-        log(tan( (PI*lat/180) / 2 + PI/4 )) * EARTH_RADIUS
-        );
+                     log(tan( (PI*lat/180) / 2 + PI/4 )) * EARTH_RADIUS
+    );
 }
 
 pair<double, double> inverseMercator(double x, double y){
     // Adapted from https://wiki.openstreetmap.org/wiki/Mercator#C
-    return make_pair(PI*(2 * atan(exp( y/EARTH_RADIUS))/180 - PI/2),
-                     (PI * x / 180)/EARTH_RADIUS);
+    return make_pair(180*(2 * atan(exp( y/EARTH_RADIUS)))/PI - 90,
+                     (180 * x / PI)/EARTH_RADIUS);
 }
 
 double cross(double x1, double y1, double x2, double y2){
@@ -363,29 +372,29 @@ vector<Node> convexHull(vector<Node> nodes) {
     // can't capture mostBottomLeft to get relative polar angle
     // Partial function application is possible but this uses lambdas anyway
     function<bool(Node&, Node&)> convexHullPolarSort
-        = [&mostBottomLeft](Node& nodeA, Node& nodeB) {
-        // Custom comparator used to sort nodes for Graham's scan
-        // Resolves by polar angle, then sorts by distance from mostBottomLeft
-        double crossProduct = cross(nodeA.x-mostBottomLeft.x, nodeA.y-mostBottomLeft.y,
-                        nodeB.x-mostBottomLeft.x, nodeB.y-mostBottomLeft.y );
-        if (crossProduct>0) {
-            // nodeB is left of nodeA
-            return true;
-        }
-        else if (crossProduct < 0) {
-            // nodeB is right of nodeA
-            return false;
-        }
-        else {
-            // mostBottomLeft, nodeA, nodeB are collinear
-            // break ties by increasing distance
-            // Could use manhattan distance due to co-linearity
-            return pow(nodeA.x - mostBottomLeft.x, 2) +
-                pow(nodeA.y - mostBottomLeft.y, 2) <
-                pow(nodeB.x - mostBottomLeft.x, 2) +
-                pow(nodeB.y - mostBottomLeft.y, 2);
-        }
-    };
+            = [&mostBottomLeft](Node& nodeA, Node& nodeB) {
+                // Custom comparator used to sort nodes for Graham's scan
+                // Resolves by polar angle, then sorts by distance from mostBottomLeft
+                double crossProduct = cross(nodeA.x-mostBottomLeft.x, nodeA.y-mostBottomLeft.y,
+                                            nodeB.x-mostBottomLeft.x, nodeB.y-mostBottomLeft.y );
+                if (crossProduct>0) {
+                    // nodeB is left of nodeA
+                    return true;
+                }
+                else if (crossProduct < 0) {
+                    // nodeB is right of nodeA
+                    return false;
+                }
+                else {
+                    // mostBottomLeft, nodeA, nodeB are collinear
+                    // break ties by increasing distance
+                    // Could use manhattan distance due to co-linearity
+                    return pow(nodeA.x - mostBottomLeft.x, 2) +
+                           pow(nodeA.y - mostBottomLeft.y, 2) <
+                           pow(nodeB.x - mostBottomLeft.x, 2) +
+                           pow(nodeB.y - mostBottomLeft.y, 2);
+                }
+            };
 
     // Don't pop elements here - vectors have O(n) pop front - to avoid!
     sort(nodes.begin() + 1, nodes.end(), convexHullPolarSort);
@@ -394,10 +403,10 @@ vector<Node> convexHull(vector<Node> nodes) {
     vector<Node> convexHullStack{ mostBottomLeft, nodes[1], nodes[2] };
     for (unsigned int i = 3; i < nodes.size(); i++) {
         while (!leftTurn(
-            convexHullStack.back().x - (convexHullStack.end() - 2)->x,
-            convexHullStack.back().y - (convexHullStack.end() - 2)->y,
-            nodes[i].x - convexHullStack.back().x,
-            nodes[i].y - convexHullStack.back().y))
+                convexHullStack.back().x - (convexHullStack.end() - 2)->x,
+                convexHullStack.back().y - (convexHullStack.end() - 2)->y,
+                nodes[i].x - convexHullStack.back().x,
+                nodes[i].y - convexHullStack.back().y))
         {
             convexHullStack.pop_back();
         }
@@ -498,6 +507,206 @@ aStarResultObject aStarResult(int startNode,
     return aStarResultObject(distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath);
 }
 
+string interpolatedLatLon(double x1, double y1, double x2, double y2, double value1, double value2, double isovalue){
+    // Presume value2!=value1
+    double x = x1 + (x2-x1)*(isovalue-value1)/(value2-value1);
+    double y = y1 + (y2-y1)*(isovalue-value1)/(value2-value1);
+    pair<double, double> posDeg = inverseMercator(x, y);
+    return '[' + to_string(posDeg.first) + ',' + to_string(posDeg.second) + ']';
+}
+
+void findSubisoline(double gridDistance,
+                    double absoluteMinX,
+                    double absoluteMinY,
+                    double minX,
+                    double maxX,
+                    double minY,
+                    double maxY,
+                    double isovalue,
+                    const vector<double>& distances,
+                    const vector<vector<int>>& closestNodes,
+                    string& totalResult,
+                    mutex& m){
+    string result= "";
+    for (double y = minY + gridDistance/2; y <= maxY - gridDistance/2; y+=gridDistance){
+        for (double x = minX + gridDistance/2; x <= maxX - gridDistance/2; x+=gridDistance){
+            double topLeftValue =
+                    distances[
+                            closestNodes[static_cast<long long>(round((y - gridDistance/2 - absoluteMinY)/gridDistance))]
+                            [static_cast<long long>(round((x - gridDistance/2 - absoluteMinX)/gridDistance))]
+                    ];
+            double topRightValue =
+                    distances[
+                            closestNodes[static_cast<long long>(round((y - gridDistance/2 - absoluteMinY)/gridDistance))]
+                            [static_cast<long long>(round((x + gridDistance/2 - absoluteMinX)/gridDistance))]
+                    ];
+            double bottomLeftValue =
+                    distances[
+                            closestNodes[static_cast<long long>(round((y + gridDistance/2 - absoluteMinY)/gridDistance))]
+                            [static_cast<long long>(round((x - gridDistance/2 - absoluteMinX)/gridDistance))]
+                    ];
+            double bottomRightValue =
+                    distances[
+                            closestNodes[static_cast<long long>(round((y + gridDistance/2 - absoluteMinY)/gridDistance))]
+                            [static_cast<long long>(round((x + gridDistance/2 - absoluteMinX)/gridDistance))]
+                    ];
+            // gives each of 16 cases a unique number
+            // each bit indicates above/below,  left right top bottom
+            int caseIndex = ((topLeftValue>=isovalue)<<3) + ((topRightValue>=isovalue)<<2)
+                            + ((bottomLeftValue>=isovalue)<<1) + ((bottomRightValue >=isovalue));
+
+            // gridDistance=gridDistance allows property of current object to be specifically captured by lambda
+            // https://stackoverflow.com/questions/7895879/using-data-member-in-lambda-capture-list-inside-a-member-function
+            function<string(Direction)> getContourPoint
+                    = [x, y, gridDistance=gridDistance, topLeftValue, topRightValue, bottomLeftValue, bottomRightValue, isovalue](Direction d){
+                switch(d){
+                    case Top:
+                        return interpolatedLatLon(x-gridDistance/2,
+                                                  y-gridDistance/2,
+                                                  x+gridDistance/2,
+                                                  y-gridDistance/2,
+                                                  topLeftValue,
+                                                  topRightValue,
+                                                  isovalue);
+                    case Bottom:
+                        return interpolatedLatLon(x-gridDistance/2,
+                                                  y+gridDistance/2,
+                                                  x+gridDistance/2,
+                                                  y+gridDistance/2,
+                                                  bottomLeftValue,
+                                                  bottomRightValue,
+                                                  isovalue);
+                    case Left:
+                        return interpolatedLatLon(x-gridDistance/2,
+                                                  y-gridDistance/2,
+                                                  x-gridDistance/2,
+                                                  y+gridDistance/2,
+                                                  topLeftValue,
+                                                  bottomLeftValue,
+                                                  isovalue);
+
+                    case Right:
+                        return interpolatedLatLon(x+gridDistance/2,
+                                                  y-gridDistance/2,
+                                                  x+gridDistance/2,
+                                                  y+gridDistance/2,
+                                                  topRightValue,
+                                                  bottomRightValue,
+                                                  isovalue);
+                    default:
+                        return string("");
+                }
+
+            };
+            double average;
+            switch (caseIndex){
+                case 15: case 0:
+                    // All on/off
+                    break;
+                case 1:
+                    // Low Low
+                    // Low High
+                    // Linear interpolation used to determine where along lines isoline appears
+
+                    // For bottom edge
+                    result += '[' + getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
+                    break;
+                case 2:
+                    // Low Low
+                    // High Low
+                    result += '[' + getContourPoint(Bottom) + ',' + getContourPoint(Left) + "],";
+                    break;
+                case 3:
+                    // Low Low
+                    // High High
+                    result += '[' + getContourPoint(Left) + ',' + getContourPoint(Right) + "],";
+                    break;
+                case 4:
+                    // Low High
+                    // Low Low
+                    result += '[' + getContourPoint(Top) + ',' + getContourPoint(Right) + "],";
+                    break;
+                case 5:
+                    // Low High
+                    // Low High
+                    result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Top) + "],";
+                    break;
+                case 6:
+                    // Low High
+                    // High Low
+                    // Saddle point
+                    average = (bottomRightValue + bottomLeftValue + topRightValue + topLeftValue)/4;
+                    if (average>=isovalue){
+                        result += '['+ getContourPoint(Top) + ',' + getContourPoint(Left) + "],";
+                        result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
+                    }
+                    else{
+                        result += '['+ getContourPoint(Top) + ',' + getContourPoint(Right) + "],";
+                        result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Left) + "],";
+
+                    }
+                    break;
+                case 7:
+                    // Low High
+                    // High High
+                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Top) + "],";
+                    break;
+                case 8:
+                    // High Low
+                    // Low Low
+                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Top) + "],";
+                    break;
+                case 9:
+                    // High Low
+                    // Low High
+                    // Saddle point
+                    average = (bottomRightValue + bottomLeftValue + topRightValue + topLeftValue)/4;
+                    if (average>=isovalue){
+                        result += '['+ getContourPoint(Top) + ',' + getContourPoint(Right) + "],";
+                        result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Left) + "],";
+                    }
+                    else{
+                        result += '['+ getContourPoint(Top) + ',' + getContourPoint(Left) + "],";
+                        result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
+                    }
+                    break;
+                case 10:
+                    // High Low
+                    // High Low
+                    result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Top) + "],";
+                    break;
+                case 11:
+                    // High Low
+                    // High High
+                    result += '['+ getContourPoint(Right) + ',' + getContourPoint(Top) + "],";
+                    break;
+                case 12:
+                    // High High
+                    // Low Low
+                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Right) + "],";
+                    break;
+                case 13:
+                    // High High
+                    // Low High
+                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Bottom) + "],";
+                    break;
+                case 14:
+                    // High High
+                    // High Low
+                    result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
+                    break;
+
+            }
+        }
+    }
+
+    // This allows stuff to be added in order of finish rather than needing to be in order
+    m.lock();
+    totalResult += result;
+    m.unlock();
+}
+
+
 class MapGraphInstance{
 private:
     vector<vector<Edge>> distanceAdjacencyList;
@@ -556,12 +765,18 @@ private:
         minY = stod(params[2]);
         maxY = stod(params[3]);
         gridDistance = stod(params[4]);
+
+        for (double y = minY; y <= maxY; y+=gridDistance){
+            getline(gridIn, line);
+            params = split(line, ',');
+            closestNodes.push_back(vector<int>(params.size()));
+            // https://stackoverflow.com/questions/20257582/convert-vectorstdstring-to-vectordouble
+            transform(params.begin(), params.end(), closestNodes.back().begin(), [](const string& val)
+            {
+                return stoi(val);
+            });
+        }
     }
-
-    string findSubisoline(double minX, double maxX, double minY, double maxY, const vector<double> &distances){
-
-    }
-
     LRUcache<int, pair<vector<double>, vector<int>>> dijkstraResultCache =
     LRUcache<int, pair<vector<double>, vector<int>>>([this](int x){return dijkstraResult(x, distanceAdjacencyList);});
 public:
@@ -638,12 +853,12 @@ public:
             int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){
                 aStarResultObject secondaryAstar = aStarResult(node2,
-                                                                node1,
-                                                                distanceAdjacencyList,
-                                                                timeAdjacencyList,
-                                                                [this](int node, int endNode){
-                    return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-                    });
+                                                               node1,
+                                                               distanceAdjacencyList,
+                                                               timeAdjacencyList,
+                                                               [this](int node, int endNode){
+                                                                   return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
+                                                               });
                 double distance = secondaryAstar.distance;
                 vector<int> route = secondaryAstar.path;
                 if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
@@ -702,7 +917,7 @@ public:
                                              return walkingTime(node, endNode);
                                          },
                                          false
-                                         );
+            );
             // Output of distance, time is flipped in a star if time is seen as metric to be optimised
             result += to_string(completedAstar.subsidiaryDistance) + "," + to_string(completedAstar.distance) + ",[";
         }
@@ -715,7 +930,7 @@ public:
                                              return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
                                          },
                                          false
-                                         );
+            );
             result += to_string(completedAstar.distance) + "," + to_string(completedAstar.subsidiaryDistance) + ",[";
         }
         for (int node : completedAstar.path){
@@ -789,8 +1004,42 @@ public:
         return nodeElevationString;
     }
 
-    string isoline(int startNode, double isovalue){
+    string isoline(int startNode, double isovalue, int threads=300){
         vector<double> distances = dijkstraResultCache.getData(startNode).first;
+        int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
+
+        vector<future<void>> calculatedFutures;
+
+        // Mutex allows threads to edit result from different threads!
+        mutex m;
+        string result = "[";
+        for (int i = 0; i < threads; i++){
+            // Note nice partitioning is not always possible - consider 11 items needing processing with 5 threads
+            // cref allows async to use reference properly
+            calculatedFutures.push_back(async(launch:: async,
+                                              findSubisoline,
+                                              gridDistance,
+                                              minX,
+                                              minY,
+                                              minX,
+                                              maxX,
+                                              minY+i*diff*gridDistance,
+                                              min(maxY, minY+(i+1)*(diff)*gridDistance-gridDistance),
+                                              isovalue,
+                                              cref(distances),
+                                              cref(closestNodes),
+                                              ref(result),
+                                              ref(m)));
+        }
+
+        for (int i = 0; i < threads; i++){
+            // Wait for all threads to finish
+            calculatedFutures[i].get();
+        }
+
+        result.pop_back();
+        result += ']';
+        return result;
     }
 };
 
@@ -867,8 +1116,8 @@ private:
     }
     pair<int, double> nearestNeighbourRecursive(Node node, BinaryTreeNode<Node> currentBTNode, bool isX=true) const{
         pair<int, double> best = make_pair(currentBTNode.value.index,
-                                                 (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
-                                                 (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
+                                           (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
+                                           (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
         pair<int, double> newPossibility;
         if ((isX?node.x:node.y) < (isX?currentBTNode.value.x:currentBTNode.value.y)){
             // smaller value - go to the left!
@@ -984,27 +1233,24 @@ void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
     fout <<  to_string(minX) << ',' << to_string(maxX) << ',' << to_string(minY) << ',' << to_string(maxY) << ',' << gridDistance << '\n';
 
     vector<future<string>> calculatedFutures;
-
+    int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
     for (int i = 0; i < threads; i++){
         // Note nice partitioning is not always possible - consider 11 items needing processing with 5 threads
-        int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
-//        py::print(minY+i*diff);
-//        py::print(min(maxY, minY+(i+1)*(diff)-1));
+        // cref allows async to use reference properly
         calculatedFutures.push_back(async(launch:: async,
                                           &nearestNeighboursSubresult,
                                           minX,
                                           maxX,
                                           minY+i*diff*gridDistance,
-                                          min(maxY, minY+(i+1)*(diff)*gridDistance-1),
+                                          min(maxY, minY+(i+1)*(diff)*gridDistance-gridDistance),
                                           gridDistance,
-                                          tree));
+                                          cref(tree)));
     }
 
     for (int i = 0; i < threads; i++){
         fout << calculatedFutures[i].get();
     }
 }
-
 
 PYBIND11_MODULE(graph_algorithms, m) {
      py::class_<MapGraphInstance>(m, "MapGraphInstance")
@@ -1027,12 +1273,16 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("overlap_tolerance")=0.05,
             py::arg("max_tries")=numeric_limits<int>::max())
         .def("a_star", &MapGraphInstance::a_star,
-             py::arg("start_node"),
-             py::arg("end_node"),
-             py::arg("use_time"));
+            py::arg("start_node"),
+            py::arg("end_node"),
+            py::arg("use_time"))
+         .def("isoline", &MapGraphInstance::isoline,
+            py::arg("start_node"),
+            py::arg("isovalue"),
+            py::arg("threads")=300);
      m.def("compute_2D_nearest_neighbours", &compute2DNearestNeighbours,
-           py::arg("nodes"),
-           py::arg("grid_filename")="map_data/grid2d.csv",
-           py::arg("grid_distance")=10,
-           py::arg("threads")=300);
+            py::arg("nodes"),
+            py::arg("grid_filename")="map_data/grid2d.csv",
+            py::arg("grid_distance")=10,
+            py::arg("threads")=300);
 }
