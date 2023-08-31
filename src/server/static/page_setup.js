@@ -5,7 +5,7 @@ let startNodeMarker;
 let endNodeMarker;
 let startNodeConnector;
 let endNodeConnector;
-let convexHullRegions = [];
+let convexHullRegions;
 let convexHullRegionsLatLons = [];
 let currentIndicatedConvexHull;
 let convexHullIndex = 0;
@@ -150,7 +150,6 @@ async function initialise() {
       await loadRouteUrl(currentURL.searchParams.get("route"));
    }
    applyRoute(0);
-   await generateIsochrone();
    setupConvexHullInputs();
    displayConvexHull();
 

@@ -203,9 +203,9 @@ def get_region():
     return serverMapGraphInstance.get_region_nodes()
 
 
-@app.get('/api/get/convex/<node_index>/<partition_distance>')
-def get_convex(node_index, partition_distance):
-    return serverMapGraphInstance.convex_hull_partition(int(node_index), float(partition_distance))
+@app.get('/api/get/isoline/<node_index>/<isovalue>')
+def get_convex(node_index, isovalue):
+    return serverMapGraphInstance.isoline(int(node_index), float(isovalue))
 
 
 @app.get('/api/get/cycle/<node_index>/<length>')

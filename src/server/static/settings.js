@@ -16,14 +16,12 @@ async function hideSettings() {
         // Must regenerate if changed partition distance and reindex
         settings.partitionDistance = parseInt(document.querySelector('input[name="partition-distance"]:checked').value);
         settings.isochroneOpacity = parseFloat(document.getElementById('region-opacity').value);
-        await generateIsochrone();
         setupConvexHullInputs();
         displayConvexHull();
     }
     else if (settings.isochroneOpacity !== parseFloat(document.getElementById('region-opacity').value)) {
         settings.isochroneOpacity = parseFloat(document.getElementById('region-opacity').value);
         // No need to reconsider reindexing region selection since same as before
-        generateIsochrone();
     }
     sessionStorage.setItem("settings", JSON.stringify(settings));
 }
