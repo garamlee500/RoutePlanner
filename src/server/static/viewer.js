@@ -108,15 +108,15 @@ async function initialise() {
 
    map.createPane('node-markers');
    map.getPane('node-markers').style.zIndex = 401;
-   map.createPane('isochrone-colouring');
-   map.getPane('isochrone-colouring').style.zIndex = 399;
+   map.createPane('region-colouring');
+   map.getPane('region-colouring').style.zIndex = 399;
 
    // Creates rectangle covering entire map, except for a hole around region
    L.polygon([
       [[90, -180], [90, 180], [-90, 180], [-90, -180]], outerRegionLatLngs], {
         color: 'grey',
         fillOpacity: 0.3,
-        pane: 'isochrone-colouring',
+        pane: 'region-colouring',
         interactive: false
    }).addTo(map);
 

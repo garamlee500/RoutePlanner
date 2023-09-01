@@ -5,10 +5,8 @@ let startNodeMarker;
 let endNodeMarker;
 let startNodeConnector;
 let endNodeConnector;
-let convexHullRegions;
-let convexHullRegionsLatLons = [];
-let currentIndicatedConvexHull;
-let convexHullIndex = 0;
+let currentIndicatedIsoline;
+let isolineIndex = 0;
 let walkSuggestionDistance = 5;
 let gpsAccuracy = null;
 let currentChart = null;
@@ -21,9 +19,6 @@ let routeTimes = [];
 let routeLine;
 let settings;
 let defaultSettings = {
-    partitionDistance: 100,
-    isochroneOpacity: 0.5,
-    isochroneDelay: 0,
     findShortestPathsByTime: false
 };
 
@@ -48,12 +43,11 @@ async function initialise() {
       settings = {...defaultSettings};
    }
 
-   document.getElementById("convex-hull-slider-checkbox").checked = false;
    document.getElementById("destination-show-checkbox").checked = true;
    document.getElementById("walk-generator-slider").value = 5;
    document.getElementById("walk-generator-slider-text").value = 5;
-   document.getElementById("convex-hull-slider").value = 0;
-   document.getElementById("convex-hull-slider-text").value = "0";
+   document.getElementById("isoline-slider").value = 0;
+   document.getElementById("isoline-slider-text").value = "0";
 
 
    document.getElementById('destination-show-checkbox').addEventListener(
@@ -67,10 +61,9 @@ async function initialise() {
                 routeLine.remove(map);
             }
         });
-   document.getElementById('convex-hull-slider-box').addEventListener("change", displayConvexHull);
-   document.getElementById('convex-hull-slider').addEventListener("input", (event) => {
-       convexHullIndex = event.target.value;
-       displayConvexHull();
+   document.getElementById('isoline-slider').addEventListener("input", (event) => {
+       isolineIndex = event.target.value;
+       adjustIsolineInputs();
    });
    document.getElementById('walk-generator-slider').addEventListener("input", (event) => {
        walkSuggestionDistance = event.target.value;
@@ -80,9 +73,9 @@ async function initialise() {
        walkSuggestionDistance = event.target.value;
        document.getElementById('walk-generator-slider').value = walkSuggestionDistance;
    });
-   document.getElementById('convex-hull-slider-text').addEventListener("input", (event) => {
-       convexHullIndex = event.target.value * 1000 / settings.partitionDistance;
-       displayConvexHull();
+   document.getElementById('isoline-slider-text').addEventListener("input", (event) => {
+       isolineIndex = event.target.value * 10;
+       adjustIsolineInputs();
    });
    document.getElementById('destination-search').addEventListener("keydown", async function(e) {
        if (e.code === "Enter") {
@@ -115,15 +108,15 @@ async function initialise() {
 
    map.createPane('node-markers');
    map.getPane('node-markers').style.zIndex = 401;
-   map.createPane('isochrone-colouring');
-   map.getPane('isochrone-colouring').style.zIndex = 399;
+   map.createPane('region-colouring');
+   map.getPane('region-colouring').style.zIndex = 399;
 
    // Creates rectangle covering entire map, except for a hole around region
    L.polygon([
       [[90, -180], [90, 180], [-90, 180], [-90, -180]], outerRegionLatLngs], {
         color: 'grey',
         fillOpacity: 0.3,
-        pane: 'isochrone-colouring',
+        pane: 'region-colouring',
         interactive: false
    }).addTo(map);
 
@@ -150,8 +143,7 @@ async function initialise() {
       await loadRouteUrl(currentURL.searchParams.get("route"));
    }
    applyRoute(0);
-   setupConvexHullInputs();
-   displayConvexHull();
+   displayIsoline();
 
    await setStartSearchAddress();
    await setDestinationSearchAddress();

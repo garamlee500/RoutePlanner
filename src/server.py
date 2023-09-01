@@ -204,7 +204,7 @@ def get_region():
 
 
 @app.get('/api/get/isoline/<node_index>/<isovalue>')
-def get_convex(node_index, isovalue):
+def get_isoline(node_index, isovalue):
     return serverMapGraphInstance.isoline(int(node_index), float(isovalue))
 
 

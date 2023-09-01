@@ -18,37 +18,14 @@
                 <img class="image-icon" src="static/back.png" alt="Go back">
             </button>
             <h1 style="grid-column: 2; grid-row: 2">Settings</h1>
-            <p style="grid-column: 3; grid-row: 3;">Animation delay for isochrones (ms)</p>
-            <input id="isochrone-delay" min="0" max="1000" type="number" style="grid-column: 4; grid-row: 3" />
-            <p style="grid-column: 3; grid-row: 4;">Opacity of map highlighting</p>
-            <input id="region-opacity" min="0" max="1" step="0.1" type="number" style="grid-column: 4; grid-row: 4" />
-            <p style="grid-column: 3; grid-row: 5 / span 2;">
-                Distance between calculated region indicators. Smaller distances have higher resolution but are slower to render.
-            </p>
-            <div style="grid-column: 4; grid-row: 5;">
-                <input type="radio" id="partition100" name="partition-distance" value="100"
-                       checked="checked">
-                <label for="partition100">100m</label>
-            </div>
-            <div style="grid-column: 4; grid-row: 6;">
-                <input type="radio" id="partition500" name="partition-distance" value="500"
-                       >
-                <label for="partition500">500m</label>
-            </div>
-            <div style="grid-column: 4; grid-row: 7;">
-                <input type="radio" id="partition1000" name="partition-distance" value="1000"
-                       >
-                <label for="partition1000">1km</label>
-            </div>
-            <p style="grid-column: 3; grid-row: 8;">Classify shortest paths by time (untick to sort by distance)</p>
-            <input type="checkbox" style="grid-column: 4; grid-row: 8;" id="find-shortest-paths-by-time-check-box"/>
+            <p style="grid-column: 3; grid-row: 4;">Classify shortest paths by time (untick to sort by distance)</p>
+            <input type="checkbox" style="grid-column: 4; grid-row: 4;" id="find-shortest-paths-by-time-check-box"/>
             <h1 style="grid-column: 2; grid-row: 9">Statistics</h1>
             <p id="stats-start-location" style="grid-column: 3 / span 2; grid-row: 10;"></p>
             <p id="stats-destination-location" style="grid-column: 3 / span 2; grid-row: 11;"></p>
             <p id="stats-gps-accuracy" style="grid-column: 3 / span 2; grid-row: 12;"></p>
             <button class="text-button" id="default-settings" style="grid-row: 14; grid-column: 3/span 2;"
-                    onclick="settings={...defaultSettings};displaySettings();
-                    setupConvexHullInputs();displayConvexHull();">
+                    onclick="settings={...defaultSettings};displaySettings();displayIsoline();">
                 Reset settings to default
             </button>
         </div>
@@ -93,14 +70,14 @@
                 <input id="start-search" placeholder="" class="search-box" value="" type="search" />
                 <input id="destination-search" placeholder="" class="search-box" value="" type="search" />
             </div>
-            <div id="convex-hull-slider-box">
+            <div id="isoline-slider-box">
                 <div class="image-icon-div" style="grid-column: 1; grid-row: 1">
                     <img class="image-icon" src="/static/convex_hull.jpg">
                 </div>
-                <input type="range" id="convex-hull-slider">
-                <input type="checkbox" id="convex-hull-slider-checkbox" style="grid-column: 5; grid-row: 1; height:133%" />
-                <input type="number" id="convex-hull-slider-text" min="0" />
-                <label id="convex-hull-slider-units">km</label>
+                <input type="range" id="isoline-slider" min="0" max="500" step="1">
+                <button class="text-button grey-button" onclick="displayIsoline();" style="grid-column: 5; grid-row: 1; height:133%"></button>
+                <input type="number" id="isoline-slider-text" min="0" max="50" step="0.1"/>
+                <label id="isoline-slider-units">km</label>
             </div>
             <button class="image-icon-div button" style="grid-row: 3" onclick="displaySettings();">
                 <img class="image-icon" src="/static/settings.png">
@@ -117,7 +94,7 @@
  <!--       Note in production environment would probably be all compiled into one minified .js file-->
  <!--       And served from a cdn instead of this server to reduce server load-->
         <script src="/static/functions.js"></script>
-        <script src="/static/convex_hull.js"></script>
+        <script src="/static/isoline.js"></script>
         <script src="/static/settings.js"></script>
         <script src="/static/page_setup.js"></script>
         <script src="/static/script.js"></script>

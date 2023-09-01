@@ -220,8 +220,7 @@ async function fixStart(updateSearchAddress=true) {
     if(updateSearchAddress) setStartSearchAddress();
     setUrl();
     await applyRoute(0);
-    setupConvexHullInputs();
-    displayConvexHull();
+    displayIsoline();
 }
 
 async function searchReverseGeocode(latLon) {

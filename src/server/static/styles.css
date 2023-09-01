@@ -55,20 +55,20 @@
     filter: blur(2px);
 }
 
-#convex-hull-slider-units{
+#isoline-slider-units{
     grid-column: 4 / span 1;
     grid-row: 2 / span 1;
     font: inherit;
 }
 
-#convex-hull-slider{
+#isoline-slider{
     width: 100%;
     position: relative;
     grid-column: 2/ span 3;
     grid-row: 1 / span 1;
 }
 
-#convex-hull-slider-box{
+#isoline-slider-box{
     position: relative;
     grid-column: 1 / span 1;
     grid-row: 2 / span 1;
@@ -98,7 +98,7 @@
 #destination-search{
     grid-row: 4 / span 1;
 }
-#convex-hull-slider-text{
+#isoline-slider-text{
     font-family: inherit;
     position: absolute;
     width: 100%;

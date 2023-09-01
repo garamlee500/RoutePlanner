@@ -528,6 +528,12 @@ void findSubisoline(double gridDistance,
                     string& totalResult,
                     mutex& m){
     string result= "";
+
+    if (minY != absoluteMinY){
+        // Allows the sampling of rows inbetween regions!
+        minY -= gridDistance;
+    }
+
     for (double y = minY + gridDistance/2; y <= maxY - gridDistance/2; y+=gridDistance){
         for (double x = minX + gridDistance/2; x <= maxX - gridDistance/2; x+=gridDistance){
             double topLeftValue =
@@ -955,45 +961,6 @@ public:
         return result;
     }
 
-
-    string convex_hull_partition(int startNode, double partitionDistance=2000){
-        vector<double> dijkstraDistance = dijkstraResultCache.getData(startNode).first;
-        vector<vector<Node>> partitionedNodes {vector<Node>{}};
-        unsigned int largestSetNum = 0;
-        for (unsigned int i = 0; i < dijkstraDistance.size(); i++){
-            unsigned int nodeSetIndex = floor(dijkstraDistance[i] / partitionDistance);
-            if (nodeSetIndex > largestSetNum){
-                for (unsigned int j = 0; j < nodeSetIndex - largestSetNum; j++){
-                    partitionedNodes.push_back(vector<Node>{});
-                }
-                largestSetNum = nodeSetIndex;
-            }
-            partitionedNodes[nodeSetIndex].push_back(mercatorNodeList[i]);
-        }
-
-        // vector merging - might be better to use linked lists if convex hulls get very large
-        vector<vector<Node>> convexHulls;
-        convexHulls.push_back(convexHull(partitionedNodes[0]));
-
-        for (unsigned int i = 1; i < partitionedNodes.size(); i++){
-            partitionedNodes[i].insert(partitionedNodes[i].end(), convexHulls[i-1].begin(), convexHulls[i-1].end());
-            convexHulls.push_back(convexHull(partitionedNodes[i]));
-        }
-        string result = "[";
-        for (const vector<Node>& partitionConvexHull : convexHulls){
-            result += '[';
-            result += to_string(partitionConvexHull[0].index);
-            for (unsigned int i = 1; i < partitionConvexHull.size(); i++){
-                result += ',';
-                result += to_string(partitionConvexHull[i].index);
-            }
-            result += "],";
-        }
-        // Remove extra comma at end
-        result.pop_back();
-        result += ']';
-        return result;
-    }
     string get_node_lat_lons(){
         return nodeLatLons;
     }
@@ -1123,7 +1090,7 @@ private:
             // smaller value - go to the left!
             if (currentBTNode.left){
                 // left node exists
-                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left.get(), !isX);
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left, !isX);
                 if (newPossibility.second < best.second){
                     best = newPossibility;
                 }
@@ -1137,7 +1104,7 @@ private:
                 smallestPossibleDistance = (currentBTNode.value.y-node.y)*(currentBTNode.value.y-node.y);
             }
             if (smallestPossibleDistance<best.second&&currentBTNode.right){
-                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right.get(), !isX);
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right, !isX);
                 if (newPossibility.second < best.second){
                     best = newPossibility;
                 }
@@ -1147,7 +1114,7 @@ private:
             //to the right!
             if (currentBTNode.right) {
                 // left node exists
-                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right.get(), !isX);
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.right, !isX);
                 if (newPossibility.second < best.second) {
                     best = newPossibility;
                 }
@@ -1160,7 +1127,7 @@ private:
                 smallestPossibleDistance = (currentBTNode.value.y - node.y) * (currentBTNode.value.y - node.y);
             }
             if (smallestPossibleDistance < best.second && currentBTNode.left) {
-                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left.get(), !isX);
+                newPossibility = nearestNeighbourRecursive(node, *currentBTNode.left, !isX);
                 if (newPossibility.second < best.second) {
                     best = newPossibility;
                 }
@@ -1260,9 +1227,6 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("elevation_list_filename") = "map_data/elevation.csv",
             py::arg("grid_filename") = "map_data/grid2d.csv"
         )
-        .def("convex_hull_partition", &MapGraphInstance::convex_hull_partition,
-            py::arg("start_node"),
-            py::arg("partition_distance")=2000)
         .def("get_region_nodes", &MapGraphInstance::get_region_nodes)
         .def("get_node_lat_lons", &MapGraphInstance::get_node_lat_lons)
         .def("get_node_elevations", &MapGraphInstance::get_node_elevations)
