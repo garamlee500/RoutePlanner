@@ -1,8 +1,8 @@
+import json
 import flask
 import flask_login
 from graph_algorithms import MapGraphInstance
 import database
-import json
 
 app = flask.Flask(__name__,
                   static_folder='server/static',
@@ -109,7 +109,6 @@ def get_main_page():
                                  authenticated_user=flask_login.current_user.is_authenticated)
 
 
-
 @app.get('/view/<route_id>')
 def view_route(route_id):
     route = database.get_route(route_id)
@@ -154,7 +153,6 @@ def make_route_public():
                               flask.request.json["route_id"],
                               flask.request.json["is_public"])
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
-
 
 
 @app.post('/api/post/delete/')

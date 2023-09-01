@@ -80,11 +80,11 @@ struct aStarResultObject{
                       vector<double> subsidiaryDistancesAlongPath):
             distance(distance),
             subsidiaryDistance(subsidiaryDistance),
-            path(path),
-            distancesAlongPath(distancesAlongPath),
-            subsidiaryDistancesAlongPath(subsidiaryDistancesAlongPath)
+            path(std::move(path)),
+            distancesAlongPath(std::move(distancesAlongPath)),
+            subsidiaryDistancesAlongPath(std::move(subsidiaryDistancesAlongPath))
     {}
-    aStarResultObject(){}
+    aStarResultObject()= default;
 };
 
 // A Generic LRU cache that takes integers as inputs, with automatic data generation when cache miss occurs
@@ -115,7 +115,7 @@ private:
     }
 public:
     // Cache initialises with function to run if cache miss occurs
-    LRUcache(function<T2(T1)> targetFunction, unsigned int maxSize = 100):
+    explicit LRUcache(function<T2(T1)> targetFunction, unsigned int maxSize = 100):
             targetFunction(targetFunction),
             maxSize(maxSize)
     {}
@@ -154,10 +154,10 @@ public:
     }
 
     IndexedPriorityQueue(function<bool(T, T)> itemComparator):
-            itemComparator(itemComparator){}
+            itemComparator(std::move(itemComparator)){}
     IndexedPriorityQueue(function<bool(T, T)> itemComparator, IndexTracker indexTracker):
-            itemComparator(itemComparator),
-            itemIndices(indexTracker){}
+            itemComparator(std::move(itemComparator)),
+            itemIndices(std::move(indexTracker)){}
 
     bool itemPresent(T item, bool itemExistenceCheck=true){
         // itemExistenceCheck should allow inlining by compiler such that bounds checking can be avoided if the
@@ -278,7 +278,7 @@ public:
     // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
     //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
     DijkstraHeap(int nodeCount, function<bool(int, int)> nodeComparator)
-            : priorityQueue(IndexedPriorityQueue<int, vector<int>>(nodeComparator, vector<int>(nodeCount)))
+            : priorityQueue(IndexedPriorityQueue<int, vector<int>>(std::move(nodeComparator), vector<int>(nodeCount)))
     {
         for (int i = 0; i < nodeCount; i++) {
             // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indices is not indexed out of bounds
@@ -504,7 +504,7 @@ aStarResultObject aStarResult(int startNode,
         reverse(distancesAlongPath.begin(), distancesAlongPath.end());
         reverse(subsidiaryDistancesAlongPath.begin(), subsidiaryDistancesAlongPath.end());
     }
-    return aStarResultObject(distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath);
+    return {distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath};
 }
 
 string interpolatedLatLon(double x1, double y1, double x2, double y2, double value1, double value2, double isovalue){
@@ -534,6 +534,7 @@ void findSubisoline(double gridDistance,
         minY -= gridDistance;
     }
 
+    // Floating point addition is fine as we are only dealing with integers/half integers
     for (double y = minY + gridDistance/2; y <= maxY - gridDistance/2; y+=gridDistance){
         for (double x = minX + gridDistance/2; x <= maxX - gridDistance/2; x+=gridDistance){
             double topLeftValue =
@@ -712,6 +713,19 @@ void findSubisoline(double gridDistance,
     m.unlock();
 }
 
+vector<int> reconstructDijkstraRoute(int endNode, vector<int>& prevNodes, bool reversedPath=true){
+    vector<int> result;
+    int currentNode = endNode;
+    while (prevNodes[currentNode] != -1){
+        result.push_back(currentNode);
+        currentNode = prevNodes[currentNode];
+    }
+    result.push_back(currentNode);
+    if (!reversedPath){
+        reverse(result.begin(), result.end());
+    }
+    return result;
+}
 
 class MapGraphInstance{
 private:
@@ -748,20 +762,8 @@ private:
         double speed = 6*(exp(-3.5*abs(slope + 0.05))) / 3.6;
         return distance/speed;
     }
-    vector<int> reconstructDijkstraRoute(int endNode, vector<int>& prevNodes, bool reversedPath=true){
-        vector<int> result;
-        int currentNode = endNode;
-        while (prevNodes[currentNode] != -1){
-            result.push_back(currentNode);
-            currentNode = prevNodes[currentNode];
-        }
-        result.push_back(currentNode);
-        if (!reversedPath){
-            reverse(result.begin(), result.end());
-        }
-        return result;
-    }
-    void getClosestNodes(string graphFilename){
+
+    void getClosestNodes(const string& graphFilename){
         ifstream gridIn(graphFilename);
         string line;
         getline(gridIn, line);
@@ -775,7 +777,7 @@ private:
         for (double y = minY; y <= maxY; y+=gridDistance){
             getline(gridIn, line);
             params = split(line, ',');
-            closestNodes.push_back(vector<int>(params.size()));
+            closestNodes.emplace_back(params.size());
             // https://stackoverflow.com/questions/20257582/convert-vectorstdstring-to-vectordouble
             transform(params.begin(), params.end(), closestNodes.back().begin(), [](const string& val)
             {
@@ -786,10 +788,10 @@ private:
     LRUcache<int, pair<vector<double>, vector<int>>> dijkstraResultCache =
     LRUcache<int, pair<vector<double>, vector<int>>>([this](int x){return dijkstraResult(x, distanceAdjacencyList);});
 public:
-    MapGraphInstance(string nodeFilename="map_data/nodes.csv",
-                     string adjacencyListFilename="map_data/edges.csv",
-                     string elevationListFilename="map_data/elevation.csv",
-                     string graphFilename="map_data/grid2d.csv"){
+    explicit MapGraphInstance(const string& nodeFilename="map_data/nodes.csv",
+                              const string& adjacencyListFilename="map_data/edges.csv",
+                              const string& elevationListFilename="map_data/elevation.csv",
+                              const string& graphFilename="map_data/grid2d.csv"){
         ifstream nodeIn(nodeFilename);
         ifstream edgeIn(adjacencyListFilename);
         ifstream elevationIn(elevationListFilename);
@@ -809,20 +811,20 @@ public:
 
             // Precalculate all mercator projection x,y values for all nodes
             pair<double, double> mercatorXY = mercator(stod(lineEntries[1]), stod(lineEntries[2]));
-            mercatorNodeList.push_back(Node(i, mercatorXY.first, mercatorXY.second));
+            mercatorNodeList.emplace_back(i, mercatorXY.first, mercatorXY.second);
         }
         nodeLatLons.pop_back();
         nodeLatLons += ']';
         for (int i = 0; i < nodeCount; i++){
-            distanceAdjacencyList.push_back(vector<Edge>());
-            timeAdjacencyList.push_back(vector<Edge>());
+            distanceAdjacencyList.emplace_back();
+            timeAdjacencyList.emplace_back();
         }
         for (int i = 0; i < nodeCount; i++){
             getline(edgeIn, line);
             vector<string> lineEntries = split(line, ',');
             for (unsigned int j = 0; 3 * j + 2 < lineEntries.size(); j++){
-                distanceAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+1])));
-                timeAdjacencyList[i].push_back(Edge(stoi(lineEntries[3*j]), stod(lineEntries[3*j+2])));
+                distanceAdjacencyList[i].emplace_back(stoi(lineEntries[3*j]), stod(lineEntries[3*j+1]));
+                timeAdjacencyList[i].emplace_back(stoi(lineEntries[3*j]), stod(lineEntries[3*j+2]));
             }
         }
         nodeElevationString = "[";
@@ -1028,7 +1030,7 @@ class TwoDtree{
 private:
     BinaryTreeNode<Node> root = BinaryTreeNode(Node(-1, -1, -1));
 
-    BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
+    static BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
         int medianIndex = quickSelect(nodes, left, right, isX);
         BinaryTreeNode subRoot(nodes[medianIndex]);
 
@@ -1041,7 +1043,7 @@ private:
 
         return subRoot;
     }
-    int lomutoPartition(vector<Node>& nodes, int left, int right, int pivotIndex, bool isX=true){
+    static int lomutoPartition(vector<Node>& nodes, int left, int right, int pivotIndex, bool isX=true){
         // Implementation of Lomuto partition scheme
         // https://en.wikipedia.org/wiki/Quickselect
         double pivotValue = (isX ? nodes[pivotIndex].x : nodes[pivotIndex].y);
@@ -1057,7 +1059,7 @@ private:
         swap(nodes[right], nodes[storeIndex]);
         return storeIndex;
     }
-    int quickSelect(vector<Node>& nodes, int left, int right, bool isX=true){
+    static int quickSelect(vector<Node>& nodes, int left, int right, bool isX=true){
         // https://en.wikipedia.org/wiki/Quickselect
 
         // Don't bother averaging two items to get median in even case
@@ -1081,7 +1083,7 @@ private:
         }
         return left;
     }
-    pair<int, double> nearestNeighbourRecursive(Node node, BinaryTreeNode<Node> currentBTNode, bool isX=true) const{
+    pair<int, double> nearestNeighbourRecursive(Node node, const BinaryTreeNode<Node>& currentBTNode, bool isX=true) const{
         pair<int, double> best = make_pair(currentBTNode.value.index,
                                            (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
                                            (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
@@ -1136,7 +1138,7 @@ private:
         return best;
     }
 public:
-    TwoDtree(vector<Node>& nodes){
+    explicit TwoDtree(vector<Node>& nodes){
         root = createSubTree(nodes, 0, nodes.size()-1);
     }
 
@@ -1170,7 +1172,7 @@ string nearestNeighboursSubresult(double minX,
 
 // Ids are 64 bits not 32 - learned the hard way!
 void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
-                                string gridFile = "map_data/grid2d.csv",
+                                const string& gridFilename = "map_data/grid2d.csv",
                                 double gridDistance=10,
                                 int threads=100){
     vector<Node> mercatorNodes;
@@ -1184,7 +1186,7 @@ void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
         minY = min(minY, mercatorXY.second);
         maxX = max(maxX, mercatorXY.first);
         maxY = max(maxY, mercatorXY.second);
-        mercatorNodes.push_back(Node(i, mercatorXY.first, mercatorXY.second));
+        mercatorNodes.emplace_back(i, mercatorXY.first, mercatorXY.second);
     }
 
 
@@ -1196,7 +1198,7 @@ void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
 
 
     TwoDtree tree = TwoDtree(mercatorNodes);
-    ofstream fout(gridFile);
+    ofstream fout(gridFilename);
     fout <<  to_string(minX) << ',' << to_string(maxX) << ',' << to_string(minY) << ',' << to_string(maxY) << ',' << gridDistance << '\n';
 
     vector<future<string>> calculatedFutures;
