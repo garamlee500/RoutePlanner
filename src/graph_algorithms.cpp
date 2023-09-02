@@ -1019,9 +1019,7 @@ struct BinaryTreeNode{
     shared_ptr<BinaryTreeNode<T>> right;
     BinaryTreeNode(T value):
             value(value)
-    {
-
-    }
+    {}
 };
 
 
@@ -1031,7 +1029,20 @@ private:
     BinaryTreeNode<Node> root = BinaryTreeNode(Node(-1, -1, -1));
 
     static BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
-        int medianIndex = quickSelect(nodes, left, right, isX);
+        int medianIndex = (left+right)/2;
+        if (isX){
+            nth_element(nodes.begin() + left,
+                        nodes.begin() + medianIndex,
+                        nodes.begin() + right + 1,
+                        [](const Node& a, const Node& b){return a.x < b.x;});
+        }
+        else{
+            nth_element(nodes.begin() + left,
+                        nodes.begin() + medianIndex,
+                        nodes.begin() + right + 1,
+                        [](const Node& a, const Node& b){return a.y < b.y;});
+        }
+
         BinaryTreeNode subRoot(nodes[medianIndex]);
 
         if (medianIndex>left){
@@ -1043,46 +1054,7 @@ private:
 
         return subRoot;
     }
-    static int lomutoPartition(vector<Node>& nodes, int left, int right, int pivotIndex, bool isX=true){
-        // Implementation of Lomuto partition scheme
-        // https://en.wikipedia.org/wiki/Quickselect
-        double pivotValue = (isX ? nodes[pivotIndex].x : nodes[pivotIndex].y);
-        swap(nodes[right], nodes[pivotIndex]);
-        int storeIndex = left;
 
-        for (int i = left; i < right; i++){
-            if ((isX ? nodes[i].x : nodes[i].y) < pivotValue){
-                swap(nodes[i], nodes[storeIndex]);
-                storeIndex++;
-            }
-        }
-        swap(nodes[right], nodes[storeIndex]);
-        return storeIndex;
-    }
-    static int quickSelect(vector<Node>& nodes, int left, int right, bool isX=true){
-        // https://en.wikipedia.org/wiki/Quickselect
-
-        // Don't bother averaging two items to get median in even case
-        // Doesn't make any sense for a k-d tree
-        int requiredIndex = (left+right)/2 - left;
-
-        while (left<right){
-            uniform_int_distribution<> distrib(left, right);
-            int pivotIndex = lomutoPartition(nodes, left, right, distrib(gen), isX);
-            if (pivotIndex-left > requiredIndex){
-                right = pivotIndex-1;
-            }
-            else if (pivotIndex-left < requiredIndex){
-                requiredIndex = requiredIndex - (pivotIndex-left+1);
-                left = pivotIndex+1;
-            }
-            if (pivotIndex-left==requiredIndex){
-                return pivotIndex;
-            }
-
-        }
-        return left;
-    }
     pair<int, double> nearestNeighbourRecursive(Node node, const BinaryTreeNode<Node>& currentBTNode, bool isX=true) const{
         pair<int, double> best = make_pair(currentBTNode.value.index,
                                            (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
