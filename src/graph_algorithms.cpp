@@ -1056,6 +1056,8 @@ private:
     }
 
     pair<int, double> nearestNeighbourRecursive(const Node& node, const BinaryTreeNode<Node>& currentBTNode, bool isX=true) const{
+        // Returns an integer and double pair - integer denotes index of closest node, double indicate distance of query node to this closest node
+        // The distance, while not required for the final output, is needed to compare to other nodes in k-d tree
         pair<int, double> best = make_pair(currentBTNode.value.index,
                                            (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
                                            (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
@@ -1114,7 +1116,7 @@ public:
         root = createSubTree(nodes, 0, nodes.size()-1);
     }
 
-    int nearestNeighbour(Node node) const{
+    int nearestNeighbour(const Node& node) const{
         return nearestNeighbourRecursive(node, root).first;
     }
 
