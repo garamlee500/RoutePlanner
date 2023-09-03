@@ -1055,7 +1055,7 @@ private:
         return subRoot;
     }
 
-    pair<int, double> nearestNeighbourRecursive(Node node, const BinaryTreeNode<Node>& currentBTNode, bool isX=true) const{
+    pair<int, double> nearestNeighbourRecursive(const Node& node, const BinaryTreeNode<Node>& currentBTNode, bool isX=true) const{
         pair<int, double> best = make_pair(currentBTNode.value.index,
                                            (node.x-currentBTNode.value.x)*(node.x-currentBTNode.value.x)+
                                            (node.y-currentBTNode.value.y)*(node.y-currentBTNode.value.y));
