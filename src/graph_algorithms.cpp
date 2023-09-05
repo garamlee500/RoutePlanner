@@ -301,7 +301,7 @@ public:
     }
 };
 
-vector<string> split(string &s, char delim){
+vector<string> split(const string& s, char delim){
     vector<string> result;
     string current = "";
     for (char c : s){
