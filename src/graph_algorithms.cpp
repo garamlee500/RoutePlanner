@@ -713,7 +713,7 @@ void findSubisoline(double gridDistance,
     m.unlock();
 }
 
-vector<int> reconstructDijkstraRoute(int endNode, vector<int>& prevNodes, bool reversedPath=true){
+vector<int> reconstructDijkstraRoute(int endNode, const vector<int>& prevNodes, bool reversedPath=true){
     vector<int> result;
     int currentNode = endNode;
     while (prevNodes[currentNode] != -1){
@@ -973,7 +973,7 @@ public:
         return nodeElevationString;
     }
 
-    string isoline(int startNode, double isovalue, int threads=300){
+    string isoline(int startNode, double isovalue, int threads=100){
         vector<double> distances = dijkstraResultCache.getData(startNode).first;
         int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
 
@@ -1148,7 +1148,7 @@ string nearestNeighboursSubresult(double minX,
 void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
                                 const string& gridFilename = "map_data/grid2d.csv",
                                 double gridDistance=10,
-                                int threads=100){
+                                int threads=300){
     vector<Node> mercatorNodes;
     double minX = numeric_limits<double>::max();
     double maxX = numeric_limits<double>::lowest();
@@ -1219,10 +1219,10 @@ PYBIND11_MODULE(graph_algorithms, m) {
          .def("isoline", &MapGraphInstance::isoline,
             py::arg("start_node"),
             py::arg("isovalue"),
-            py::arg("threads")=300);
+            py::arg("threads")=100);
      m.def("compute_2D_nearest_neighbours", &compute2DNearestNeighbours,
             py::arg("nodes"),
             py::arg("grid_filename")="map_data/grid2d.csv",
             py::arg("grid_distance")=10,
-            py::arg("threads")=100);
+            py::arg("threads")=300);
 }
