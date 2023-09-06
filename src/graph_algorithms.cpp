@@ -149,7 +149,6 @@ private:
     IndexTracker itemIndices;
 public:
     unsigned int size(){
-        // Get the size of the heap
         return heap.size();
     }
 
