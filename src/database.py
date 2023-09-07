@@ -67,7 +67,7 @@ def check_password(username, raw_password):
 
 
 def get_route(route_id):
-    res = cur.execute("SELECT timestamp, route, username, route_name, public FROM routes "
+    res = cur.execute("SELECT strftime('%d/%m/%Y %H:%M', timestamp), route, username, route_name, public FROM routes "
                       "WHERE id = ?", (route_id,))
     return res.fetchone()
 
@@ -125,7 +125,7 @@ def get_route_rating(route_id):
 
 
 def get_all_routes(username):
-    res = cur.execute("SELECT id, timestamp, route, username, route_name, public "
+    res = cur.execute("SELECT id, strftime('%d/%m/%Y %H:%M', timestamp), route, username, route_name, public "
                       "FROM routes "
                       "WHERE username=? "
                       "ORDER BY datetime(timestamp) DESC",
