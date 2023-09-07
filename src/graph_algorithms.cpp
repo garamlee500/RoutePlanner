@@ -120,14 +120,6 @@ public:
             maxSize(maxSize)
     {}
 
-    void storeData(T1 x, T2 data){
-        if (cachedData.count(x)){
-            cacheHit(x);
-        }
-        else{
-            storeDataWithoutCacheHitChecks(x, data);
-        }
-    }
     T2 getData(T1 x){
         if (cachedData.count(x)){
             cacheHit(x);
