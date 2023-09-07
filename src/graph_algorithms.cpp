@@ -1025,7 +1025,7 @@ struct BinaryTreeNode{
 class TwoDtree{
     // A k-d tree but solely for 2 dimensions
 private:
-    BinaryTreeNode<Node> root = BinaryTreeNode(Node(-1, -1, -1));
+    BinaryTreeNode<Node> root = BinaryTreeNode<Node>(Node(-1, -1, -1));
 
     static BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
         int medianIndex = (left+right)/2;
@@ -1042,7 +1042,7 @@ private:
                         [](const Node& a, const Node& b){return a.y < b.y;});
         }
 
-        BinaryTreeNode subRoot(nodes[medianIndex]);
+        BinaryTreeNode<Node> subRoot(nodes[medianIndex]);
 
         if (medianIndex>left){
             subRoot.left = make_shared<BinaryTreeNode<Node>>(createSubTree(nodes, left, medianIndex-1, !isX));
