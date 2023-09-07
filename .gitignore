@@ -1,6 +1,7 @@
 __pycache__/
 .idea/
 .vscode/
+.vs/
 *.swp
 /elevation_errors.png
 /src/map_data/grid2d.csv
