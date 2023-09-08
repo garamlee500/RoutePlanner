@@ -406,7 +406,7 @@ vector<Node> convexHull(vector<Node> nodes) {
     return convexHullStack;
 }
 
-pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Edge>>& adjacencyList){
+pair<vector<double>, vector<int>> dijkstraResult(int startNode, const vector<vector<Edge>>& adjacencyList){
     vector<double> distances(adjacencyList.size(), numeric_limits<int>::max());
     vector<int> previousNodes(adjacencyList.size(), -1);
 
@@ -431,8 +431,8 @@ pair<vector<double>, vector<int>> dijkstraResult(int startNode, vector<vector<Ed
 
 aStarResultObject aStarResult(int startNode,
                               int endNode,
-                              vector<vector<Edge>>& adjacencyList,
-                              vector<vector<Edge>>& subsidiaryAdjacencyList,
+                              const vector<vector<Edge>>& adjacencyList,
+                              const vector<vector<Edge>>& subsidiaryAdjacencyList,
                               function<double(int, int)> heuristicFunction,
                               bool reversedPath=true){
     unordered_map<int, double> distances;
