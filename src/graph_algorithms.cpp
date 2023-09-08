@@ -433,8 +433,8 @@ aStarResultObject aStarResult(int startNode,
                               int endNode,
                               const vector<vector<Edge>>& adjacencyList,
                               const vector<vector<Edge>>& subsidiaryAdjacencyList,
-                              function<double(int, int)> heuristicFunction,
-                              bool reversedPath=true){
+                              function<double(int, int)> heuristicFunction){
+
     unordered_map<int, double> distances;
     unordered_map<int, double> subsidiaryDistances;
     unordered_map<int, int> previousNodes;
@@ -490,11 +490,10 @@ aStarResultObject aStarResult(int startNode,
     path.push_back(startNode);
     distancesAlongPath.push_back(0);
     subsidiaryDistancesAlongPath.push_back(0);
-    if (!reversedPath){
-        reverse(path.begin(), path.end());
-        reverse(distancesAlongPath.begin(), distancesAlongPath.end());
-        reverse(subsidiaryDistancesAlongPath.begin(), subsidiaryDistancesAlongPath.end());
-    }
+
+    reverse(path.begin(), path.end());
+    reverse(distancesAlongPath.begin(), distancesAlongPath.end());
+    reverse(subsidiaryDistancesAlongPath.begin(), subsidiaryDistancesAlongPath.end());
     return {distances[endNode], subsidiaryDistances[endNode], path, distancesAlongPath, subsidiaryDistancesAlongPath};
 }
 
@@ -851,8 +850,8 @@ public:
             int node1 = possibleNodes[distrib(gen)];
             int node2 = possibleNodes[distrib(gen)];
             if (node1 != node2){
-                aStarResultObject secondaryAstar = aStarResult(node2,
-                                                               node1,
+                aStarResultObject secondaryAstar = aStarResult(node1,
+                                                               node2,
                                                                distanceAdjacencyList,
                                                                timeAdjacencyList,
                                                                [this](int node, int endNode){
@@ -914,9 +913,8 @@ public:
                                          distanceAdjacencyList,
                                          [this](int node, int endNode){
                                              return walkingTime(node, endNode);
-                                         },
-                                         false
-            );
+                                         }
+                                        );
             // Output of distance, time is flipped in a star if time is seen as metric to be optimised
             result += to_string(completedAstar.subsidiaryDistance) + "," + to_string(completedAstar.distance) + ",[";
         }
@@ -927,9 +925,8 @@ public:
                                          timeAdjacencyList,
                                          [this](int node, int endNode){
                                              return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-                                         },
-                                         false
-            );
+                                         }
+                                         );
             result += to_string(completedAstar.distance) + "," + to_string(completedAstar.subsidiaryDistance) + ",[";
         }
         for (int node : completedAstar.path){
