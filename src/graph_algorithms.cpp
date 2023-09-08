@@ -904,7 +904,7 @@ public:
         return "[0,0]";
     }
 
-    string a_star(int startNode, int endNode, bool useTime){
+    string aStar(int startNode, int endNode, bool useTime){
         aStarResultObject completedAstar;
         string result = "[";
         if (useTime) {
@@ -954,13 +954,13 @@ public:
         return result;
     }
 
-    string get_node_lat_lons(){
+    string getNodeLatLons(){
         return nodeLatLons;
     }
-    string get_region_nodes(){
+    string getRegionNodes(){
         return region_nodes;
     }
-    string get_node_elevations(){
+    string getNodeElevations(){
         return nodeElevationString;
     }
 
@@ -1194,16 +1194,16 @@ PYBIND11_MODULE(graph_algorithms, m) {
             py::arg("elevation_list_filename") = "map_data/elevation.csv",
             py::arg("grid_filename") = "map_data/grid2d.csv"
         )
-        .def("get_region_nodes", &MapGraphInstance::get_region_nodes)
-        .def("get_node_lat_lons", &MapGraphInstance::get_node_lat_lons)
-        .def("get_node_elevations", &MapGraphInstance::get_node_elevations)
+        .def("get_region_nodes", &MapGraphInstance::getRegionNodes)
+        .def("get_node_lat_lons", &MapGraphInstance::getNodeLatLons)
+        .def("get_node_elevations", &MapGraphInstance::getNodeElevations)
         .def("generate_cycle", &MapGraphInstance::generate_cycle,
             py::arg("start_node"),
             py::arg("target_length"),
             py::arg("distance_tolerance")=0.05,
             py::arg("overlap_tolerance")=0.05,
             py::arg("max_tries")=numeric_limits<int>::max())
-        .def("a_star", &MapGraphInstance::a_star,
+        .def("a_star", &MapGraphInstance::aStar,
             py::arg("start_node"),
             py::arg("end_node"),
             py::arg("use_time"))
