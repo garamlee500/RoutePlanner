@@ -471,8 +471,8 @@ aStarResultObject aStarResult(int startNode,
             else{
                 visitedNodes.insert(edge.endIndex);
                 distances[edge.endIndex] = edge.distance + distances[currentNode];
-                subsidiaryDistances[edge.endIndex] = subsidiaryEdge.distance + subsidiaryDistances[currentNode];
                 previousNodes[edge.endIndex] = currentNode;
+                subsidiaryDistances[edge.endIndex] = subsidiaryEdge.distance + subsidiaryDistances[currentNode];
                 nodeMinHeap.insertItem(edge.endIndex);
             }
         }
