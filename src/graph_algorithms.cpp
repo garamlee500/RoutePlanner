@@ -8,7 +8,6 @@
 #include <fstream>
 #include <cmath>
 #include <list>
-#include <utility>
 #include <limits>
 #include <algorithm>
 #include <unordered_map>
@@ -82,6 +81,8 @@ struct aStarResultObject{
             distancesAlongPath(std::move(distancesAlongPath)),
             subsidiaryDistancesAlongPath(std::move(subsidiaryDistancesAlongPath))
     {}
+
+    // C++ needs default constructs just to 'declare' variables
     aStarResultObject()= default;
 };
 
@@ -114,7 +115,7 @@ private:
 public:
     // Cache initialises with function to run if cache miss occurs
     explicit LRUcache(function<T2(T1)> targetFunction, unsigned int maxSize = 100):
-            targetFunction(targetFunction),
+            targetFunction(std::move(targetFunction)),
             maxSize(maxSize)
     {}
 
@@ -142,7 +143,7 @@ public:
         return heap.size();
     }
 
-    IndexedPriorityQueue(function<bool(T, T)> itemComparator):
+    explicit IndexedPriorityQueue(function<bool(T, T)> itemComparator):
             itemComparator(std::move(itemComparator)){}
     IndexedPriorityQueue(function<bool(T, T)> itemComparator, IndexTracker indexTracker):
             itemComparator(std::move(itemComparator)),
@@ -266,10 +267,10 @@ public:
     }
     // nodeComparator - a function taking in two integers (nodeA, nodeB) and returns True if the current shortest path
     //      to nodeA from startNode is less than the current shortest path to nodeB from startNode, or False otherwise
-    DijkstraHeap(int nodeCount, function<bool(int, int)> nodeComparator)
+    DijkstraHeap(unsigned int nodeCount, function<bool(int, int)> nodeComparator)
             : priorityQueue(IndexedPriorityQueue<int, vector<int>>(std::move(nodeComparator), vector<int>(nodeCount)))
     {
-        for (int i = 0; i < nodeCount; i++) {
+        for (unsigned int i = 0; i < nodeCount; i++) {
             // Insert nodes 0 to n - 1 to ensure vector<int> tracking node indices is not indexed out of bounds
             // Not particularly performance affecting since all nodes will need to be eventually added anyway
             priorityQueue.insertItem(i);
@@ -292,7 +293,7 @@ public:
 
 vector<string> split(const string& s, char delim){
     vector<string> result;
-    string current = "";
+    string current;
     for (char c : s){
         if (c==delim){
             result.push_back(current);
@@ -515,7 +516,7 @@ void findSubisoline(double gridDistance,
                     const vector<vector<int>>& closestNodes,
                     string& totalResult,
                     mutex& m){
-    string result= "";
+    string result;
 
     if (minY != absoluteMinY){
         // Allows the sampling of rows inbetween regions!
@@ -820,7 +821,7 @@ public:
         nodeElevationString += line;
         nodeElevationString += ']';
         vector<string> lineEntries = split(line, ',');
-        for (string s : lineEntries){
+        for (const string& s : lineEntries){
             nodeElevations.push_back(stod(s));
         }
         computeRegionNodes();
@@ -1003,7 +1004,7 @@ struct BinaryTreeNode{
     T value;
     shared_ptr<BinaryTreeNode<T>> left;
     shared_ptr<BinaryTreeNode<T>> right;
-    BinaryTreeNode(T value):
+    explicit BinaryTreeNode(T value):
             value(value)
     {}
 };
@@ -1014,8 +1015,8 @@ class TwoDtree{
 private:
     BinaryTreeNode<Node> root = BinaryTreeNode<Node>(Node(-1, -1, -1));
 
-    static BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, int left, int right, bool isX=true){
-        int medianIndex = (left+right)/2;
+    static BinaryTreeNode<Node> createSubTree(vector<Node>& nodes, unsigned int left, unsigned int right, bool isX=true){
+        unsigned int medianIndex = (left+right)/2;
         if (isX){
             nth_element(nodes.begin() + left,
                         nodes.begin() + medianIndex,
@@ -1120,8 +1121,8 @@ string nearestNeighboursSubresult(double minX,
     }
 
     string result;
-    for (int y = minY; y <= maxY; y+= gridDistance){
-        for (int x = minX; x <= maxX; x+=gridDistance){
+    for (double y = minY; y <= maxY; y+= gridDistance){
+        for (double x = minX; x <= maxX; x+=gridDistance){
             result += to_string(tree.nearestNeighbour(Node(-1, x, y))) + ',';
         }
         result.pop_back();
