@@ -1,7 +1,7 @@
-import matplotlib
-import requests
 import random
 import json
+import matplotlib
+import requests
 from matplotlib import pyplot as plt
 from src.load_data import load_node_list
 
@@ -51,7 +51,7 @@ for i in range(int(input())):
     all_errors.append(errors)
 
 plt.boxplot(all_errors, labels=datasets)
-plt.title(f"(Interpolated height - dataset height) for 100 random points")
+plt.title("(Interpolated height - dataset height) for 100 random points")
 plt.ylabel("Elevation difference (m)")
 plt.savefig("elevation_errors.png")
 plt.show()

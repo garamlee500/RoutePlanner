@@ -4,26 +4,27 @@ import json
 class Settings:
     # Allow some restricted access to settings dict
     # Partly implements interface to dictionary
+    # https://docs.python.org/3/reference/datamodel.html#emulating-container-types
     def __getitem__(self, index):
-        return self.settings_dict[index]
+        return self._settings_dict[index]
 
     def __setitem__(self, key, value):
         if key in self._default_settings:
-            self.settings_dict[key] = value
+            self._settings_dict[key] = value
         else:
             raise KeyError()
 
     def reload(self):
         try:
             with open(self._settings_file) as file:
-                self.settings_dict = json.load(file)
+                self._settings_dict = json.load(file)
         except FileNotFoundError:
-            self.settings_dict = {}
+            self._settings_dict = {}
 
         # Set any unset settings to default
         for setting in self._default_settings:
-            if setting not in self.settings_dict:
-                self.settings_dict[setting] = self._default_settings[setting]
+            if setting not in self._settings_dict:
+                self._settings_dict[setting] = self._default_settings[setting]
 
     def __init__(self, settings_file="server/settings.json"):
         self._settings_file = settings_file
@@ -40,8 +41,8 @@ class Settings:
         self.reload()
 
     def reset(self):
-        self.settings_dict = self._default_settings
+        self._settings_dict = self._default_settings
 
     def save(self):
         with open(self._settings_file, 'w') as file:
-            json.dump(self.settings_dict, file)
+            json.dump(self._settings_dict, file)

@@ -69,6 +69,6 @@ class Menu:
                 self._options[chosen_option - 1][1].run()
             else:
                 self._options[chosen_option - 1][1]()
-                
+
             if not self._loop:
                 break

@@ -1,5 +1,5 @@
-from waitress import serve
 import math
+from waitress import serve
 from get_data import download_edges_in_relation, download_edges_around_point, search_relation
 from settings import Settings
 from menu import Menu

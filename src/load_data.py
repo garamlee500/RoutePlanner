@@ -31,4 +31,3 @@ def load_node_list(filename="map_data/nodes.csv",
                     nodes.append((float(line[1]), float(line[2])))
 
     return nodes
-

@@ -14,17 +14,13 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 
-class User(flask_login.UserMixin):
-    pass
-
-
 # https://github.com/maxcountryman/flask-login
 @login_manager.user_loader
 def user_loader(username):
     if not database.user_exists(username):
         return
 
-    user = User()
+    user = flask_login.UserMixin()
     user.id = username
     return user
 
@@ -36,7 +32,7 @@ def request_loader(request):
     if not database.user_exists(username):
         return
 
-    user = User()
+    user = flask_login.UserMixin()
     user.id = username
     return user
 
@@ -83,7 +79,7 @@ def login():
 
     username = flask.request.form['username']
     if database.check_password(username, flask.request.form["password"]):
-        user = User()
+        user = flask_login.UserMixin()
         user.id = username
         flask_login.login_user(user)
         return flask.redirect('/')

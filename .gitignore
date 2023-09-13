@@ -5,3 +5,4 @@ __pycache__/
 *.swp
 /elevation_errors.png
 /src/map_data/grid2d.csv
+/pyproject.toml
