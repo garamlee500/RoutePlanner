@@ -11,6 +11,7 @@ current_settings = Settings()
 
 
 def redownload_all_data():
+    # Runs download_edges with current settings applied
     try:
         if current_settings["RELATION_REGION_MODE"]:
             download_edges_in_relation(current_settings["AREA_RELATION_ID"],
@@ -59,6 +60,7 @@ def set_area_by_searching():
         areas = search_relation(search_term,
                                 overpass_interpreter_url=current_settings["OVERPASS_INTERPRETER_URL"])
         set_area_menu = Menu(start_text=f"Found {len(areas)} results: ", loop=False)
+
         def create_set_area_function(region_index):
             def set_area_function():
                 current_settings["AREA_RELATION_ID"] = areas[region_index]['id']
@@ -81,6 +83,7 @@ def set_area_by_searching():
 
 
 def current_region_string():
+    # Creates a formatted string describing the region that is currently selected
     if current_settings["RELATION_REGION_MODE"]:
         return f"Current region: https://openstreetmap.org/relation/{current_settings['AREA_RELATION_ID']}"
 
@@ -88,7 +91,6 @@ def current_region_string():
            f"?mlat={current_settings['LAT_CENTRE']}" \
            f"&mlon={current_settings['LON_CENTRE']} " \
            f"with radius {current_settings['AREA_RADIUS']}m"
-
 
 
 def set_area_by_point_radius():
@@ -122,7 +124,6 @@ def set_area_by_point_radius():
 
     print("Settings saved!")
     print("Note: data will need to be re-downloaded")
-    # Save changes to settings
     current_settings.save()
 
 
@@ -130,7 +131,7 @@ main_menu: Menu = Menu(start_text="Welcome to server configuration")
 main_menu.add_option(("Redownload all data", redownload_all_data))
 main_menu.add_option(("Run server", run_server))
 
-area_setting_menu: Menu = Menu(start_text=lambda: "Map target area selection\n"+current_region_string())
+area_setting_menu: Menu = Menu(start_text=lambda: "Map target area selection\n" + current_region_string())
 area_setting_menu.add_option(("Set area by OpenStreetMap relation id", set_area_by_relation_id))
 area_setting_menu.add_option(("Set area by searching OpenStreetMap", set_area_by_searching))
 area_setting_menu.add_option(("Set area by point and radius", set_area_by_point_radius))
@@ -152,6 +153,7 @@ aster_gdem_api_menu: Menu = Menu(
                        f"Note the current ASTER GDEM server connected to is: {current_settings['ASTER_GDEM_API_URL']}",
     loop=False
 )
+
 
 def set_overpass_endpoint(url):
     current_settings['OVERPASS_INTERPRETER_URL'] = url
@@ -184,9 +186,11 @@ def set_custom_gdem_aster_endpoint():
     else:
         print("No URL chosen. Going back.")
 
+
 def reset_database_prompt():
     print("Are you sure you want to delete all user data?")
-    print("Type - 'Hello World!' exactly without the quotes and press enter to delete data, otherwise just press enter.")
+    print(
+        "Type - 'Hello World!' exactly without the quotes and press enter to delete data, otherwise just press enter.")
     if input() == "Hello World!":
         database.reset_database()
         print("Database reset!")
@@ -218,7 +222,7 @@ aster_gdem_api_menu.add_option(
 
 aster_gdem_api_menu.add_option(
     ("Github ASTER GDEM backup (England only) - https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND@main/",
-    lambda: set_gdem_aster_endpoint("https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND@main/"))
+     lambda: set_gdem_aster_endpoint("https://cdn.jsdelivr.net/gh/garamlee500/ASTER_GDEM_ENGLAND@main/"))
 )
 aster_gdem_api_menu.add_option(
     ("Custom URL",
@@ -229,7 +233,7 @@ main_menu.add_option(("Set overpass api instance",
                       overpass_api_endpoint_menu))
 
 main_menu.add_option(("Set ASTER GDEM api url",
-                     aster_gdem_api_menu))
+                      aster_gdem_api_menu))
 
 main_menu.add_option((
     "Reset database (use to delete test database)",

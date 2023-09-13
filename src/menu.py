@@ -1,19 +1,22 @@
-from typing import Union, Tuple, List, Callable, Literal
+from typing import Union, Tuple, List, Callable, Literal, Any
 import math
 
 
 class Menu:
-    # Options should have a name with either a submenu to call
-    # or a function to call that is completely void with no arguments
-    def __init__(self, options: List[Tuple[str, Union['Menu', Callable[[], None]]]] = None, start_text=None, loop=True):
+    # Options should be either of form (option description, Menu of submenu)
+    # or (option description, function)
+    # The function must require no inputs but can output anything
+    # (although the output is expected to be None since it is not captured)
+    def __init__(self, options: List[Tuple[str, Union['Menu', Callable[[], Any]]]] = None,
+                 start_text: Union[str, Callable[[], str]]=None, loop=True):
         if options is None:
             self._options = []
         else:
-            self._options: List[Tuple[str, Union['Menu', Callable[[], None]]]] = options
-        self._start_text = start_text
+            self._options: List[Tuple[str, Union['Menu', Callable[[], Any]]]] = options
+        self._start_text: Union[str, Callable[[], str]] = start_text
         self._loop = loop
 
-    def add_option(self, option: Tuple[str, Union['Menu', Callable[[], None]]]):
+    def add_option(self, option: Tuple[str, Union['Menu', Callable[[], Any]]]):
         self._options.append(option)
 
     @staticmethod
@@ -45,10 +48,9 @@ class Menu:
                 print("Invalid number entered. Please try again:")
         return current
 
-
     def run(self):
         while True:
-            if type(self._start_text) is str:
+            if isinstance(self._start_text, str):
                 print(self._start_text)
             elif callable(self._start_text):
                 print(self._start_text())
@@ -63,10 +65,10 @@ class Menu:
             if chosen_option == 0:
                 break
 
-            if type(self._options[chosen_option - 1][1]) is Menu:
+            if isinstance(self._options[chosen_option - 1][1], Menu):
                 self._options[chosen_option - 1][1].run()
             else:
                 self._options[chosen_option - 1][1]()
-
+                
             if not self._loop:
                 break
