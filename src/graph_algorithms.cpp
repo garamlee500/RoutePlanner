@@ -13,8 +13,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <random>
-#include <functional>
-#include <thread>
 #include <future>
 
 namespace py = pybind11;
