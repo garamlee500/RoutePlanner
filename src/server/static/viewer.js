@@ -116,7 +116,7 @@ async function loadRouteUrl(routeString){
 
     routeMarkers[0].setLatLng(route[0]);
     for (let i = route.length - 2; i > 0; i--){
-        await addStop(0, route[i]);
+        await setupStopData(0, route[i], false);
     }
     routeMarkers[routeMarkers.length-1].setLatLng(route[route.length-1]);
     connectToEndNode();
@@ -124,36 +124,6 @@ async function loadRouteUrl(routeString){
     for (let i = 0; i < route.length-1; i++){
         await applyRoute(i);
     }
-}
-
-
-async function addStop(routeLineIndex, stopPostion=null){
-    let chosenNode;
-    if (stopPostion===null) {
-        // Partitions the route line at routeLineIndex at around the middle
-        let chosenNodeIndexInRouteLine = Math.floor(routeNodeLatLons[routeLineIndex].length / 2);
-        chosenNode = closestNode(
-            {
-                lat: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][0],
-                lng: routeNodeLatLons[routeLineIndex][chosenNodeIndexInRouteLine][1],
-            });
-    }
-    else{
-        chosenNode = closestNode({lat: stopPostion[0], lng: stopPostion[1]});
-    }
-    let newNodeMarker =  L.marker(
-        nodeLatLons[chosenNode], {
-            interactive: false,
-            pane: "node-markers" // display marker above paths
-        }).addTo(map);
-    newNodeMarker._icon.classList.add("grey-marker");
-    routeNodes.splice(routeLineIndex+1, 0, chosenNode);
-    routeMarkers.splice(routeLineIndex+1, 0, newNodeMarker);
-    routeNodeLatLons.splice(routeLineIndex+1, 0, []);
-    routeChartData.splice(routeLineIndex+1, 0, []);
-    routeTimes.splice(routeLineIndex+1, 0, 0);
-    routeDistances.splice(routeLineIndex+1, 0, 0);
-
 }
 
 initialise();
