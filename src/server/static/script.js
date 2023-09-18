@@ -1,7 +1,5 @@
-async function saveRoute(){
-    document.getElementById('route-saver').textContent="Saving!";
-    document.getElementById('route-saver').disabled=true;
-    await fetch("/api/post/route", {
+async function saveRoutePostRequest(){
+    return await fetch("/api/post/route", {
             method: "POST",
             body: JSON.stringify({
                 route: routeToString(),
@@ -12,6 +10,12 @@ async function saveRoute(){
             }
         }
     );
+}
+
+async function saveRoute(){
+    document.getElementById('route-saver').textContent="Saving!";
+    document.getElementById('route-saver').disabled=true;
+    await saveRoutePostRequest();
     document.getElementById('route-saver').textContent="Saved!";
     setTimeout(function(){
             document.getElementById("route-saver").textContent = "Save route";
@@ -43,17 +47,7 @@ async function loadRouteUrl(routeString){
 async function saveShareRoute(){
     document.getElementById('route-link-copier').textContent="Saving!";
     document.getElementById('route-link-copier').disabled=true;
-    const response = await fetch("/api/post/route", {
-            method: "POST",
-            body: JSON.stringify({
-                route: routeToString(),
-                route_name: document.getElementById('route-name').value
-            }),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8"
-            }
-        }
-    );
+    const response = await saveRoutePostRequest();
     const route_id = (await response.json())["route_id"];
     await fetch("/api/post/public_route", {
                         method: "POST",
