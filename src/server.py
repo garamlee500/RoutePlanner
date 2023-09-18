@@ -111,35 +111,29 @@ def view_route(route_id):
     if route is None:
         return "Route not found", 404
     if route[4] == 1:
+        # Route is public
         if flask_login.current_user.is_authenticated:
-            return flask.render_template('viewer.html',
-                                         route=route,
-                                         route_id=route_id,
-                                         authenticated_user=flask_login.current_user.is_authenticated,
-                                         current_user_rating=
-                                         database.get_single_route_rating(route_id, flask_login.current_user.id),
-                                         current_rating=database.get_route_rating(route_id)
-                                         )
+            rating = database.get_single_route_rating(route_id, flask_login.current_user.id)
         else:
-            return flask.render_template('viewer.html',
-                                         route=route,
-                                         route_id=route_id,
-                                         authenticated_user=flask_login.current_user.is_authenticated,
-                                         current_user_rating=-1,
-                                         current_rating=database.get_route_rating(route_id)
-                                         )
-
-    if flask_login.current_user.is_authenticated:
+            rating = -1
+    elif flask_login.current_user.is_authenticated:
         if flask_login.current_user.id == route[2]:
-            return flask.render_template('viewer.html',
-                                         route=route,
-                                         route_id=route_id,
-                                         authenticated_user=flask_login.current_user.is_authenticated,
-                                         current_user_rating=-1,
-                                         current_rating=database.get_route_rating(route_id)
-                                         )
+            # Isn't public but the current user is the owner of the route
+            # Note nesting of ifs is necessary to prevent Attribute Error when finding user id for
+            # anonymous user
+            rating = database.get_single_route_rating(route_id, flask_login.current_user.id)
+        else:
+            return unauthorized_handler()
+    else:
+        return unauthorized_handler()
 
-    return unauthorized_handler()
+    return flask.render_template('viewer.html',
+                                 route=route,
+                                 route_id=route_id,
+                                 authenticated_user=flask_login.current_user.is_authenticated,
+                                 current_user_rating=rating,
+                                 current_rating=database.get_route_rating(route_id)
+                                 )
 
 
 @app.post('/api/post/public_route')
