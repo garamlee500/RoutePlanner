@@ -217,3 +217,45 @@ function routeToString(){
     routeString += ']';
     return routeString;
 }
+
+function setupPathData(a_star_data, routeLineIndex) {
+    let chartData = [];
+    let path = [];
+    let assembledPath = [];
+
+    for (let i = 0; i < a_star_data[2].length; i++) {
+        path.push(nodeLatLons[a_star_data[2][i]]);
+        chartData.push({ x: a_star_data[3][i], y: nodeElevations[a_star_data[2][i]] });
+    }
+
+    routeNodeLatLons[routeLineIndex] = path;
+    routeChartData[routeLineIndex] = chartData;
+    routeDistances[routeLineIndex] = a_star_data[0];
+    routeTimes[routeLineIndex] = a_star_data[1];
+
+    for (const routeNodeLatLonSegment of routeNodeLatLons) {
+        assembledPath = assembledPath.concat(routeNodeLatLonSegment);
+    }
+
+    let totalDistance = routeDistances.reduce((a, b) => a + b, 0);
+    let totalTime = routeTimes.reduce((a, b) => a + b, 0);
+    if (routeLine != null) {
+        routeLine.setLatLngs(assembledPath)
+            .setPopupContent(`Distance: ${Math.round(totalDistance) / 1000}km, ` +
+                `Time: ${secondsToString(totalTime)}` +
+                "<canvas id='elevation-graph'></canvas>");
+    }
+    else {
+        routeLine = L.polyline(assembledPath, {
+            fillOpacity: 1,
+        })
+            .bindPopup(`Distance: ${Math.round(totalDistance) / 1000}km, ` +
+                `Time: ${secondsToString(totalTime)}` +
+                "<canvas id='elevation-graph'></canvas>", {
+                autoPan: false
+            })
+            .on('click', showChart)
+            .addTo(map);
+    }
+
+}
