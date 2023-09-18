@@ -287,3 +287,51 @@ function setupStopData(routeLineIndex, stopPostion = null, interactive = true) {
     routeTimes.splice(routeLineIndex + 1, 0, 0);
     routeDistances.splice(routeLineIndex + 1, 0, 0);
 }
+
+async function setupMap(interactive=true) {
+    // Hide zoom control to allow for full control of ui
+    map = L.map('map', { zoomControl: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    let outerRegionIds = await (await fetch("/api/get/region")).json();
+    nodeLatLons = await (await fetch("/api/get/nodes")).json()
+    nodeElevations = await (await fetch("/api/get/elevations")).json();
+
+
+    let outerRegionLatLngs = outerRegionIds.map((index) => nodeLatLons[index]);
+
+    map.createPane('node-markers');
+    map.getPane('node-markers').style.zIndex = 401;
+    map.createPane('region-colouring');
+    map.getPane('region-colouring').style.zIndex = 399;
+
+    // Creates rectangle covering entire map, except for a hole around region
+    L.polygon([
+        [[90, -180], [90, 180], [-90, 180], [-90, -180]], outerRegionLatLngs], {
+        color: 'grey',
+        fillOpacity: 0.3,
+        pane: 'region-colouring',
+        interactive: false
+    }).addTo(map);
+
+    let regionPolygon = L.polygon(outerRegionLatLngs);
+    map = map.fitBounds(regionPolygon.getBounds());
+    routeMarkers.push(L.marker(regionPolygon.getBounds().getCenter(), {
+        interactive: interactive,
+        draggable: interactive,
+        autoPan: true,
+        title: "Start"
+    }).addTo(map));
+    routeMarkers.push(L.marker(nodeLatLons[0], {
+        interactive: interactive,
+        draggable: interactive,
+        autoPan: true,
+        title: "Destination"
+    }).addTo(map));
+    routeMarkers[1]._icon.classList.add("red-marker");
+    routeNodes.push(closestNode(routeMarkers[0].getLatLng()));
+    routeNodes[1] = 0;
+}

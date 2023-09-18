@@ -993,7 +993,9 @@ public:
             calculatedFutures[i].get();
         }
 
-        result.pop_back();
+        if (result.size() > 1) {
+            result.pop_back();
+        }
         result += ']';
         return result;
     }

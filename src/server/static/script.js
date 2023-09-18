@@ -19,7 +19,6 @@ async function saveRoute(){
     }, 500);
 }
 
-
 async function loadRouteUrl(routeString){
     if (routeString === null || routeString === ''){
         return;
@@ -74,8 +73,6 @@ async function saveShareRoute(){
             document.getElementById("route-link-copier").disabled = false;
     }, 500);
 }
-
-
 
 function rebindStopEventListeners(stopIndex){
     routeMarkers[stopIndex].off();
