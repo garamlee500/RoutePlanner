@@ -828,7 +828,7 @@ public:
         getClosestNodes(graphFilename);
     }
 
-    string generate_cycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
+    string generateCycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
         // Dijkstra should hopefully have been recently executed for start node
         // Note dijkstra is not that computationally expensive - the main problem is delivering the results
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
@@ -1195,7 +1195,7 @@ PYBIND11_MODULE(graph_algorithms, m) {
         .def("get_region_nodes", &MapGraphInstance::getRegionNodes)
         .def("get_node_lat_lons", &MapGraphInstance::getNodeLatLons)
         .def("get_node_elevations", &MapGraphInstance::getNodeElevations)
-        .def("generate_cycle", &MapGraphInstance::generate_cycle,
+        .def("generate_cycle", &MapGraphInstance::generateCycle,
             py::arg("start_node"),
             py::arg("target_length"),
             py::arg("distance_tolerance")=0.05,
