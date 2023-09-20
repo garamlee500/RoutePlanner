@@ -1,6 +1,5 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
 #include <string>
 #include <memory>
 #include <unordered_set>
@@ -16,27 +15,14 @@
 
 namespace py = pybind11;
 using namespace std;
-// magic command
-// c++ -O3 -Wall -shared -fPIC $(python3 -m pybind11 --includes) graph_algorithms.cpp -o graph_algorithms$(python3-config --extension-suffix)
-// c++ -O3 -Wall -shared -fPIC $(/home/garam/OneDrive/Documents/Garam/Coding/Python/RoutePlanner/venv/bin/python3 -m pybind11 --includes) graph_algorithms.cpp -o graph_algorithms$(/home/garam/OneDrive/Documents/Garam/Coding/Python/RoutePlanner/venv/bin/python3 -c "import distutils.sysconfig;print(distutils.sysconfig.get_config_var('EXT_SUFFIX'));")
-// "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64\cl.exe" /O2 /fp:fast /LD /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared" /I "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\include" /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" /I "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\include" /I "C:\Users\garam\AppData\Roaming\Python\Python39\site-packages\pybind11\include" C:\Users\garam\Downloads\SouthamptonMap\cpp_files\graph_algorithms.cpp "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\libs\python39.lib" /link  /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\lib\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64" /OUT:"graph_algorithms.pyd"
-
-// Powershell script given to me by God - correctly identifies suffix to!
-// & "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\bin\Hostx64\x64\cl.exe" /O2 /fp:fast /LD /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared" /I "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\include" /I "C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" /I "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\include" /I "C:\Users\garam\AppData\Roaming\Python\Python39\site-packages\pybind11\include" graph_algorithms.cpp "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\libs\python39.lib" /link  /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.33.31629\lib\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64" /OUT:"graph_algorithms"$(& "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\python" -c "import distutils.sysconfig;print(distutils.sysconfig.get_config_var('EXT_SUFFIX'))")
-
-
-// For college computers - cleans after itself!
-// H:\Documents\Apps\cl\cl.exe /O2 /fp:fast /LD /I  H:\Documents\Apps\cl\shared-include /I  H:\Documents\Apps\cl\ucrt-include /I  H:\Documents\Apps\cl\python-include /I  H:\Documents\Apps\cl\pybind-include /I  H:\Documents\Apps\cl\msvc-include graph_algorithms.cpp H:\Documents\Apps\cl\python39.lib /link /LIBPATH:"H:\Documents\Apps\cl\libs" /OUT:"graph_algorithms"$(& " H:\Documents\Apps\python39\python.exe" -c "import distutils.sysconfig;print(distutils.sysconfig.get_config_var('EXT_SUFFIX'))"); Remove-Item graph_algorithms.exp; Remove-Item graph_algorithms.lib; Remove-Item graph_algorithms.obj;
-
 
 // use constexpr to define constants
 constexpr int EARTH_RADIUS = 6378137;
 constexpr double PI = 3.14159265358979323846;
 
 // https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
-// "A Mersenne Twister pseudo-random generator of 32-bit numbers with a state size of 19937 bits"
-random_device rd;  // a seed source for the random number engine
-mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
+random_device rd;
+mt19937 gen(rd());
 
 struct Edge{
     int endIndex;
@@ -55,7 +41,6 @@ struct Node {
             y(y)
     {}
 };
-
 
 enum Direction{
     Top,
@@ -81,8 +66,6 @@ struct aStarResultObject{
             distancesAlongPath(std::move(distancesAlongPath)),
             subsidiaryDistancesAlongPath(std::move(subsidiaryDistancesAlongPath))
     {}
-
-    // C++ needs default constructs just to 'declare' variables
     aStarResultObject()= default;
 };
 
@@ -356,11 +339,6 @@ vector<Node> convexHull(vector<Node> nodes) {
     // Swap most bottom left element to front of list
     swap(nodes[mostBottomLeftIndex], nodes[0]);
 
-    // Create lambda to sort nodes
-    // Must be a lambda - c++ does not support functions inside
-    // functions, but if function defined outside,
-    // can't capture mostBottomLeft to get relative polar angle
-    // Partial function application is possible but this uses lambdas anyway
     function<bool(Node&, Node&)> convexHullPolarSort
             = [&mostBottomLeft](Node& nodeA, Node& nodeB) {
                 // Custom comparator used to sort nodes for Graham's scan
@@ -602,29 +580,41 @@ void findSubisoline(double gridDistance,
                 case 1:
                     // Low Low
                     // Low High
-                    // Linear interpolation used to determine where along lines isoline appears
-
-                    // For bottom edge
+                case 14:
+                    // High High
+                    // High Low
                     result += '[' + getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
                     break;
                 case 2:
                     // Low Low
                     // High Low
+                case 13:
+                    // High High
+                    // Low High
                     result += '[' + getContourPoint(Bottom) + ',' + getContourPoint(Left) + "],";
                     break;
                 case 3:
                     // Low Low
                     // High High
+                case 12:
+                    // High High
+                    // Low Low
                     result += '[' + getContourPoint(Left) + ',' + getContourPoint(Right) + "],";
                     break;
                 case 4:
                     // Low High
                     // Low Low
+                case 11:
+                    // High Low
+                    // High High
                     result += '[' + getContourPoint(Top) + ',' + getContourPoint(Right) + "],";
                     break;
                 case 5:
                     // Low High
                     // Low High
+                case 10:
+                    // High Low
+                    // High Low
                     result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Top) + "],";
                     break;
                 case 6:
@@ -645,8 +635,6 @@ void findSubisoline(double gridDistance,
                 case 7:
                     // Low High
                     // High High
-                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Top) + "],";
-                    break;
                 case 8:
                     // High Low
                     // Low Low
@@ -665,33 +653,7 @@ void findSubisoline(double gridDistance,
                         result += '['+ getContourPoint(Top) + ',' + getContourPoint(Left) + "],";
                         result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
                     }
-                    break;
-                case 10:
-                    // High Low
-                    // High Low
-                    result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Top) + "],";
-                    break;
-                case 11:
-                    // High Low
-                    // High High
-                    result += '['+ getContourPoint(Right) + ',' + getContourPoint(Top) + "],";
-                    break;
-                case 12:
-                    // High High
-                    // Low Low
-                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Right) + "],";
-                    break;
-                case 13:
-                    // High High
-                    // Low High
-                    result += '['+ getContourPoint(Left) + ',' + getContourPoint(Bottom) + "],";
-                    break;
-                case 14:
-                    // High High
-                    // High Low
-                    result += '['+ getContourPoint(Bottom) + ',' + getContourPoint(Right) + "],";
-                    break;
-
+                    break;                   
             }
         }
     }
