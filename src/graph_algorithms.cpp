@@ -791,6 +791,7 @@ public:
     }
 
     string generateCycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
+        if (startNode < 0 || startNode >= nodeCount) return "[0,0]";
         // Dijkstra should hopefully have been recently executed for start node
         // Note dijkstra is not that computationally expensive - the main problem is delivering the results
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
@@ -865,6 +866,9 @@ public:
     }
 
     string aStar(int startNode, int endNode, bool useTime){
+        if (startNode < 0 || startNode >= nodeCount) return "[0,0,[],[]]";
+        if (endNode < 0 || endNode >= nodeCount) return "[0,0,[],[]]";
+
         aStarResultObject completedAstar;
         string result = "[";
         if (useTime) {
@@ -923,6 +927,8 @@ public:
     }
 
     string isoline(int startNode, double isovalue, int threads=100){
+        if (startNode < 0 || startNode >= nodeCount) return "[]";
+
         vector<double> distances = dijkstraResultCache.getData(startNode).first;
         int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
 
