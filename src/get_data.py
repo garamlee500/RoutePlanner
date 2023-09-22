@@ -1,5 +1,6 @@
 import json
 from typing import Callable, List, Tuple, Set, Dict
+from pathlib import Path
 import requests
 from distance_formulas import haversine_node_distance, walking_time
 import exceptions
@@ -201,6 +202,9 @@ def _download_edges(edge_query: str,
                                                               aster_gdem_api_endpoint=aster_gdem_api_endpoint)
     if verbose:
         print("Found elevations of nodes")
+
+    # Make map_data folder if it doesn't exist
+    Path("map_data").mkdir(exist_ok=True)
 
     with open(node_filename, 'w') as file:
         # Write node count at top of file
