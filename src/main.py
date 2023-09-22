@@ -32,7 +32,12 @@ def redownload_all_data():
 
 
 def run_server():
-    server.reload_map_graph()
+    try:
+        server.reload_map_graph()
+    except ValueError:
+        print("Invalid map data!")
+        print("Have you tried 'Redownload all data'?")
+        return
     print("Running server!")
     print("Press CTRL-C to stop server")
     serve(server.app)
