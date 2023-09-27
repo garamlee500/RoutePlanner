@@ -38,6 +38,10 @@ def run_server():
         print("Invalid map data!")
         print("Have you tried 'Redownload all data'?")
         return
+    except:
+        print("Warning - unknown error occured while loading map data!")
+        print("Have you tried 'Redownload all data'?")
+        return
     print("Running server!")
     print("Press CTRL-C to stop server")
     serve(server.app)
