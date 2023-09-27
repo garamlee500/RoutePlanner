@@ -328,6 +328,11 @@ vector<Node> convexHull(vector<Node> nodes) {
     if (nodes.size() <= 3){
         return nodes;
     }
+    // Note we can't just use closest node to bottom left
+    // such as in this scenario:
+    // - - - 
+    // x - - 
+    // - - x
     Node mostBottomLeft = nodes[0];
     unsigned int mostBottomLeftIndex = 0;
     for (unsigned int i = 1; i < nodes.size(); i++) {
