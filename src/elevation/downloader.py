@@ -74,6 +74,7 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
                             data.close()
         except:
             print("Unable to get all elevation tiles")
+            print("Please ensure the current set ASTER GDEM api url is correct, and that you are connnected to the internet")
             tile_data.append([])
 
     elevations = []
