@@ -5,7 +5,6 @@
 #account-button:hover{
     background-color: lightblue;
 }
-
 #login-button{
     background-color: green;
     color: white;
@@ -48,7 +47,6 @@
     grid-template-rows: 10% 40% 40% 10%;
     grid-template-columns: 5% 15% 15% 15% 15% 15% 15% 5%;
 }
-
 #bottom-bar > button{
     font-size: 1vw;
 }
@@ -58,11 +56,9 @@
     border-radius: 4px;
     font: inherit;
 }
-
 .text-button:hover{
     background-color: lightgrey;
 }
-
 .button:hover{
     background-color: lightgray;
 }
