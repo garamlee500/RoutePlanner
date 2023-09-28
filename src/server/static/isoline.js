@@ -9,7 +9,6 @@ async function displayIsoline() {
     }
 
     const isolineResponse = await fetch(`/api/get/isoline/${routeNodes[0]}/${isolineIndex*100}`);
-
     if (currentIndicatedIsoline!=null){
         currentIndicatedIsoline.remove(map);
     }
@@ -21,6 +20,4 @@ async function displayIsoline() {
             interactive: false
         }
     ).addTo(map);
-
-
 }
