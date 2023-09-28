@@ -362,10 +362,8 @@ vector<Node> convexHull(vector<Node> nodes) {
                     // mostBottomLeft, nodeA, nodeB are collinear
                     // break ties by increasing distance
                     // Could use manhattan distance due to co-linearity
-                    return pow(nodeA.x - mostBottomLeft.x, 2) +
-                           pow(nodeA.y - mostBottomLeft.y, 2) <
-                           pow(nodeB.x - mostBottomLeft.x, 2) +
-                           pow(nodeB.y - mostBottomLeft.y, 2);
+                    return abs(nodeA.x - mostBottomLeft.x) + abs(nodeA.y - mostBottomLeft.y) <
+                           abs(nodeB.x - mostBottomLeft.x) + abs(nodeB.y - mostBottomLeft.y);
                 }
             };
 
