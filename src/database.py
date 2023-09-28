@@ -3,7 +3,6 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Flask requests are dealt sequentially so no danger here
-# Change to allow different databases?
 con = sqlite3.connect("server/data.db", check_same_thread=False)
 cur = con.cursor()
 
@@ -99,7 +98,6 @@ def set_route_public(username, route_id, is_public=True):
 
 def rate_route(username, route_id, rating):
     # https://www.sqlite.org/lang_replace.html
-    # Note how replace into replaces preexisting item in sqlite if it already exists
     cur.execute("REPLACE INTO route_ratings VALUES"
                 "(?,?,?)",
                 (username, route_id, rating))
@@ -115,6 +113,7 @@ def get_single_route_rating(route_id, username):
         return -1
 
     return rating[0]
+
 
 def get_route_rating(route_id):
     res = cur.execute("SELECT ROUND(AVG(rating),2), COUNT(rating) "
@@ -135,7 +134,7 @@ def get_all_routes(username):
 
 def get_random_routes(limit=10):
     # https://stackoverflow.com/a/24591696/13573736
-    # Notes orders randomly too not just picks
+    # Notes orders randomly too not just picks in the order it is in database
     res = cur.execute("SELECT id, route, route_name, username, ROUND(AVG(route_ratings.rating),2), COUNT(route_ratings.rating) "
                       "FROM routes, route_ratings "
                       "WHERE routes.id=route_ratings.route_id "
@@ -165,6 +164,7 @@ def get_popular_routes(limit=10, dummy_rating=3, dummy_rating_count=10):
         "LIMIT ? ",
         (dummy_rating, dummy_rating_count, dummy_rating_count, limit))
     return res.fetchall()
+
 
 def delete_route(route_id, username):
     if get_route(route_id)[2] != username:
