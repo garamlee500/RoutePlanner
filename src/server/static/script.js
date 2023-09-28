@@ -210,12 +210,9 @@ async function searchGeocode(query) {
     return null;
 }
 
-
 async function dijkstraDetails(node) {
     return await (await fetch(`/api/get/dijkstra/${node}`)).json();
 }
-
-
 
 async function applyRoute(routeLineIndex) {
     // Connects node at routeLineIndex to node at routeLineIndex + 1
@@ -240,4 +237,3 @@ async function applyRoute(routeLineIndex) {
     connectToStartNode();
     connectToEndNode();
 }
-
