@@ -34,7 +34,7 @@ def create_tables():
     cur.execute("CREATE TABLE IF NOT EXISTS route_ratings"
                 "(rating_user TEXT,"
                 "route_id INTEGER,"
-                "rating INTEGER CHECK(rating >= 0 AND rating <= 5),"
+                "rating INTEGER CHECK(rating >= 0 AND rating <= 5 AND typeof(rating)=='integer'),"
                 "PRIMARY KEY (rating_user, route_id),"
                 "FOREIGN KEY(rating_user) REFERENCES accounts(username),"
                 "FOREIGN KEY(route_id) REFERENCES routes(id) ON DELETE CASCADE)")
