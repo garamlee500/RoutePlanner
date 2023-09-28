@@ -308,7 +308,7 @@ double cross(double x1, double y1, double x2, double y2){
 }
 
 bool leftTurn(double x1, double y1, double x2, double y2) {
-    // Does(x1, y1, 0) x(x2, y2, 0) and checks magnitude
+    // Does(x1, y1, 0) x(x2, y2, 0) and checks magnitude of z coordinate
     // Equivalent to checking determinant and seeing whether such a transformation would flip orientation or not
     // No flip orientation->anti-clockwise turn from x1, y1->x2, y2
     return cross(x1, y1, x2, y2) >= 0;
