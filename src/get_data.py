@@ -6,6 +6,7 @@ from distance_formulas import haversine_node_distance, walking_time
 import elevation.downloader
 import graph_algorithms
 
+
 def bfs_connected_nodes(start_node: int,
                         adjacency_list: List[List[Tuple[int, float]]]) -> List[bool]:
     connected_nodes = [False for _ in adjacency_list]
@@ -39,7 +40,7 @@ def search_relation(search_term, overpass_interpreter_url):
     """
     query = f"[out:json];" \
             f"relation[name~'{search_term}',i][type='boundary'];" \
-            f"out;"
+            f"out tags;"
 
     response = requests.get(overpass_interpreter_url, params={'data': query})
     if response.status_code != 200:
@@ -61,7 +62,7 @@ def _process_ways(data: Dict,
                   adjacency_list: List[List[Tuple[int, float]]],
                   dead_nodes: Set[int],
                   node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance
-):
+                  ):
     """
     Goes through each way in the data dict and adds it to the adjacency list, subject to checks
     """
@@ -90,7 +91,6 @@ def _download_edges(edge_query: str,
                     elevation_list_filename="map_data/elevation.csv",
                     grid_filename="map_data/grid2d.csv",
                     verbose=True):
-
     response = requests.get(overpass_interpreter_url, params={'data': edge_query})
     if response.status_code != 200:
         raise ConnectionError("Unable to succesfully connect to Overpass Api")
@@ -216,7 +216,7 @@ def _download_edges(edge_query: str,
             # Write node_index, edge_distance, walking time for each edge
             file.write(','.join([str(edge[0])
                                  + ',' + str(edge[1]) + ',' +
-                                 str(walking_time(edge[1], elevations[edge[0]]-elevations[node]))
+                                 str(walking_time(edge[1], elevations[edge[0]] - elevations[node]))
                                  for edge in row]))
             file.write('\n')
 
