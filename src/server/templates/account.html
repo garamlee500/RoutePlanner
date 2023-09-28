@@ -54,10 +54,12 @@
         Hello {{ username }}! Found {{ saved_routes|length }} saved routes in account:
         <br>
         <table>
-            <th>Route</th>
-            <th>Creation Date</th>
-            <th>Public?</th>
-            <th>Delete?</th>
+            <tr>
+                <th>Route</th>
+                <th>Creation Date</th>
+                <th>Public?</th>
+                <th>Delete?</th>
+            </tr>
             {% for route in saved_routes %}
                 <tr>
                     <td>
@@ -92,9 +94,11 @@
         <br>
         Try some popular routes in your region:
         <table>
-            <th>Route</th>
-            <th>Route creator</th>
-            <th>Average route rating</th>
+            <tr>
+                <th>Route</th>
+                <th>Route creator</th>
+                <th>Average route rating</th>
+             </tr>
             {% for route in popular_routes %}
                 <tr>
                 <td>
@@ -112,9 +116,11 @@
         <br>
         Try some random routes in your region:
         <table>
-            <th>Route</th>
-            <th>Route creator</th>
-            <th>Average route rating</th>
+            <tr>
+                <th>Route</th>
+                <th>Route creator</th>
+                <th>Average route rating</th>
+            </tr>
             {% for route in random_routes %}
                 <tr>
                 <td>
@@ -128,5 +134,6 @@
                 </td>
                 </tr>
             {% endfor %}
-        </table>    </body>
+        </table>
+    </body>
 </html>
