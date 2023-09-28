@@ -4,7 +4,6 @@ from get_data import download_edges_in_relation, download_edges_around_point, se
 from settings import Settings
 from menu import Menu
 import server
-import exceptions
 import database
 
 current_settings = Settings()
@@ -26,7 +25,7 @@ def redownload_all_data():
     except ConnectionError:
         print("ERROR: Unable to connect to the Overpass API")
         print("Try checking your internet connection, or changing the Overpass API instance used")
-    except exceptions.InvalidRegionError:
+    except ValueError:
         print("ERROR: Unable to successfully process region.")
         print("Please ensure valid and sensible region has been selected")
 

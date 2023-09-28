@@ -3,7 +3,6 @@ from typing import Callable, List, Tuple, Set, Dict
 from pathlib import Path
 import requests
 from distance_formulas import haversine_node_distance, walking_time
-import exceptions
 import elevation.downloader
 import graph_algorithms
 
@@ -157,7 +156,7 @@ def _download_edges(edge_query: str,
             safe_node += 1
 
     if safe_node == len(adjacency_list):
-        raise exceptions.InvalidRegionError(
+        raise ValueError(
             "Region given has no set of connected nodes that take up at least half the entire region"
         )
 
