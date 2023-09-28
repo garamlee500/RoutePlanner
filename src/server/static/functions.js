@@ -10,33 +10,6 @@ function secondsToString(seconds){
     }
 }
 
-function colorGradient(colorCount,
-                       startR = 0,
-                       startG = 255,
-                       startB = 0,
-                       endR = 255,
-                       endG = 0,
-                       endB = 0,) {
-
-    if (colorCount === 1) {
-        // Zero division error occurs if colorCount is 1
-        return [`rgb(${startR},${startG},${startB})`];
-    }
-
-    // Uses a linear colour gradient
-    let colors = []
-    let rDiff = (endR - startR) / (colorCount - 1);
-    let gDiff = (endG - startG) / (colorCount - 1);
-    let bDiff = (endB - startB) / (colorCount - 1);
-    for (let i = 0; i < colorCount; i++) {
-        let r = Math.round(startR + rDiff * i);
-        let g = Math.round(startG + gDiff * i);
-        let b = Math.round(startB + bDiff * i);
-        colors.push(`rgb(${r},${g},${b})`)
-    }
-    return colors;
-}
-
 function nodeDistanceMetric(node1lat, node1lon, node2lat, node2lon) {
     // Outputs a metric for distance between two nodes that can be used to
     // compare distances - is an increasing function of haversine node distance

@@ -33,13 +33,7 @@ def _generate_zip_filename_for_tile(lat_lon: Tuple[int, int]):
 
 
 def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_api_endpoint: str) -> List[float]:
-    """
-    Gets the elevation of all nodes in a given list of nodes
-    See https://www.jspacesystems.or.jp/ersdac/GDEM/E/2.html for format of geotiff files
-    :param nodes:
-    :param aster_gdem_api_endpoint:
-    :return:
-    """
+    # See https://www.jspacesystems.or.jp/ersdac/GDEM/E/2.html for format of geotiff files
 
     # Moved import into only submodule that requires it due to large loading times
     # on start up of main.py despite not needing it most of the time
