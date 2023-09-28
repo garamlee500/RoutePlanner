@@ -22,9 +22,7 @@ let defaultSettings = {
     findShortestPathsByTime: false
 };
 
-
 async function initialise() {
-
    if (sessionStorage.getItem("settings")) {
       settings = JSON.parse(sessionStorage.getItem("settings"));
    }
