@@ -47,8 +47,8 @@ def search_relation(search_term, overpass_interpreter_url):
         raise ConnectionError("Unable to successfully connect to Overpass Api")
 
     relations = json.loads(response.text)["elements"]
-    # Sort by descending order by descending tag count,
-    # then by name match to give more important results first
+    # Sort by descending tag count,
+    # then by descending name match to give more important results first
     # Uses fact .sort() is stable (but have to reverse order of sorts)
     relations.sort(key=lambda x: name_match_score(x['tags']['name'], search_term), reverse=True)
     relations.sort(key=lambda x: len(x['tags']), reverse=True)
