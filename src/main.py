@@ -38,12 +38,17 @@ def run_server():
         print("Have you tried 'Redownload all data'?")
         return
     except:
-        print("Warning - unknown error occured while loading map data!")
+        print("Warning - unknown error occurred while loading map data!")
         print("Have you tried 'Redownload all data'?")
         return
     print("Running server!")
     print("Press CTRL-C to stop server")
-    serve(server.app)
+    try:
+        serve(server.app)
+    except Exception as e:
+        print(e)
+        print("An unknown error occurred. Please see error message above.")
+        print("If this continues happening, try closing and restarting this program.")
 
 
 def set_area_by_relation_id():
