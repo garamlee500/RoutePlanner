@@ -102,15 +102,11 @@ def _download_edges(edge_query: str,
     if response.status_code != 200:
         raise ConnectionError("Unable to succesfully connect to Overpass Api")
 
-    present_nodes = set()
-    present_node_data = json.loads(response.text)["elements"]
-    for node in present_node_data:
-        present_nodes.add(node['id'])
+    present_nodes = {node['id'] for node in json.loads(response.text)["elements"]}
 
     if verbose:
         print("Downloaded data")
 
-    # All current nodes with ids, lat, lon
     node_indexes = {}
     node_lat_lng_indexes = {}
     nodes = []
