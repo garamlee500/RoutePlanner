@@ -8,6 +8,12 @@ import database
 
 current_settings = Settings()
 
+def unknown_error(e):
+    print(e)
+    print("An unknown error occurred. Please see error message above.")
+    print("If this continues happening, try closing and restarting this program.")
+
+
 
 def redownload_all_data():
     # Runs download_edges with current settings applied
@@ -29,10 +35,7 @@ def redownload_all_data():
         print("ERROR: Unable to successfully process region.")
         print("Please ensure valid and sensible region has been selected")
     except Exception as e:
-        print(e)
-        print("An unknown error occurred. Please see error message above.")
-        print("If this continues happening, try closing and restarting this program.")
-
+        unknown_error(e)
 
 def run_server():
     try:
@@ -42,18 +45,14 @@ def run_server():
         print("Have you tried 'Redownload all data'?")
         return
     except Exception as e:
-        print(e)
-        print("An unknown error occurred. Please see error message above.")
-        print("Have you tried 'Redownload all data'?")
+        unknown_error(e)
         return
     print("Running server!")
     print("Press CTRL-C to stop server")
     try:
         serve(server.app)
     except Exception as e:
-        print(e)
-        print("An unknown error occurred. Please see error message above.")
-        print("If this continues happening, try closing and restarting this program.")
+        unknown_error(e)
 
 
 def set_area_by_relation_id():
@@ -66,6 +65,8 @@ def set_area_by_relation_id():
         current_settings.save()
         print("Settings saved!")
         print("Note: data will need to be re-downloaded")
+    else:
+        print("Going back.")
 
 
 def set_area_by_searching():
@@ -98,6 +99,8 @@ def set_area_by_searching():
     except ConnectionError:
         print("ERROR: Unable to connect to the Overpass API")
         print("Try checking your internet connection, or changing the Overpass API instance used")
+    except Exception as e:
+        unknown_error(e)
 
 
 def current_region_string():
