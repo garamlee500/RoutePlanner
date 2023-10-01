@@ -1,5 +1,6 @@
 from typing import List, Tuple
 
+
 def load_adjacency_list(filename="map_data/edges.csv") -> List[List[Tuple[int, float, float]]]:
     adjacency_list: List[List[Tuple[int, float, float]]] = []
     with open(filename) as file:
@@ -9,8 +10,8 @@ def load_adjacency_list(filename="map_data/edges.csv") -> List[List[Tuple[int, f
                 # Remove \n at end of line
                 line = line[:-1]
                 line = line.split(',')
-                for i in range(len(line)//3):
-                    adjacency_list[-1].append((int(line[3*i]), float(line[3*i+1]), float(line[3*i+2])))
+                for i in range(len(line) // 3):
+                    adjacency_list[-1].append((int(line[3 * i]), float(line[3 * i + 1]), float(line[3 * i + 2])))
 
     return adjacency_list
 

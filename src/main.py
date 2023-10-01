@@ -28,6 +28,10 @@ def redownload_all_data():
     except ValueError:
         print("ERROR: Unable to successfully process region.")
         print("Please ensure valid and sensible region has been selected")
+    except Exception as e:
+        print(e)
+        print("An unknown error occurred. Please see error message above.")
+        print("If this continues happening, try closing and restarting this program.")
 
 
 def run_server():
@@ -37,8 +41,9 @@ def run_server():
         print("Invalid map data!")
         print("Have you tried 'Redownload all data'?")
         return
-    except:
-        print("Warning - unknown error occurred while loading map data!")
+    except Exception as e:
+        print(e)
+        print("An unknown error occurred. Please see error message above.")
         print("Have you tried 'Redownload all data'?")
         return
     print("Running server!")
