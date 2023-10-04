@@ -1,4 +1,5 @@
 import math
+import urllib.parse
 from waitress import serve
 from get_data import download_edges_in_relation, download_edges_around_point, search_relation
 from settings import Settings
@@ -91,8 +92,11 @@ def set_area_by_searching():
             return set_area_function
 
         for i, item in enumerate(areas):
+            wiki_link = ''
+            if 'wikipedia' in item['tags']:
+                wiki_link = '- https://' + urllib.parse.quote('wikipedia.org/wiki/' + item['tags']['wikipedia']) + ' '
             set_area_menu.add_option((f"{item['tags']['name']} "
-                                      f"{'- ' + item['tags']['wikipedia'] + ' ' if 'wikipedia' in item['tags'] else ''}"
+                                      f"{wiki_link}"
                                       f"- https://www.openstreetmap.org/relation/{item['id']}",
                                       create_set_area_function(i)))
         set_area_menu.run()
