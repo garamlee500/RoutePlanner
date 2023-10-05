@@ -12,19 +12,16 @@ class Settings:
         if key in self._default_settings:
             self._settings_dict[key] = value
         else:
+            # Ensure that all keys are names of valid settings
             raise KeyError()
 
     def reload(self):
         try:
             with open(self._settings_file) as file:
-                self._settings_dict = json.load(file)
+                # Override all settings with ones from file, while preserving non-set defaults
+                self._settings_dict = self._default_settings | json.load(file)
         except FileNotFoundError:
-            self._settings_dict = {}
-
-        # Set any unset settings to default
-        for setting in self._default_settings:
-            if setting not in self._settings_dict:
-                self._settings_dict[setting] = self._default_settings[setting]
+            pass
 
     def __init__(self, settings_file="server/settings.json"):
         self._settings_file = settings_file
@@ -39,9 +36,6 @@ class Settings:
             "ASTER_GDEM_API_URL": "https://gdemdl.aster.jspacesystems.or.jp/download/"
         }
         self.reload()
-
-    def reset(self):
-        self._settings_dict = self._default_settings
 
     def save(self):
         with open(self._settings_file, 'w') as file:
