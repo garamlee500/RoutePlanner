@@ -9,6 +9,7 @@ import database
 
 current_settings = Settings()
 
+
 def unknown_error(e):
     print(e)
     print("An unknown error occurred. Please see error message above.")
