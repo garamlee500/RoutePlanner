@@ -2,6 +2,7 @@ from typing import List, Tuple
 from math import floor, ceil
 from io import BytesIO
 import zipfile
+import urllib.parse
 import requests
 from distance_formulas import haversine_node_distance
 
@@ -58,7 +59,8 @@ def get_elevation_for_nodes(nodes: List[Tuple[int, float, float]], aster_gdem_ap
     for tile in required_tiles:
         try:
             # Server provides data in this format - not much we can do to make this cleaner
-            response = requests.get(aster_gdem_api_endpoint + _generate_zip_filename_for_tile(tile))
+            # urljoin ensures urls are joined together succesfully regardless of whether url ends in / or not
+            response = requests.get(urllib.parse.urljoin(aster_gdem_api_endpoint + '/', _generate_zip_filename_for_tile(tile)))
             with zipfile.ZipFile(BytesIO(response.content)) as download_zip:
                 with download_zip.open(_generate_subzip_filename_for_tile(tile)) as sub_download_zip_file:
                     with zipfile.ZipFile(sub_download_zip_file) as sub_download_zip:
