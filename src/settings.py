@@ -5,8 +5,8 @@ class Settings:
     # Allow some restricted access to settings dict
     # Partly implements interface to dictionary
     # https://docs.python.org/3/reference/datamodel.html#emulating-container-types
-    def __getitem__(self, index):
-        return self._settings_dict[index]
+    def __getitem__(self, key):
+        return self._settings_dict[key]
 
     def __setitem__(self, key, value):
         if key in self._default_settings:
