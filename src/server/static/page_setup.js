@@ -99,7 +99,13 @@ async function initialise() {
 
    let currentURL = new URL(window.location.href);
    if (currentURL.searchParams.has("route")){
-      await loadRouteUrl(currentURL.searchParams.get("route"));
+       try{
+          await loadRouteUrl(currentURL.searchParams.get("route"));
+       }
+       catch(e){
+           // Prevent errors in route stalling setup
+           console.warn("Invalid route parameter. Ignoring given route.");
+       }
    }
    applyRoute(0);
    displayIsoline();
