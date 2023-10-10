@@ -42,7 +42,10 @@ def search_relation(search_term, overpass_interpreter_url):
             f"relation[name~'{search_term}',i][type='boundary'];" \
             f"out tags;"
 
-    response = requests.get(overpass_interpreter_url, params={'data': query})
+    try:
+        response = requests.get(overpass_interpreter_url, params={'data': query})
+    except:
+        raise ConnectionError("Unable to succesfully connect to Overpass Api")
     if response.status_code != 200:
         raise ConnectionError("Unable to successfully connect to Overpass Api")
 
@@ -91,14 +94,21 @@ def _download_edges(edge_query: str,
                     elevation_list_filename="map_data/elevation.csv",
                     grid_filename="map_data/grid2d.csv",
                     verbose=True):
-    response = requests.get(overpass_interpreter_url, params={'data': edge_query})
+
+    try:
+        response = requests.get(overpass_interpreter_url, params={'data': edge_query})
+    except:
+        raise ConnectionError("Unable to succesfully connect to Overpass Api")
     if response.status_code != 200:
         raise ConnectionError("Unable to succesfully connect to Overpass Api")
 
     data = json.loads(response.text)["elements"]
 
     # Make request to get all nodes that are actually in region
-    response = requests.get(overpass_interpreter_url, params={'data': node_query})
+    try:
+        response = requests.get(overpass_interpreter_url, params={'data': node_query})
+    except:
+        raise ConnectionError("Unable to succesfully connect to Overpass Api")
     if response.status_code != 200:
         raise ConnectionError("Unable to succesfully connect to Overpass Api")
 
