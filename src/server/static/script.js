@@ -203,6 +203,7 @@ async function searchGeocode(query) {
     let requestURL = new URL("https://nominatim.openstreetmap.org/search?format=json");
     requestURL.searchParams.append('q', query);
     requestURL.searchParams.append('viewbox', map.getBounds().toBBoxString());
+    requestURL.searchParams.append('limit', 1)
     const data = await (await fetch(requestURL)).json();
     if (data.length > 0) {
         return [parseFloat(data[0]["lat"]), parseFloat(data[0]["lon"]), data[0]["display_name"]];
