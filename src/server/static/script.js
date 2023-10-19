@@ -115,16 +115,9 @@ function centreMap() {
 }
 
 function getStartGPSLocation() {
-    try {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(setStartGPSLocation);
-        } else {
-            alert("This browser does not support geolocation.")
-        }
-    }
-    catch (error) {
-        alert("Browser did not respond with location. Please check you have set location permissions properly for this website.")
-    }
+    navigator.geolocation.getCurrentPosition(setStartGPSLocation, (e) =>
+    (alert("Browser did not respond with location. Please check you have set location permissions properly for this website.")),
+        {enableHighAccuracy: true});
 }
 
 function setStartGPSLocation(position) {
