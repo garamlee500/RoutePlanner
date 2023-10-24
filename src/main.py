@@ -16,7 +16,6 @@ def unknown_error(e):
     print("If this continues happening, try closing and restarting this program.")
 
 
-
 def redownload_all_data():
     # Runs download_edges with current settings applied
     try:
@@ -38,6 +37,7 @@ def redownload_all_data():
         print("Please ensure valid and sensible region has been selected")
     except Exception as e:
         unknown_error(e)
+
 
 def run_server():
     try:
