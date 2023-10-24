@@ -793,7 +793,7 @@ public:
         getClosestNodes(graphFilename);
     }
 
-    string generateCycle(int startNode, double targetLength, double distanceTolerance=0.05, double overlapTolerance=0.05, int maxTries=numeric_limits<int>::max()){
+    string generateCycle(int startNode, double targetLength, double maxDeviance=1000){
         if (startNode < 0 || startNode >= nodeCount) return "[0,0]";
         // Dijkstra should hopefully have been recently executed for start node
         // Note dijkstra is not that computationally expensive - the main problem is delivering the results
@@ -811,61 +811,38 @@ public:
         }
         // Creates a random number generator to generate numbers from 0 to n-1
         uniform_int_distribution<> distrib(0, possibleNodes.size() - 1);
-        for (int i = 0; i < maxTries; i++){
-            int node1 = possibleNodes[distrib(gen)];
-            int node2 = possibleNodes[distrib(gen)];
-            if (node1 != node2){
-                aStarResultObject secondaryAstar = aStarResult(node1,
-                                                               node2,
-                                                               distanceAdjacencyList,
-                                                               timeAdjacencyList,
-                                                               [this](int node, int endNode){
-                                                                   return haversineDistance(nodeLats[node], nodeLons[node], nodeLats[endNode], nodeLons[endNode]);
-                                                               });
-                double distance = secondaryAstar.distance;
-                vector<int> route = secondaryAstar.path;
-                if ( abs(distance + distances[node1] + distances[node2]  - targetLength)/targetLength < distanceTolerance){
-                    // Valid cycle found
-                    // Return distance and path
-                    vector<int> pathA = reconstructDijkstraRoute(node1, prevNodes, false);
-                    vector<int> pathC = reconstructDijkstraRoute(node2, prevNodes);
-                    unordered_set<int> usedNodes;
-                    int duplicateCount = 0;
+        int chosenNode = possibleNodes[distrib(gen)];
 
-                    // following makes sure no overlaps in cycles
-                    pathA.pop_back();
-                    pathC.pop_back();
-                    route.pop_back();
+        pair<vector<double>, vector<int>> secondaryDijkstra = dijkstraResultCache.getData(chosenNode);
+        vector<double> secondaryDistances = secondaryDijkstra.first;
+        vector<int> secondaryPrevNodes = secondaryDijkstra.second;
 
-                    string result = "[";
-                    result += to_string(node1) + ',' + to_string(node2) + ']';
-                    for (int x : pathA){
-                        if (!usedNodes.insert(x).second){
-                            duplicateCount++;
-                        }
-                    }
-                    for (int x : route){
-                        if (!usedNodes.insert(x).second){
-                            duplicateCount++;
-                        }
-                    }
-                    for (int x : pathC){
-                        if (!usedNodes.insert(x).second){
-                            duplicateCount++;
-                        }
-                    }
-                    if ( ((double)duplicateCount)/(pathA.size() + route.size() + pathC.size()) < overlapTolerance){
-                        return result;
-                    }
-                    overlapTolerance *= 1.1;
-                }
-                else{
-                    distanceTolerance *= 1.1;
-                }
+        vector<pair<int, double>> nodeSuitability;
+        nodeSuitability.reserve(nodeCount);
+        for (int i = 0; i < nodeCount; i++){
+            if (i==chosenNode||i==startNode){
+                continue;
             }
-
+            double deviance = abs(targetLength-distances[chosenNode]-secondaryDistances[i]-distances[i]);
+            if (deviance < maxDeviance) {
+                nodeSuitability.emplace_back(i, deviance);
+            }
         }
-        return "[0,0]";
+
+        if (nodeSuitability.empty()){
+            return "[0,0]";
+        }
+
+        auto compare = [](pair<int, double> a, pair<int, double> b){return a.second < b.second;};
+        sort(nodeSuitability.begin(), nodeSuitability.end(), compare);
+
+        // Generate indexes from 0 to n with linear distribution, giving index 0 weight n and index n-1 weight 1
+        vector<int> weights(nodeSuitability.size());
+        iota(weights.rbegin(), weights.rend(), 1);
+
+        discrete_distribution<> discrete_distrib(weights.begin(), weights.end());
+
+        return "[" + to_string(chosenNode) + ',' + to_string(nodeSuitability[discrete_distrib(gen)].first) + "]";
     }
 
     string aStar(int startNode, int endNode, bool useTime){
@@ -1169,9 +1146,7 @@ PYBIND11_MODULE(graph_algorithms, m) {
         .def("generate_cycle", &MapGraphInstance::generateCycle,
             py::arg("start_node"),
             py::arg("target_length"),
-            py::arg("distance_tolerance")=0.05,
-            py::arg("overlap_tolerance")=0.05,
-            py::arg("max_tries")=numeric_limits<int>::max())
+            py::arg("max_deviance")=1000)
         .def("a_star", &MapGraphInstance::aStar,
             py::arg("start_node"),
             py::arg("end_node"),
