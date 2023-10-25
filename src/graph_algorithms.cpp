@@ -799,7 +799,6 @@ public:
         // Note dijkstra is not that computationally expensive - the main problem is delivering the results
         pair<vector<double>, vector<int>> computedDijkstra = dijkstraResultCache.getData(startNode);
         vector<double> distances = computedDijkstra.first;
-        vector<int> prevNodes = computedDijkstra.second;
         vector<int> possibleNodes;
         for (int node = 0; node < nodeCount; node++){
             if (distances[node] > targetLength/6 && distances[node] < (targetLength)/3){
@@ -815,7 +814,6 @@ public:
 
         pair<vector<double>, vector<int>> secondaryDijkstra = dijkstraResultCache.getData(chosenNode);
         vector<double> secondaryDistances = secondaryDijkstra.first;
-        vector<int> secondaryPrevNodes = secondaryDijkstra.second;
 
         vector<pair<int, double>> nodeSuitability;
         nodeSuitability.reserve(nodeCount);
