@@ -805,7 +805,7 @@ public:
                 possibleNodes.push_back(node);
             }
         }
-        if (possibleNodes.size() < 2){
+        if (possibleNodes.size() < 1){
             return "[0,0]";
         }
         // Creates a random number generator to generate numbers from 0 to n-1
