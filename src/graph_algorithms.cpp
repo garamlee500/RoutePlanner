@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <random>
 #include <future>
+#include <numeric>
 
 namespace py = pybind11;
 using namespace std;
@@ -808,7 +809,6 @@ public:
         if (possibleNodes.empty()){
             return "[0,0]";
         }
-        // Creates a random number generator to generate numbers from 0 to n-1
         uniform_int_distribution<> distrib(0, possibleNodes.size() - 1);
         int chosenNode = possibleNodes[distrib(gen)];
 
