@@ -29,7 +29,6 @@ def create_tables():
                 "route_name TEXT,"
                 "public INTEGER,"
                 "FOREIGN KEY(username) REFERENCES accounts(username))")
-    # https://www.sqlite.org/foreignkeys.html - for info about ON CASCADE DELETE
     cur.execute("CREATE TABLE IF NOT EXISTS route_ratings"
                 "(rating_user TEXT,"
                 "route_id INTEGER,"
@@ -40,7 +39,6 @@ def create_tables():
 
 
 def user_exists(username):
-    # Prevents unwanted sql injection vulnerabilities
     res = cur.execute("SELECT username FROM accounts WHERE username=?", (username,))
     return res.fetchone() is not None
 
@@ -55,6 +53,7 @@ def create_user(username, raw_password):
 
 
 def check_password(username, raw_password):
+    # Returns True if user exists with given password, otherwise False
     res = cur.execute("SELECT password_hash "
                       "FROM accounts "
                       "WHERE username=?",
@@ -66,6 +65,7 @@ def check_password(username, raw_password):
 
 
 def get_route(route_id):
+    # Fetches route with proper datetime formatting
     res = cur.execute("SELECT strftime('%d/%m/%Y %H:%M', timestamp), route, username, route_name, public FROM routes "
                       "WHERE id = ?", (route_id,))
     return res.fetchone()
@@ -133,16 +133,15 @@ def get_all_routes(username):
 
 
 def get_random_routes(limit=10):
-    # https://stackoverflow.com/a/24591696/13573736
-    # Notes orders randomly too not just picks in the order it is in database
-    res = cur.execute("SELECT id, route, route_name, username, ROUND(AVG(route_ratings.rating),2), COUNT(route_ratings.rating) "
-                      "FROM routes, route_ratings "
-                      "WHERE routes.id=route_ratings.route_id "
-                      "AND public = 1 "
-                      "GROUP BY routes.id "
-                      "ORDER BY RANDOM() "
-                      "LIMIT ?",
-                      (limit,))
+    res = cur.execute(
+        "SELECT id, route, route_name, username, ROUND(AVG(route_ratings.rating),2), COUNT(route_ratings.rating) "
+        "FROM routes, route_ratings "
+        "WHERE routes.id=route_ratings.route_id "
+        "AND public = 1 "
+        "GROUP BY routes.id "
+        "ORDER BY RANDOM() "
+        "LIMIT ?",
+        (limit,))
     return res.fetchall()
 
 
@@ -152,6 +151,7 @@ def get_popular_routes(limit=10, dummy_rating=3, dummy_rating_count=10):
     # to prefer routes with more ratings.
     # https://stackoverflow.com/a/1411268
     # Note *1.0 is to convert integer to real - prevents integer division!
+    # Ties are broken randomly, to allow for a range of results when loads of tied results are present
     res = cur.execute(
         "SELECT routes.id, routes.route, routes.route_name, routes.username, ROUND(AVG(route_ratings.rating),2), COUNT(route_ratings.rating) "
         "FROM routes, route_ratings "
@@ -176,5 +176,6 @@ def delete_route(route_id, username):
 
     con.commit()
     return True
+
 
 create_tables()

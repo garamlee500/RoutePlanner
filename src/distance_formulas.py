@@ -4,11 +4,9 @@ EARTH_RADIUS = 6_371_000
 
 
 def walking_time(distance: float, elevation_gain: float) -> float:
-    """
-    Uses Tobler's hiking function to find walking distance between two nodes
-    (presuming straight road between two)
-    https://en.wikipedia.org/wiki/Tobler%27s_hiking_function
-    """
+    # Uses Tobler's hiking function to find walking distance between two nodes
+    # (presuming straight road between two)
+    # https://en.wikipedia.org/wiki/Tobler%27s_hiking_function
     if distance == 0:
         return 0
 
@@ -19,12 +17,9 @@ def walking_time(distance: float, elevation_gain: float) -> float:
 
 
 def haversine_node_distance(node1lat, node1lon, node2lat, node2lon) -> float:
-    """
-    Find direct distance between two nodes, using the
-    Haversine formula. See https://en.wikipedia.org/wiki/Haversine_formula
-    :return: Float giving distance 'as-the-crow-flies' between two nodes,
-        taking into account the earth's curvature
-    """
+    # Find direct distance between two nodes, using the
+    # Haversine formula. See https://en.wikipedia.org/wiki/Haversine_formula
+
     lat2 = radians(node2lat)
     lat1 = radians(node1lat)
     lon2 = radians(node2lon)
