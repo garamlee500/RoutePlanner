@@ -148,6 +148,7 @@ def _download_edges(edge_query: str,
 
     safe_node = 0
 
+    connected_to_dead_node = [False for _ in range(len(nodes))]
     connected_nodes = []
     while safe_node < len(adjacency_list):
         connected_nodes = bfs_connected_nodes(safe_node, adjacency_list)
@@ -156,10 +157,12 @@ def _download_edges(edge_query: str,
         if connected_nodes.count(False) * 2 < len(adjacency_list):
             break
         safe_node += 1
+        # Merge boolean values from connected_to_dead_node and connected_nodes (to dead node)
+        connected_to_dead_node = [a or b for a,b in zip(connected_to_dead_node, connected_nodes)]
         while safe_node < len(adjacency_list):
             # Any node connected to a dead node is also dead,
             # so keep going until node unconnected to dead node is found
-            if not connected_nodes[safe_node]:
+            if not connected_to_dead_node[safe_node]:
                 break
             safe_node += 1
 
