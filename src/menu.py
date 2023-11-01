@@ -21,7 +21,7 @@ class Menu:
 
     @staticmethod
     def prompt_integer(lower_bound: Union[int, Literal[-math.inf]], upper_bound: Union[int, Literal[math.inf]]) -> int:
-        # Prompts for an integer x, where min <= x < max until a valid one is entered
+        # Prompts for an integer x, where lower_bound <= x < upper_bound until a valid one is entered
         current = upper_bound
         while current < lower_bound or current >= upper_bound:
             input_string = input()
@@ -36,7 +36,7 @@ class Menu:
 
     @staticmethod
     def prompt_float(lower_bound: float, upper_bound: float) -> float:
-        # Prompts for a float x, where min <= x < max until a valid one is entered
+        # Prompts for a float x, where lower_bound <= x < upper_bound until a valid one is entered
         current = upper_bound
         while current < lower_bound or current >= upper_bound:
             input_string = input()
