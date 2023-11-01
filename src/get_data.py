@@ -2,7 +2,6 @@ import json
 from typing import Callable, List, Tuple, Set, Dict
 from pathlib import Path
 import re
-import urllib.parse
 import requests
 from distance_formulas import haversine_node_distance, walking_time
 import elevation.downloader
@@ -40,8 +39,8 @@ def name_match_score(name, search):
 def search_relation(search_term, overpass_interpreter_url):
     # Performs a case-insensitive for all (up to 100) relations that are boundaries containing search_term
     # Double re.escape is required to allow string to reach regex parser properly
-    # qt turns off id sort for quicker results (but turns on geographical sort instead) - result is sorted 
-    # once received so not really important 
+    # qt turns off id sort for quicker results (but turns on geographical sort instead) - result is sorted
+    # once received so not really important
     query = f"[out:json];" \
             f"relation[name~'{re.escape(re.escape(search_term))}',i][type='boundary'];" \
             f"out tags qt 100;"
