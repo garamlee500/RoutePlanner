@@ -68,9 +68,7 @@ def _process_ways(data: Dict,
                   dead_nodes: Set[int],
                   node_distance_formula: Callable[[float, float, float, float], float] = haversine_node_distance
                   ):
-    """
-    Goes through each way in the data dict and adds it to the adjacency list, subject to checks
-    """
+    # Goes through each way in the data dict and adds it to the adjacency list, subject to checks
     for item in data:
         if item["type"] == "way":
             for i in range(len(item["nodes"]) - 1):
@@ -140,7 +138,7 @@ def _download_edges(edge_query: str,
                 node_lat_lng_indexes[(item["lat"], item["lon"])] = len(nodes)
                 nodes.append((item["id"], item["lat"], item["lon"]))
 
-    adjacency_list: List[List[Tuple[int, float]]] = [[] for _i in range(len(nodes))]
+    adjacency_list: List[List[Tuple[int, float]]] = [[] for _ in range(len(nodes))]
     _process_ways(data, present_nodes, node_indexes, nodes, adjacency_list, set(), node_distance_formula)
 
     if verbose:
@@ -253,9 +251,6 @@ def download_edges_in_relation(area_relation_id: int,
                                elevation_list_filename="map_data/elevation.csv",
                                grid_filename="map_data/grid2d.csv",
                                verbose=True):
-    """
-    Runs download_edges but with prebuilt query
-    """
     # out skel returns all but tags
     # out ids only returns ids
     edge_query = "[out:json];" + \
@@ -287,9 +282,6 @@ def download_edges_around_point(node_lat: float,
                                 elevation_list_filename="map_data/elevation.csv",
                                 grid_filename="map_data/grid2d.csv",
                                 verbose=True):
-    """
-    Runs download_edges but with prebuilt query
-    """
     edge_query = "[out:json];" + \
                  f"way(around:{node_radius},{node_lat},{node_lon})['highway']['highway'!~'motorway'];" + \
                  "(._;>;);out skel;"
