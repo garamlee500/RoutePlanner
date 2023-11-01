@@ -1,6 +1,8 @@
 import json
 from typing import Callable, List, Tuple, Set, Dict
 from pathlib import Path
+import re
+import urllib.parse
 import requests
 from distance_formulas import haversine_node_distance, walking_time
 import elevation.downloader
@@ -23,6 +25,8 @@ def bfs_connected_nodes(start_node: int,
 
 
 def name_match_score(name, search):
+    name = name.lower()
+    search = search.lower()
     if search == name:
         return 100
 
@@ -34,14 +38,13 @@ def name_match_score(name, search):
 
 
 def search_relation(search_term, overpass_interpreter_url):
-    """
-    Performs a case-insensitive for all relations that are boundaries
-    containing search_term
-    """
+    # Performs a case-insensitive for all (up to 100) relations that are boundaries containing search_term
+    # Double re.escape is required to allow string to reach regex parser properly
+    # qt turns off id sort for quicker results (but turns on geographical sort instead) - result is sorted 
+    # once received so not really important 
     query = f"[out:json];" \
-            f"relation[name~'{search_term}',i][type='boundary'];" \
-            f"out tags;"
-
+            f"relation[name~'{re.escape(re.escape(search_term))}',i][type='boundary'];" \
+            f"out tags qt 100;"
     try:
         response = requests.get(overpass_interpreter_url, params={'data': query})
     except:
@@ -50,8 +53,7 @@ def search_relation(search_term, overpass_interpreter_url):
         raise ConnectionError("Unable to successfully connect to Overpass Api")
 
     relations = json.loads(response.text)["elements"]
-    # Sort by descending tag count,
-    # then by descending name match to give more important results first
+    # Sort by descending tag count (descending importance), breaking ties with name match score
     # Uses fact .sort() is stable (but have to reverse order of sorts)
     relations.sort(key=lambda x: name_match_score(x['tags']['name'], search_term), reverse=True)
     relations.sort(key=lambda x: len(x['tags']), reverse=True)
