@@ -1,3 +1,5 @@
+# Not part of NEA project
+
 import random
 import json
 import matplotlib

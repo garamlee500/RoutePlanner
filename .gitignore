@@ -6,3 +6,4 @@ __pycache__/
 /elevation_errors.png
 src/map_data/
 /pyproject.toml
+src/speed_test.py
