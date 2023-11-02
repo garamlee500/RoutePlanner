@@ -21,7 +21,6 @@ using namespace std;
 constexpr int EARTH_RADIUS = 6378137;
 constexpr double PI = 3.14159265358979323846;
 
-// https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
 random_device rd;
 mt19937 gen(rd());
 
@@ -362,13 +361,12 @@ vector<Node> convexHull(vector<Node> nodes) {
                 else {
                     // mostBottomLeft, nodeA, nodeB are collinear
                     // break ties by increasing distance
-                    // Could use manhattan distance due to co-linearity
+                    // Can use manhattan distance due to co-linearity
                     return abs(nodeA.x - mostBottomLeft.x) + abs(nodeA.y - mostBottomLeft.y) <
                            abs(nodeB.x - mostBottomLeft.x) + abs(nodeB.y - mostBottomLeft.y);
                 }
             };
 
-    // Don't pop elements here - vectors have O(n) pop front - to avoid!
     sort(nodes.begin() + 1, nodes.end(), convexHullPolarSort);
 
     // Can't use std::stack, since access to top 2 elements required
@@ -529,9 +527,9 @@ void findSubisoline(double gridDistance,
                             [static_cast<long long>(round((x + gridDistance/2 - absoluteMinX)/gridDistance))]
                     ];
             // gives each of 16 cases a unique number
-            // each bit indicates above/below,  left right top bottom
+            // 1001 would indicate topLeft is above isovalue, topRight below, bottomLeft below, bottomRight above
             int caseIndex = ((topLeftValue>=isovalue)<<3) + ((topRightValue>=isovalue)<<2)
-                            + ((bottomLeftValue>=isovalue)<<1) + ((bottomRightValue >=isovalue));
+                            + ((bottomLeftValue>=isovalue)<<1) + ((bottomRightValue>=isovalue));
 
             // gridDistance=gridDistance allows property of current object to be specifically captured by lambda
             // https://stackoverflow.com/questions/7895879/using-data-member-in-lambda-capture-list-inside-a-member-function
@@ -697,21 +695,22 @@ private:
     double minY;
     double maxY;
     double gridDistance;
-    string region_nodes;
+    string regionNodes;
     string nodeLatLons;
     string nodeElevationString;
 
     void computeRegionNodes(){
-        region_nodes = "[";
+        regionNodes = "[";
         // Get the convex hull of all points to get outer region
         for (const Node& outerNode : convexHull(mercatorNodeList)){
-            region_nodes += '[' + to_string(outerNode.index) + ']' + ',';
+            regionNodes += '[' + to_string(outerNode.index) + ']' + ',';
         }
-        region_nodes.pop_back();
-        region_nodes += ']';
+        regionNodes.pop_back();
+        regionNodes += ']';
     }
 
     double walkingTime(int startNode, int endNode){
+        // Presumes duplicate nodes have been removed
         double distance = haversineDistance(nodeLats[startNode], nodeLons[startNode], nodeLats[endNode], nodeLons[endNode]);
         double slope = (nodeElevations[endNode]-nodeElevations[startNode])/distance;
         double speed = 6*(exp(-3.5*abs(slope + 0.05))) / 3.6;
@@ -839,7 +838,6 @@ public:
         iota(weights.rbegin(), weights.rend(), 1);
 
         discrete_distribution<> discrete_distrib(weights.begin(), weights.end());
-
         return "[" + to_string(chosenNode) + ',' + to_string(nodeSuitability[discrete_distrib(gen)].first) + "]";
     }
 
@@ -858,7 +856,7 @@ public:
                                              return walkingTime(node, endNode);
                                          }
                                         );
-            // Output of distance, time is flipped in a star if time is seen as metric to be optimised
+            // Output of distance, time is flipped in a* if time is seen as metric to be optimised
             result += to_string(completedAstar.subsidiaryDistance) + "," + to_string(completedAstar.distance) + ",[";
         }
         else{
@@ -898,7 +896,7 @@ public:
         return nodeLatLons;
     }
     string getRegionNodes(){
-        return region_nodes;
+        return regionNodes;
     }
     string getNodeElevations(){
         return nodeElevationString;
@@ -908,15 +906,15 @@ public:
         if (startNode < 0 || startNode >= nodeCount) return "[]";
 
         vector<double> distances = dijkstraResultCache.getData(startNode).first;
+        // Finds appropriate row offset so each thread gets similar amount of rows to process
         int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
 
         vector<future<void>> calculatedFutures;
 
-        // Mutex allows threads to edit result from different threads!
+        // Mutex allows result editing from different threads!
         mutex m;
         string result = "[";
         for (int i = 0; i < threads; i++){
-            // Note nice partitioning is not always possible - consider 11 items needing processing with 5 threads
             // cref allows async to use reference properly
             calculatedFutures.push_back(async(launch:: async,
                                               findSubisoline,
