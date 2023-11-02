@@ -1077,7 +1077,6 @@ string nearestNeighboursSubresult(double minX,
     return result;
 }
 
-// Ids are 64 bits not 32 - learned the hard way!
 void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
                                 const string& gridFilename = "map_data/grid2d.csv",
                                 double gridDistance=10,
@@ -1096,13 +1095,11 @@ void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
         mercatorNodes.emplace_back(i, mercatorXY.first, mercatorXY.second);
     }
 
-
-    // Make sure grid covers ever so slightly more than points on grid.
+    // Make sure grid covers area ever so slightly more than points on grid.
     minX = floor(minX/gridDistance)*gridDistance;
     minY = floor(minY/gridDistance)*gridDistance;
     maxX = ceil(maxX/gridDistance)*gridDistance;
     maxY = ceil(maxY/gridDistance)*gridDistance;
-
 
     TwoDtree tree = TwoDtree(mercatorNodes);
     ofstream fout(gridFilename);
@@ -1111,7 +1108,6 @@ void compute2DNearestNeighbours(vector<tuple<long long, double, double>> nodes,
     vector<future<string>> calculatedFutures;
     int diff = (round((maxY - minY)/gridDistance))/threads + (static_cast<long long>(round((maxY - minY)/gridDistance)) % threads == 0 ? 0 : 1 );
     for (int i = 0; i < threads; i++){
-        // Note nice partitioning is not always possible - consider 11 items needing processing with 5 threads
         // cref allows async to use reference properly
         calculatedFutures.push_back(async(launch:: async,
                                           &nearestNeighboursSubresult,
