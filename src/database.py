@@ -90,7 +90,7 @@ def store_route(route, username, route_name, timestamp=None):
 
 
 def set_route_public(username, route_id, is_public=True):
-    # Checks logged-in user matches one that created record
+    # Checks logged-in user matches one that created route
     cur.execute("UPDATE routes SET public = ? WHERE id=? AND username=?",
                 (is_public, route_id, username))
     con.commit()
@@ -167,15 +167,11 @@ def get_popular_routes(limit=10, dummy_rating=3, dummy_rating_count=10):
 
 
 def delete_route(route_id, username):
-    if get_route(route_id)[2] != username:
-        return False
-
+    # Checks logged-in user matches one that created route
     # Note ON CASCADE DELETE means all reviews are deleted automatically
     cur.execute("DELETE FROM routes "
-                "WHERE id=?", (route_id,))
+                "WHERE id=? AND username=?", (route_id, username))
 
     con.commit()
-    return True
-
 
 create_tables()

@@ -51,6 +51,7 @@ def account():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # GET request delivers register page, POST request creates account
     if flask.request.method == 'GET':
         if flask_login.current_user.is_authenticated:
             return flask.redirect('/')
@@ -58,19 +59,20 @@ def register():
         return flask.send_file('server/static/register.html')
 
     username = flask.request.form['username']
-    if not database.user_exists(username):
-        database.create_user(username, flask.request.form['password'])
-        return 'User created! - <a href="/login">Login</a>'
+    if database.user_exists(username):
+        return flask.render_template_string(
+            'User with username {{ username }} already exists! - <a href="/login">Go back</a>',
+            username=username)
 
-    # Good practice to prevent weird xss/added html stuff
-    return flask.render_template_string(
-        'User with username {{ username }} already exists! - <a href="/login">Go back</a>',
-        username=username)
+    database.create_user(username, flask.request.form['password'])
+    return 'User created! - <a href="/login">Login</a>'
+
 
 
 # https://github.com/maxcountryman/flask-login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # GET request delivers login page, POST request logs in user
     if flask.request.method == 'GET':
         if flask_login.current_user.is_authenticated:
             return flask.redirect('/')
@@ -119,8 +121,7 @@ def view_route(route_id):
     elif flask_login.current_user.is_authenticated:
         if flask_login.current_user.id == route[2]:
             # Isn't public but the current user is the owner of the route
-            # Note nesting of ifs is necessary to prevent Attribute Error when finding user id for
-            # anonymous user
+            # Nesting of ifs prevents error if user is anonymous
             rating = database.get_single_route_rating(route_id, flask_login.current_user.id)
         else:
             return unauthorized_handler()
@@ -139,6 +140,7 @@ def view_route(route_id):
 @app.post('/api/post/public_route')
 @flask_login.login_required
 def make_route_public():
+    # If owner of route does not match user, no effect
     database.set_route_public(flask_login.current_user.id,
                               flask.request.json["route_id"],
                               flask.request.json["is_public"])
@@ -148,10 +150,9 @@ def make_route_public():
 @app.post('/api/post/delete/')
 @flask_login.login_required
 def delete_route():
-    if database.delete_route(flask.request.json["route_id"], flask_login.current_user.id):
-        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
-    else:
-        return unauthorized_handler()
+    # If owner of route does not match user, no effect
+    database.delete_route(flask.request.json["route_id"], flask_login.current_user.id)
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 @app.post('/api/post/rate_route')
@@ -167,7 +168,6 @@ def rate_route():
 @app.post('/api/post/route')
 @flask_login.login_required
 def save_route():
-    # Remember - don't trust user's for their username - remember authentication!
     username = flask_login.current_user.id
     route = flask.request.json["route"]
     route_name = flask.request.json["route_name"]

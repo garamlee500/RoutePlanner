@@ -2,8 +2,7 @@ import json
 
 
 class Settings:
-    # Allow some restricted access to settings dict
-    # Partly implements interface to dictionary
+    # Partly implements interface to (settings) dictionary
     # https://docs.python.org/3/reference/datamodel.html#emulating-container-types
     def __getitem__(self, key):
         return self._settings_dict[key]
@@ -21,15 +20,16 @@ class Settings:
                 # Override all settings with ones from file, while preserving non-set defaults
                 self._settings_dict = self._default_settings | json.load(file)
         except FileNotFoundError:
-            pass
+            self._settings_dict = self._default_settings.copy()
 
     def __init__(self, settings_file="server/settings.json"):
         self._settings_file = settings_file
         self._default_settings = {
-            "AREA_RELATION_ID": 127864,  # Area relation to download data from
+            # Area relation to download data from
+            "AREA_RELATION_ID": 127864,
             "OVERPASS_INTERPRETER_URL": "https://overpass-api.de/api/interpreter",
-            "RELATION_REGION_MODE": False,
             # True - download region from area_relation_id. False - Download from radius/lat/lon
+            "RELATION_REGION_MODE": False,
             "AREA_RADIUS": 8_000,
             "LAT_CENTRE": 50.9617786,
             "LON_CENTRE": -1.3651394,
