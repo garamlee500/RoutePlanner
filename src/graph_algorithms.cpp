@@ -1067,7 +1067,7 @@ string nearestNeighboursSubresult(double minX,
     }
 
     string result;
-    for (double y = minY; y <= maxY; y+= gridDistance){
+    for (double y = minY; y <= maxY; y+=gridDistance){
         for (double x = minX; x <= maxX; x+=gridDistance){
             result += to_string(tree.nearestNeighbour(Node(-1, x, y))) + ',';
         }
