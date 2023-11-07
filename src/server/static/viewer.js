@@ -6,6 +6,7 @@ let endNodeMarker;
 let startNodeConnector;
 let endNodeConnector;
 let currentChart = null;
+let regionPolygon;
 let routeMarkers = [];
 let routeNodes = [];
 let routeNodeLatLons = [];

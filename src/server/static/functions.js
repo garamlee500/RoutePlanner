@@ -290,7 +290,7 @@ async function setupMap(interactive=true) {
         interactive: false
     }).addTo(map);
 
-    let regionPolygon = L.polygon(outerRegionLatLngs);
+    regionPolygon = L.polygon(outerRegionLatLngs);
     map = map.fitBounds(regionPolygon.getBounds());
     routeMarkers.push(L.marker(regionPolygon.getBounds().getCenter(), {
         interactive: interactive,

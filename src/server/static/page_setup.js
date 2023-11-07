@@ -10,6 +10,7 @@ let isolineIndex = 0;
 let walkSuggestionDistance = 5;
 let gpsAccuracy = null;
 let currentChart = null;
+let regionPolygon;
 let routeMarkers = [];
 let routeNodes = [];
 let routeNodeLatLons = [];

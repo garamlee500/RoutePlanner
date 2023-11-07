@@ -195,7 +195,7 @@ async function searchGeocode(query) {
     // could probably mess with stuff
     let requestURL = new URL("https://nominatim.openstreetmap.org/search?format=json");
     requestURL.searchParams.append('q', query);
-    requestURL.searchParams.append('viewbox', map.getBounds().toBBoxString());
+    requestURL.searchParams.append('viewbox', regionPolygon.getBounds().toBBoxString());
     requestURL.searchParams.append('limit', 1);
     const data = await (await fetch(requestURL)).json();
     if (data.length > 0) {
