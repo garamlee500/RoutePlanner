@@ -73,7 +73,7 @@ function rebindStopEventListeners(stopIndex){
     routeMarkers[stopIndex].on("dragend", async function(){
         routeMarkers[stopIndex].setLatLng(nodeLatLons[closestNode(routeMarkers[stopIndex].getLatLng())]);
         await applyRoute(stopIndex-1);
-        await applyRoute(stopIndex)
+        await applyRoute(stopIndex);
     });
     routeMarkers[stopIndex].bindPopup(
         `<button class='text-button' onClick='addStop(${stopIndex - 1});'>Add stop before</button>
