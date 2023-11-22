@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import requests
 from distance_formulas import haversine_node_distance, walking_time
-import elevation.downloader
+import elevation
 import graph_algorithms
 
 
@@ -205,7 +205,7 @@ def _download_edges(edge_query: str,
     if verbose:
         print("Regenerated graph")
 
-    elevations = elevation.downloader.get_elevation_for_nodes(nodes,
+    elevations = elevation.get_elevation_for_nodes(nodes,
                                                               aster_gdem_api_endpoint=aster_gdem_api_endpoint)
     if verbose:
         print("Found elevations of nodes")
