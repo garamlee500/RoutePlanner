@@ -67,7 +67,7 @@ async function initialise() {
        adjustIsolineInputs();
    });
    document.getElementById('destination-search').addEventListener("keydown", async function(e) {
-       if (e.code === "Enter") {
+       if (e.key === "Enter") {
            let geocodeData = await searchGeocode(e.target.value);
            if (geocodeData == null) {
                e.target.value = "Search not found!";
@@ -80,7 +80,7 @@ async function initialise() {
        }
    });
    document.getElementById('start-search').addEventListener("keydown", async function(e) {
-       if (e.code === "Enter") {
+       if (e.key === "Enter") {
            let geocodeData = await searchGeocode(e.target.value);
            if (geocodeData == null) {
                e.target.value = "Search not found!";
@@ -111,8 +111,8 @@ async function initialise() {
    applyRoute(0);
    displayIsoline();
 
-   await setStartSearchAddress();
-   await setDestinationSearchAddress();
+   setStartSearchAddress();
+   setDestinationSearchAddress();
 
    routeMarkers[0].on('drag', function () {
       routeNodes[0] = closestNode(routeMarkers[0].getLatLng());
