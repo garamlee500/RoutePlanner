@@ -262,7 +262,7 @@ def download_edges_in_relation(area_relation_id: int,
                  f"rel({area_relation_id});" + \
                  "map_to_area->.searchArea;" + \
                  "node(area.searchArea);" + \
-                 "(._;>;);out ids;"
+                 "out ids;"
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
@@ -286,7 +286,7 @@ def download_edges_around_point(node_lat: float,
                  "(._;>;);out skel;"
     node_query = "[out:json];" + \
                  f"node(around:{node_radius},{node_lat},{node_lon});" + \
-                 "(._;>;);out ids;"
+                 "out ids;"
 
     _download_edges(edge_query, node_query, overpass_interpreter_url, aster_gdem_api_endpoint,
                     node_distance_formula, node_filename, adjacency_list_filename, elevation_list_filename,
