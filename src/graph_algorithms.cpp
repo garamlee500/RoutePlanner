@@ -666,20 +666,6 @@ void findSubisoline(double gridDistance,
     m.unlock();
 }
 
-vector<int> reconstructDijkstraRoute(int endNode, const vector<int>& prevNodes, bool reversedPath=true){
-    vector<int> result;
-    int currentNode = endNode;
-    while (prevNodes[currentNode] != -1){
-        result.push_back(currentNode);
-        currentNode = prevNodes[currentNode];
-    }
-    result.push_back(currentNode);
-    if (!reversedPath){
-        reverse(result.begin(), result.end());
-    }
-    return result;
-}
-
 class MapGraphInstance{
 private:
     vector<vector<Edge>> distanceAdjacencyList;
